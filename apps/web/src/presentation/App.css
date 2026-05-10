@@ -143,6 +143,23 @@ textarea {
   max-width: 1440px;
 }
 
+.pipeline-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  margin: 0 auto 20px;
+  max-width: 1440px;
+}
+
+.pipeline-controls label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
 .follow-up-work {
   display: grid;
   gap: 12px;

@@ -2,8 +2,65 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
+import type { JobApplication } from "../domain/jobOpportunity";
 import { createJobApplicationGraphqlGateway } from "../infrastructure/graphql/jobApplicationGraphqlGateway";
 import { App } from "./App";
+
+function createApplication(
+  application: Partial<JobApplication> &
+    Pick<JobApplication, "id" | "company" | "roleTitle">
+): JobApplication {
+  return {
+    id: application.id,
+    company: application.company,
+    roleTitle: application.roleTitle,
+    postingUrl: application.postingUrl ?? "https://example.com/job",
+    source: application.source ?? "LinkedIn",
+    location: application.location ?? "",
+    compensation: application.compensation ?? "",
+    employmentType: application.employmentType ?? "Full-time",
+    stage: application.stage ?? "Saved",
+    timeline: application.timeline ?? [
+      {
+        id: `${application.id}-saved`,
+        occurredAt: "2026-05-01T09:00:00.000Z",
+        description: "Saved opportunity"
+      }
+    ],
+    interviews: application.interviews ?? [],
+    followUps: application.followUps ?? [],
+    notes: application.notes ?? []
+  };
+}
+
+function createReadOnlyGateway(
+  applications: JobApplication[]
+): JobApplicationGateway {
+  async function unsupportedCommand(): Promise<never> {
+    throw new Error("This test gateway only supports listing applications.");
+  }
+
+  return {
+    listApplications: async () => applications,
+    createSavedOpportunity: unsupportedCommand,
+    advanceApplicationStage: unsupportedCommand,
+    scheduleInterview: unsupportedCommand,
+    createFollowUpReminder: unsupportedCommand,
+    completeFollowUpReminder: unsupportedCommand,
+    addApplicationNote: unsupportedCommand
+  };
+}
+
+function getApplicationCompaniesInStage(stage: string) {
+  const column = screen.getByRole("heading", { name: stage }).closest("article");
+
+  expect(column).not.toBeNull();
+
+  return within(column as HTMLElement)
+    .getAllByRole("heading", { level: 3 })
+    .map((heading) => heading.textContent);
+}
 
 describe("Job application tracker shell", () => {
   it("renders a pipeline workspace with the expected application stages", () => {
@@ -555,5 +612,213 @@ describe("Job application tracker shell", () => {
       await within(notes).findByText("Recruiter mentioned the team is expanding.")
     ).toBeInTheDocument();
     expect(within(detail).getByText("Added note")).toBeInTheDocument();
+  });
+
+  it("lets a user filter the pipeline by stage", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Add opportunity" })
+    );
+    await user.type(screen.getByLabelText("Company"), "Vercel");
+    await user.type(screen.getByLabelText("Role title"), "UI Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://vercel.com/careers/ui-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Mark Linear as applied" })
+    );
+
+    await user.selectOptions(screen.getByLabelText("Filter by stage"), "Applied");
+
+    const board = screen.getByRole("region", { name: "Application pipeline" });
+
+    expect(within(board).getByText("Linear")).toBeInTheDocument();
+    expect(within(board).queryByText("Vercel")).not.toBeInTheDocument();
+  });
+
+  it("lets a user filter the pipeline by source", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.selectOptions(screen.getByLabelText("Source"), "Referral");
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Add opportunity" })
+    );
+    await user.type(screen.getByLabelText("Company"), "Vercel");
+    await user.type(screen.getByLabelText("Role title"), "UI Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://vercel.com/careers/ui-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.selectOptions(screen.getByLabelText("Filter by source"), "Referral");
+
+    const board = screen.getByRole("region", { name: "Application pipeline" });
+
+    expect(within(board).getByText("Linear")).toBeInTheDocument();
+    expect(within(board).queryByText("Vercel")).not.toBeInTheDocument();
+  });
+
+  it("lets a user search the pipeline by company or role title", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Add opportunity" })
+    );
+    await user.type(screen.getByLabelText("Company"), "Vercel");
+    await user.type(screen.getByLabelText("Role title"), "UI Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://vercel.com/careers/ui-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.type(screen.getByLabelText("Search applications"), "frontend");
+
+    const board = screen.getByRole("region", { name: "Application pipeline" });
+
+    expect(within(board).getByText("Linear")).toBeInTheDocument();
+    expect(within(board).queryByText("Vercel")).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("Search applications"));
+    await user.type(screen.getByLabelText("Search applications"), "vercel");
+
+    expect(within(board).queryByText("Linear")).not.toBeInTheDocument();
+    expect(within(board).getByText("Vercel")).toBeInTheDocument();
+  });
+
+  it("lets a user sort the pipeline by last activity", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <App
+        gateway={createReadOnlyGateway([
+          createApplication({
+            id: "linear",
+            company: "Linear",
+            roleTitle: "Frontend Engineer",
+            timeline: [
+              {
+                id: "linear-saved",
+                occurredAt: "2026-05-01T09:00:00.000Z",
+                description: "Saved opportunity"
+              }
+            ]
+          }),
+          createApplication({
+            id: "vercel",
+            company: "Vercel",
+            roleTitle: "UI Engineer",
+            timeline: [
+              {
+                id: "vercel-saved",
+                occurredAt: "2026-05-04T09:00:00.000Z",
+                description: "Saved opportunity"
+              }
+            ]
+          })
+        ])}
+      />
+    );
+    await screen.findByRole("heading", { name: "Linear" });
+
+    await user.selectOptions(
+      screen.getByLabelText("Sort applications"),
+      "lastActivity"
+    );
+
+    expect(getApplicationCompaniesInStage("Saved")).toEqual([
+      "Vercel",
+      "Linear"
+    ]);
+  });
+
+  it("lets a user sort the pipeline by follow-up date", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <App
+        gateway={createReadOnlyGateway([
+          createApplication({
+            id: "linear",
+            company: "Linear",
+            roleTitle: "Frontend Engineer",
+            followUps: [
+              {
+                id: "linear-follow-up",
+                applicationId: "linear",
+                dueAt: "2026-05-15T09:00:00.000Z",
+                note: "Check in with recruiter",
+                completedAt: null
+              }
+            ]
+          }),
+          createApplication({
+            id: "vercel",
+            company: "Vercel",
+            roleTitle: "UI Engineer",
+            followUps: [
+              {
+                id: "vercel-follow-up",
+                applicationId: "vercel",
+                dueAt: "2026-05-12T09:00:00.000Z",
+                note: "Send portfolio",
+                completedAt: null
+              }
+            ]
+          }),
+          createApplication({
+            id: "figma",
+            company: "Figma",
+            roleTitle: "Product Engineer"
+          })
+        ])}
+      />
+    );
+    await screen.findByRole("heading", { name: "Linear" });
+
+    await user.selectOptions(
+      screen.getByLabelText("Sort applications"),
+      "followUpDate"
+    );
+
+    expect(getApplicationCompaniesInStage("Saved")).toEqual([
+      "Vercel",
+      "Linear",
+      "Figma"
+    ]);
   });
 });

@@ -36,6 +36,10 @@ import {
 import type { ScheduleInterviewCommand } from "../domain/interviewScheduling";
 import { getNextStages } from "../domain/stageTransition";
 import "./App.css";
+import {
+  type PipelineSortOption,
+  usePipelineControlsStore
+} from "./pipelineControlsStore";
 
 type AppProps = {
   gateway: JobApplicationGateway;
@@ -59,6 +63,20 @@ export function App({ gateway }: AppProps) {
     compensation: "",
     employmentType: "Full-time"
   });
+  const stageFilter = usePipelineControlsStore((state) => state.stageFilter);
+  const sourceFilter = usePipelineControlsStore((state) => state.sourceFilter);
+  const searchTerm = usePipelineControlsStore((state) => state.searchTerm);
+  const sortBy = usePipelineControlsStore((state) => state.sortBy);
+  const setStageFilter = usePipelineControlsStore(
+    (state) => state.setStageFilter
+  );
+  const setSourceFilter = usePipelineControlsStore(
+    (state) => state.setSourceFilter
+  );
+  const setSearchTerm = usePipelineControlsStore(
+    (state) => state.setSearchTerm
+  );
+  const setSortBy = usePipelineControlsStore((state) => state.setSortBy);
 
   useEffect(() => {
     let isMounted = true;
@@ -110,6 +128,18 @@ export function App({ gateway }: AppProps) {
   }
 
   const activeApplicationCount = applications.filter(isActiveApplication).length;
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const visibleApplications = sortApplications(
+    applications.filter(
+      (application) =>
+        (stageFilter === "All" || application.stage === stageFilter) &&
+        (sourceFilter === "All" || application.source === sourceFilter) &&
+        (!normalizedSearchTerm ||
+          application.company.toLowerCase().includes(normalizedSearchTerm) ||
+          application.roleTitle.toLowerCase().includes(normalizedSearchTerm))
+    ),
+    sortBy
+  );
   const selectedApplication = applications.find(
     (application) => application.id === selectedApplicationId
   );
@@ -390,6 +420,62 @@ export function App({ gateway }: AppProps) {
         </strong>
       </section>
 
+      <section aria-label="Pipeline controls" className="pipeline-controls">
+        <label>
+          Filter by stage
+          <select
+            onChange={(event) =>
+              setStageFilter(event.target.value as typeof stageFilter)
+            }
+            value={stageFilter}
+          >
+            <option value="All">All stages</option>
+            {applicationStages.map((stage) => (
+              <option key={stage} value={stage}>
+                {stage}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Filter by source
+          <select
+            onChange={(event) =>
+              setSourceFilter(event.target.value as typeof sourceFilter)
+            }
+            value={sourceFilter}
+          >
+            <option value="All">All sources</option>
+            {jobSources.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Search applications
+          <input
+            onChange={(event) => setSearchTerm(event.target.value)}
+            type="search"
+            value={searchTerm}
+          />
+        </label>
+        <label>
+          Sort applications
+          <select
+            onChange={(event) =>
+              setSortBy(event.target.value as typeof sortBy)
+            }
+            value={sortBy}
+          >
+            <option value="created">Created order</option>
+            <option value="lastActivity">Last activity</option>
+            <option value="followUpDate">Follow-up date</option>
+          </select>
+        </label>
+      </section>
+
       <FollowUpWork
         onCompleteFollowUp={handleCompleteFollowUp}
         overdueItems={overdueFollowUpItems}
@@ -401,7 +487,7 @@ export function App({ gateway }: AppProps) {
         className="pipeline-board"
       >
         {applicationStages.map((stage) => {
-          const stageApplications = applications.filter(
+          const stageApplications = visibleApplications.filter(
             (application) => application.stage === stage
           );
 
@@ -951,6 +1037,56 @@ function compareFollowUps(left: FollowUpReminder, right: FollowUpReminder) {
 
 function compareFollowUpItems(left: FollowUpWorkItem, right: FollowUpWorkItem) {
   return compareFollowUps(left.followUp, right.followUp);
+}
+
+function sortApplications(
+  applications: JobApplication[],
+  sortBy: PipelineSortOption
+) {
+  if (sortBy === "created") {
+    return applications;
+  }
+
+  return [...applications].sort((left, right) => {
+    if (sortBy === "lastActivity") {
+      return latestActivityTime(right) - latestActivityTime(left);
+    }
+
+    return (
+      earliestActiveFollowUpTime(left) - earliestActiveFollowUpTime(right)
+    );
+  });
+}
+
+function latestActivityTime(application: JobApplication) {
+  return Math.max(
+    ...application.timeline.map((event) => dateTimeOrZero(event.occurredAt)),
+    0
+  );
+}
+
+function earliestActiveFollowUpTime(application: JobApplication) {
+  const activeDueTimes = application.followUps
+    .filter((followUp) => !followUp.completedAt)
+    .map((followUp) => dateTimeOrInfinity(followUp.dueAt));
+
+  if (activeDueTimes.length === 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  return Math.min(...activeDueTimes);
+}
+
+function dateTimeOrZero(value: string) {
+  const time = new Date(value).getTime();
+
+  return Number.isFinite(time) ? time : 0;
+}
+
+function dateTimeOrInfinity(value: string) {
+  const time = new Date(value).getTime();
+
+  return Number.isFinite(time) ? time : Number.POSITIVE_INFINITY;
 }
 
 function formatTimelineDate(value: string) {
