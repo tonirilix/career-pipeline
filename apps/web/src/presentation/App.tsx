@@ -36,16 +36,17 @@ import {
 import type { ScheduleInterviewCommand } from "../domain/interviewScheduling";
 import { getNextStages } from "../domain/stageTransition";
 import "./App.css";
-import {
-  type PipelineSortOption,
-  usePipelineControlsStore
-} from "./pipelineControlsStore";
+import type {
+  PipelineSortOption,
+  UsePipelineControls
+} from "./ports/pipelineControls";
 
 type AppProps = {
   gateway: JobApplicationGateway;
+  usePipelineControls: UsePipelineControls;
 };
 
-export function App({ gateway }: AppProps) {
+export function App({ gateway, usePipelineControls }: AppProps) {
   const stableGateway = useMemo(() => gateway, [gateway]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
@@ -63,20 +64,16 @@ export function App({ gateway }: AppProps) {
     compensation: "",
     employmentType: "Full-time"
   });
-  const stageFilter = usePipelineControlsStore((state) => state.stageFilter);
-  const sourceFilter = usePipelineControlsStore((state) => state.sourceFilter);
-  const searchTerm = usePipelineControlsStore((state) => state.searchTerm);
-  const sortBy = usePipelineControlsStore((state) => state.sortBy);
-  const setStageFilter = usePipelineControlsStore(
-    (state) => state.setStageFilter
-  );
-  const setSourceFilter = usePipelineControlsStore(
-    (state) => state.setSourceFilter
-  );
-  const setSearchTerm = usePipelineControlsStore(
-    (state) => state.setSearchTerm
-  );
-  const setSortBy = usePipelineControlsStore((state) => state.setSortBy);
+  const {
+    stageFilter,
+    sourceFilter,
+    searchTerm,
+    sortBy,
+    setStageFilter,
+    setSourceFilter,
+    setSearchTerm,
+    setSortBy
+  } = usePipelineControls();
 
   useEffect(() => {
     let isMounted = true;

@@ -1,24 +1,24 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
-  resetPipelineControls,
-  usePipelineControlsStore
+  resetZustandPipelineControlsStore,
+  useZustandPipelineControlsStore
 } from "./pipelineControlsStore";
 
-describe("pipeline controls store", () => {
+describe("Zustand pipeline controls store", () => {
   beforeEach(() => {
-    resetPipelineControls();
+    resetZustandPipelineControlsStore();
   });
 
-  it("stores pipeline control selections independently of filtering rules", () => {
-    const store = usePipelineControlsStore.getState();
+  it("adapts pipeline control selections to the presentation control port", () => {
+    const store = useZustandPipelineControlsStore.getState();
 
     store.setStageFilter("Applied");
     store.setSourceFilter("Referral");
     store.setSearchTerm("frontend");
     store.setSortBy("lastActivity");
 
-    expect(usePipelineControlsStore.getState()).toMatchObject({
+    expect(useZustandPipelineControlsStore.getState()).toMatchObject({
       stageFilter: "Applied",
       sourceFilter: "Referral",
       searchTerm: "frontend",
@@ -27,16 +27,16 @@ describe("pipeline controls store", () => {
   });
 
   it("resets pipeline control selections to their defaults", () => {
-    const store = usePipelineControlsStore.getState();
+    const store = useZustandPipelineControlsStore.getState();
 
     store.setStageFilter("Offer");
     store.setSourceFilter("Recruiter");
     store.setSearchTerm("manager");
     store.setSortBy("followUpDate");
 
-    resetPipelineControls();
+    resetZustandPipelineControlsStore();
 
-    expect(usePipelineControlsStore.getState()).toMatchObject({
+    expect(useZustandPipelineControlsStore.getState()).toMatchObject({
       stageFilter: "All",
       sourceFilter: "All",
       searchTerm: "",

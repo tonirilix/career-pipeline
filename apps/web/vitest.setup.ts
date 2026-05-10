@@ -5,14 +5,14 @@ import {
   resetJobApplicationMockData,
   server
 } from "./src/infrastructure/msw/server";
-import { resetPipelineControls } from "./src/presentation/pipelineControlsStore";
+import { resetZustandPipelineControlsStore } from "./src/infrastructure/zustand/pipelineControlsStore";
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
 afterEach(() => {
   server.resetHandlers();
   resetJobApplicationMockData();
-  resetPipelineControls();
+  resetZustandPipelineControlsStore();
 });
 
 afterAll(() => server.close());

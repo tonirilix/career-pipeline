@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import type { JobApplication } from "../domain/jobOpportunity";
 import { createJobApplicationGraphqlGateway } from "../infrastructure/graphql/jobApplicationGraphqlGateway";
+import { useZustandPipelineControlsStore } from "../infrastructure/zustand/pipelineControlsStore";
 import { App } from "./App";
 
 function createApplication(
@@ -62,9 +63,18 @@ function getApplicationCompaniesInStage(stage: string) {
     .map((heading) => heading.textContent);
 }
 
+function renderApp(gateway = createJobApplicationGraphqlGateway()) {
+  return render(
+    <App
+      gateway={gateway}
+      usePipelineControls={useZustandPipelineControlsStore}
+    />
+  );
+}
+
 describe("Job application tracker shell", () => {
   it("renders a pipeline workspace with the expected application stages", () => {
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     expect(
       screen.getByRole("heading", { name: "Job Application Tracker" })
@@ -96,7 +106,7 @@ describe("Job application tracker shell", () => {
   it("lets a user create a saved job opportunity and see it in the Saved column", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -130,7 +140,7 @@ describe("Job application tracker shell", () => {
   it("shows understandable errors for required fields and invalid posting URLs", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Posting URL"), "not-a-url");
@@ -146,7 +156,7 @@ describe("Job application tracker shell", () => {
   it("lets a user mark a saved opportunity as applied", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -181,7 +191,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when a stage transition is invalid", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -206,7 +216,7 @@ describe("Job application tracker shell", () => {
   it("lets a user advance active stages, reject an application, and reopen it", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -260,7 +270,7 @@ describe("Job application tracker shell", () => {
   it("treats rejected applications as closed work until they are reopened", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -301,7 +311,7 @@ describe("Job application tracker shell", () => {
   it("lets a user inspect application details and timeline without leaving the board", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -348,7 +358,7 @@ describe("Job application tracker shell", () => {
   it("keeps selected application timeline updated after stage changes", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -377,7 +387,7 @@ describe("Job application tracker shell", () => {
   it("lets a user schedule an interview for an applied application and see it in details", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -424,7 +434,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when scheduling an interview for a saved opportunity", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -451,7 +461,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when scheduling an interview without a date", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -476,7 +486,7 @@ describe("Job application tracker shell", () => {
   it("lets a user create and complete an upcoming follow-up reminder", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -522,7 +532,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when a follow-up is due before the latest interaction", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -553,7 +563,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when creating a follow-up without a due date", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -581,7 +591,7 @@ describe("Job application tracker shell", () => {
   it("lets a user add a note and see it in application details and timeline", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -617,7 +627,7 @@ describe("Job application tracker shell", () => {
   it("lets a user filter the pipeline by stage", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -652,7 +662,7 @@ describe("Job application tracker shell", () => {
   it("lets a user filter the pipeline by source", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -685,7 +695,7 @@ describe("Job application tracker shell", () => {
   it("lets a user search the pipeline by company or role title", async () => {
     const user = userEvent.setup();
 
-    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -723,35 +733,33 @@ describe("Job application tracker shell", () => {
   it("lets a user sort the pipeline by last activity", async () => {
     const user = userEvent.setup();
 
-    render(
-      <App
-        gateway={createReadOnlyGateway([
-          createApplication({
-            id: "linear",
-            company: "Linear",
-            roleTitle: "Frontend Engineer",
-            timeline: [
-              {
-                id: "linear-saved",
-                occurredAt: "2026-05-01T09:00:00.000Z",
-                description: "Saved opportunity"
-              }
-            ]
-          }),
-          createApplication({
-            id: "vercel",
-            company: "Vercel",
-            roleTitle: "UI Engineer",
-            timeline: [
-              {
-                id: "vercel-saved",
-                occurredAt: "2026-05-04T09:00:00.000Z",
-                description: "Saved opportunity"
-              }
-            ]
-          })
-        ])}
-      />
+    renderApp(
+      createReadOnlyGateway([
+        createApplication({
+          id: "linear",
+          company: "Linear",
+          roleTitle: "Frontend Engineer",
+          timeline: [
+            {
+              id: "linear-saved",
+              occurredAt: "2026-05-01T09:00:00.000Z",
+              description: "Saved opportunity"
+            }
+          ]
+        }),
+        createApplication({
+          id: "vercel",
+          company: "Vercel",
+          roleTitle: "UI Engineer",
+          timeline: [
+            {
+              id: "vercel-saved",
+              occurredAt: "2026-05-04T09:00:00.000Z",
+              description: "Saved opportunity"
+            }
+          ]
+        })
+      ])
     );
     await screen.findByRole("heading", { name: "Linear" });
 
@@ -769,44 +777,42 @@ describe("Job application tracker shell", () => {
   it("lets a user sort the pipeline by follow-up date", async () => {
     const user = userEvent.setup();
 
-    render(
-      <App
-        gateway={createReadOnlyGateway([
-          createApplication({
-            id: "linear",
-            company: "Linear",
-            roleTitle: "Frontend Engineer",
-            followUps: [
-              {
-                id: "linear-follow-up",
-                applicationId: "linear",
-                dueAt: "2026-05-15T09:00:00.000Z",
-                note: "Check in with recruiter",
-                completedAt: null
-              }
-            ]
-          }),
-          createApplication({
-            id: "vercel",
-            company: "Vercel",
-            roleTitle: "UI Engineer",
-            followUps: [
-              {
-                id: "vercel-follow-up",
-                applicationId: "vercel",
-                dueAt: "2026-05-12T09:00:00.000Z",
-                note: "Send portfolio",
-                completedAt: null
-              }
-            ]
-          }),
-          createApplication({
-            id: "figma",
-            company: "Figma",
-            roleTitle: "Product Engineer"
-          })
-        ])}
-      />
+    renderApp(
+      createReadOnlyGateway([
+        createApplication({
+          id: "linear",
+          company: "Linear",
+          roleTitle: "Frontend Engineer",
+          followUps: [
+            {
+              id: "linear-follow-up",
+              applicationId: "linear",
+              dueAt: "2026-05-15T09:00:00.000Z",
+              note: "Check in with recruiter",
+              completedAt: null
+            }
+          ]
+        }),
+        createApplication({
+          id: "vercel",
+          company: "Vercel",
+          roleTitle: "UI Engineer",
+          followUps: [
+            {
+              id: "vercel-follow-up",
+              applicationId: "vercel",
+              dueAt: "2026-05-12T09:00:00.000Z",
+              note: "Send portfolio",
+              completedAt: null
+            }
+          ]
+        }),
+        createApplication({
+          id: "figma",
+          company: "Figma",
+          roleTitle: "Product Engineer"
+        })
+      ])
     );
     await screen.findByRole("heading", { name: "Linear" });
 

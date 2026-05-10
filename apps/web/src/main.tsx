@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { createJobApplicationGraphqlGateway } from "./infrastructure/graphql/jobApplicationGraphqlGateway";
+import { useZustandPipelineControlsStore } from "./infrastructure/zustand/pipelineControlsStore";
 import { App } from "./presentation/App";
 
 const rootElement = document.getElementById("root");
@@ -25,7 +26,10 @@ void enableMockBackend().then(() => {
 
   createRoot(rootElement).render(
     <StrictMode>
-      <App gateway={gateway} />
+      <App
+        gateway={gateway}
+        usePipelineControls={useZustandPipelineControlsStore}
+      />
     </StrictMode>
   );
 });
