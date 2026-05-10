@@ -10,6 +10,7 @@ import {
   type ApplicationStage,
   applicationStages
 } from "../domain/applicationStage";
+import { isActiveApplication, isClosedApplication } from "../domain/closedWork";
 import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
@@ -88,6 +89,8 @@ export function App({ gateway }: AppProps) {
       setCommandError("Could not save the opportunity. Try again.");
     }
   }
+
+  const activeApplicationCount = applications.filter(isActiveApplication).length;
 
   async function handleStageChange(
     application: JobApplication,
@@ -267,6 +270,13 @@ export function App({ gateway }: AppProps) {
         </p>
       ) : null}
 
+      <section aria-label="Active work summary" className="work-summary">
+        <strong>
+          {activeApplicationCount} active{" "}
+          {activeApplicationCount === 1 ? "application" : "applications"}
+        </strong>
+      </section>
+
       <section
         aria-label="Application pipeline"
         className="pipeline-board"
@@ -324,8 +334,15 @@ function ApplicationCard({
   const primaryNextStage = nextStages[0];
 
   return (
-    <article className="opportunity-card">
+    <article
+      className={`opportunity-card${
+        isClosedApplication(application) ? " closed" : ""
+      }`}
+    >
       <h3>{application.company}</h3>
+      {isClosedApplication(application) ? (
+        <span className="status-pill">Closed</span>
+      ) : null}
       <p>{application.roleTitle}</p>
       <dl>
         <div>

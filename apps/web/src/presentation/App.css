@@ -131,6 +131,12 @@ select {
   padding: 10px 12px;
 }
 
+.work-summary {
+  color: #334155;
+  margin: 0 auto 16px;
+  max-width: 1440px;
+}
+
 .stage-column {
   background: #ffffff;
   border: 1px solid #d7dde4;
@@ -185,10 +191,28 @@ select {
   padding: 10px;
 }
 
+.opportunity-card.closed {
+  background: #f8f2f2;
+  border-color: #e5c2c2;
+}
+
 .opportunity-card h3 {
+  display: inline;
   font-size: 0.95rem;
   line-height: 1.2;
   margin: 0 0 4px;
+}
+
+.status-pill {
+  background: #f1dede;
+  border-radius: 999px;
+  color: #9f1f1f;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: 8px;
+  padding: 3px 8px;
+  text-transform: uppercase;
 }
 
 .opportunity-card p {

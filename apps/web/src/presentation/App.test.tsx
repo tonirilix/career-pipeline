@@ -199,4 +199,45 @@ describe("Job application tracker shell", () => {
       await within(appliedColumn as HTMLElement).findByText("Linear")
     ).toBeInTheDocument();
   });
+
+  it("treats rejected applications as closed work until they are reopened", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    expect(await screen.findByText("1 active application")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Mark Linear as applied" }));
+    await user.selectOptions(
+      await screen.findByLabelText("Move Linear to stage"),
+      "Rejected"
+    );
+    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+
+    const rejectedColumn = screen
+      .getByRole("heading", { name: "Rejected" })
+      .closest("article");
+
+    expect(rejectedColumn).not.toBeNull();
+    expect(
+      await within(rejectedColumn as HTMLElement).findByText("Linear")
+    ).toBeInTheDocument();
+    expect(
+      within(rejectedColumn as HTMLElement).getByText("Closed")
+    ).toBeInTheDocument();
+    expect(screen.getByText("0 active applications")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Reopen Linear" }));
+
+    expect(await screen.findByText("1 active application")).toBeInTheDocument();
+  });
 });
