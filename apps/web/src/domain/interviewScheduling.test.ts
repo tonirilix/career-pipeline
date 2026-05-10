@@ -20,7 +20,8 @@ const appliedApplication: JobApplication = {
       description: "Moved from Saved to Applied"
     }
   ],
-  interviews: []
+  interviews: [],
+  followUps: []
 };
 
 describe("interview scheduling", () => {
@@ -112,6 +113,29 @@ describe("interview scheduling", () => {
     expect(result).toEqual({
       ok: false,
       failure: { message: "Application could not be found." }
+    });
+  });
+
+  it("rejects interviews without a scheduled date", () => {
+    const result = scheduleInterview(
+      appliedApplication,
+      {
+        applicationId: "job-1",
+        type: "Recruiter screen",
+        scheduledAt: "",
+        notes: "Ask about team shape",
+        outcome: "Scheduled"
+      },
+      {
+        interviewId: "interview-1",
+        timelineEventId: "event-2",
+        occurredAt: "2026-05-10T02:00:00.000Z"
+      }
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      failure: { message: "Interview date and time is required." }
     });
   });
 });

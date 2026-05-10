@@ -6,6 +6,12 @@ import type {
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
 import {
+  type CompleteFollowUpReminderCommand,
+  type CreateFollowUpReminderCommand,
+  completeFollowUpReminder,
+  createFollowUpReminder
+} from "../../domain/followUpReminder";
+import {
   type ScheduleInterviewCommand,
   scheduleInterview
 } from "../../domain/interviewScheduling";
@@ -18,6 +24,7 @@ let applications: JobApplication[] = [];
 let nextApplicationId = 1;
 let nextTimelineEventId = 1;
 let nextInterviewId = 1;
+let nextFollowUpReminderId = 1;
 
 export const jobApplicationHandlers = [
   graphql.query("ListApplications", () => {
@@ -43,7 +50,8 @@ export const jobApplicationHandlers = [
           description: "Saved opportunity"
         }
       ],
-      interviews: []
+      interviews: [],
+      followUps: []
     };
 
     nextApplicationId += 1;
@@ -132,6 +140,82 @@ export const jobApplicationHandlers = [
         scheduleInterview: result.application
       }
     });
+  }),
+
+  graphql.mutation("CreateFollowUpReminder", ({ variables }) => {
+    const { input } = variables as {
+      input: CreateFollowUpReminderCommand;
+    };
+    const application = applications.find(
+      (candidate) => candidate.id === input.applicationId
+    );
+
+    if (!application) {
+      return HttpResponse.json({
+        errors: [{ message: "Application could not be found." }]
+      });
+    }
+
+    const result = createFollowUpReminder(application, input, {
+      reminderId: String(nextFollowUpReminderId),
+      timelineEventId: String(nextTimelineEventId),
+      occurredAt: new Date().toISOString()
+    });
+
+    if (!result.ok) {
+      return HttpResponse.json({
+        errors: [{ message: result.failure.message }]
+      });
+    }
+
+    nextFollowUpReminderId += 1;
+    nextTimelineEventId += 1;
+    applications = applications.map((candidate) =>
+      candidate.id === result.application.id ? result.application : candidate
+    );
+
+    return HttpResponse.json({
+      data: {
+        createFollowUpReminder: result.application
+      }
+    });
+  }),
+
+  graphql.mutation("CompleteFollowUpReminder", ({ variables }) => {
+    const { input } = variables as {
+      input: CompleteFollowUpReminderCommand;
+    };
+    const application = applications.find(
+      (candidate) => candidate.id === input.applicationId
+    );
+
+    if (!application) {
+      return HttpResponse.json({
+        errors: [{ message: "Application could not be found." }]
+      });
+    }
+
+    const result = completeFollowUpReminder(application, input, {
+      timelineEventId: String(nextTimelineEventId),
+      completedAt: new Date().toISOString()
+    });
+
+    if (!result.ok) {
+      return HttpResponse.json({
+        errors: [{ message: result.failure.message }]
+      });
+    }
+
+    nextTimelineEventId += 1;
+    applications = applications.map((candidate) =>
+      candidate.id === result.application.id ? result.application : candidate
+    );
+
+    return HttpResponse.json({
+      data: {
+        completeFollowUpReminder: result.application
+      }
+    });
   })
 ];
 
@@ -140,4 +224,5 @@ export function resetJobApplicationMockData() {
   nextApplicationId = 1;
   nextTimelineEventId = 1;
   nextInterviewId = 1;
+  nextFollowUpReminderId = 1;
 }

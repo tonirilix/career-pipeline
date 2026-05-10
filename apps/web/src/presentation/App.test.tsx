@@ -387,4 +387,134 @@ describe("Job application tracker shell", () => {
       )
     ).toBeInTheDocument();
   });
+
+  it("shows an understandable error when scheduling an interview without a date", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Mark Linear as applied" })
+    );
+    await user.click(screen.getByRole("button", { name: "View Linear details" }));
+
+    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
+
+    expect(
+      await screen.findByText("Interview date and time is required.")
+    ).toBeInTheDocument();
+  });
+
+  it("lets a user create and complete an upcoming follow-up reminder", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Mark Linear as applied" })
+    );
+    await user.click(screen.getByRole("button", { name: "View Linear details" }));
+
+    await user.type(screen.getByLabelText("Follow-up due date"), "2026-05-11T12:00");
+    await user.type(
+      screen.getByLabelText("Follow-up note"),
+      "Send recruiter a thank-you note"
+    );
+    await user.click(screen.getByRole("button", { name: "Create follow-up" }));
+
+    const followUpWork = screen.getByRole("region", { name: "Follow-up work" });
+    const upcoming = within(followUpWork).getByRole("list", {
+      name: "Upcoming follow-ups"
+    });
+
+    expect(
+      await within(upcoming).findByText("Send recruiter a thank-you note")
+    ).toBeInTheDocument();
+    expect(within(upcoming).getByText("Linear")).toBeInTheDocument();
+
+    await user.click(
+      within(upcoming).getByRole("button", {
+        name: "Complete follow-up for Linear"
+      })
+    );
+
+    expect(
+      within(followUpWork).getByText("No upcoming follow-ups")
+    ).toBeInTheDocument();
+  });
+
+  it("shows an understandable error when a follow-up is due before the latest interaction", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "View Linear details" })
+    );
+
+    await user.type(screen.getByLabelText("Follow-up due date"), "2026-05-09T12:00");
+    await user.type(
+      screen.getByLabelText("Follow-up note"),
+      "Send recruiter a thank-you note"
+    );
+    await user.click(screen.getByRole("button", { name: "Create follow-up" }));
+
+    expect(
+      await screen.findByText(
+        "Follow-up due date must be after the latest interaction."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("shows an understandable error when creating a follow-up without a due date", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "View Linear details" })
+    );
+
+    await user.type(
+      screen.getByLabelText("Follow-up note"),
+      "Send recruiter a thank-you note"
+    );
+    await user.click(screen.getByRole("button", { name: "Create follow-up" }));
+
+    expect(
+      await screen.findByText("Follow-up due date is required.")
+    ).toBeInTheDocument();
+  });
 });

@@ -4,6 +4,10 @@ import type {
   JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type {
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand
+} from "../../domain/followUpReminder";
 import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
@@ -34,6 +38,13 @@ const applicationFields = `
         notes
         outcome
       }
+      followUps {
+        id
+        applicationId
+        dueAt
+        note
+        completedAt
+      }
 `;
 
 const listApplicationsQuery = `
@@ -63,6 +74,22 @@ const advanceApplicationStageMutation = `
 const scheduleInterviewMutation = `
   mutation ScheduleInterview($input: ScheduleInterviewInput!) {
     scheduleInterview(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const createFollowUpReminderMutation = `
+  mutation CreateFollowUpReminder($input: CreateFollowUpReminderInput!) {
+    createFollowUpReminder(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const completeFollowUpReminderMutation = `
+  mutation CompleteFollowUpReminder($input: CompleteFollowUpReminderInput!) {
+    completeFollowUpReminder(input: $input) {
       ${applicationFields}
     }
   }
@@ -123,6 +150,34 @@ export function createJobApplicationGraphqlGateway(
       });
 
       return response.scheduleInterview;
+    },
+
+    async createFollowUpReminder(command: CreateFollowUpReminderCommand) {
+      const response = await requestGraphql<{
+        createFollowUpReminder: JobApplication;
+      }>(endpoint, {
+        query: createFollowUpReminderMutation,
+        operationName: "CreateFollowUpReminder",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.createFollowUpReminder;
+    },
+
+    async completeFollowUpReminder(command: CompleteFollowUpReminderCommand) {
+      const response = await requestGraphql<{
+        completeFollowUpReminder: JobApplication;
+      }>(endpoint, {
+        query: completeFollowUpReminderMutation,
+        operationName: "CompleteFollowUpReminder",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.completeFollowUpReminder;
     }
   };
 }

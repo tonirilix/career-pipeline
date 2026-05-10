@@ -44,6 +44,13 @@ export function scheduleInterview(
     };
   }
 
+  if (!command.scheduledAt.trim()) {
+    return {
+      ok: false,
+      failure: { message: "Interview date and time is required." }
+    };
+  }
+
   const interview: Interview = {
     id: ids.interviewId,
     type: command.type,

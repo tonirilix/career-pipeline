@@ -51,6 +51,14 @@ export type Interview = {
   outcome: InterviewOutcome;
 };
 
+export type FollowUpReminder = {
+  id: string;
+  applicationId: string;
+  dueAt: string;
+  note: string;
+  completedAt: string | null;
+};
+
 export type JobApplication = {
   id: string;
   company: string;
@@ -63,6 +71,7 @@ export type JobApplication = {
   stage: ApplicationStage;
   timeline: TimelineEvent[];
   interviews: Interview[];
+  followUps: FollowUpReminder[];
 };
 
 export type SavedJobOpportunity = JobApplication & { stage: "Saved" };

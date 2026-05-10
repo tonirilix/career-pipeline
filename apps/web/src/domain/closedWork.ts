@@ -1,11 +1,4 @@
-import type { JobApplication } from "./jobOpportunity";
-
-export type FollowUpReminder = {
-  id: string;
-  applicationId: string;
-  dueAt: string;
-  completedAt: string | null;
-};
+import type { FollowUpReminder, JobApplication } from "./jobOpportunity";
 
 export function isClosedApplication(application: JobApplication) {
   return application.stage === "Rejected" || application.stage === "Withdrawn";

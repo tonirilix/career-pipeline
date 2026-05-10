@@ -20,7 +20,8 @@ const savedApplication: JobApplication = {
       description: "Saved opportunity"
     }
   ],
-  interviews: []
+  interviews: [],
+  followUps: []
 };
 
 describe("application stage transitions", () => {

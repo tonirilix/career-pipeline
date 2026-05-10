@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
   advanceApplicationStage,
+  completeApplicationFollowUpReminder,
+  createApplicationFollowUpReminder,
   createSavedOpportunity,
   listApplications,
   scheduleApplicationInterview
@@ -12,10 +14,15 @@ import {
   applicationStages
 } from "../domain/applicationStage";
 import { isActiveApplication, isClosedApplication } from "../domain/closedWork";
+import type {
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand
+} from "../domain/followUpReminder";
 import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
   employmentTypes,
+  type FollowUpReminder,
   type Interview,
   interviewOutcomes,
   interviewTypes,
@@ -103,6 +110,21 @@ export function App({ gateway }: AppProps) {
   const selectedApplication = applications.find(
     (application) => application.id === selectedApplicationId
   );
+  const activeFollowUpItems = applications
+    .filter(isActiveApplication)
+    .flatMap((application) =>
+      application.followUps
+        .filter((followUp) => !followUp.completedAt)
+        .map((followUp) => ({ application, followUp }))
+    )
+    .sort(compareFollowUpItems);
+  const now = Date.now();
+  const overdueFollowUpItems = activeFollowUpItems.filter(
+    ({ followUp }) => new Date(followUp.dueAt).getTime() < now
+  );
+  const upcomingFollowUpItems = activeFollowUpItems.filter(
+    ({ followUp }) => new Date(followUp.dueAt).getTime() >= now
+  );
 
   async function handleStageChange(
     application: JobApplication,
@@ -131,6 +153,48 @@ export function App({ gateway }: AppProps) {
     setCommandError(null);
 
     const result = await scheduleApplicationInterview(stableGateway, command);
+
+    if (!result.ok) {
+      setCommandError(result.failure.message);
+      return;
+    }
+
+    setApplications((current) =>
+      current.map((candidate) =>
+        candidate.id === result.application.id ? result.application : candidate
+      )
+    );
+  }
+
+  async function handleCreateFollowUp(command: CreateFollowUpReminderCommand) {
+    setCommandError(null);
+
+    const result = await createApplicationFollowUpReminder(
+      stableGateway,
+      command
+    );
+
+    if (!result.ok) {
+      setCommandError(result.failure.message);
+      return;
+    }
+
+    setApplications((current) =>
+      current.map((candidate) =>
+        candidate.id === result.application.id ? result.application : candidate
+      )
+    );
+  }
+
+  async function handleCompleteFollowUp(
+    command: CompleteFollowUpReminderCommand
+  ) {
+    setCommandError(null);
+
+    const result = await completeApplicationFollowUpReminder(
+      stableGateway,
+      command
+    );
 
     if (!result.ok) {
       setCommandError(result.failure.message);
@@ -306,6 +370,12 @@ export function App({ gateway }: AppProps) {
         </strong>
       </section>
 
+      <FollowUpWork
+        onCompleteFollowUp={handleCompleteFollowUp}
+        overdueItems={overdueFollowUpItems}
+        upcomingItems={upcomingFollowUpItems}
+      />
+
       <section
         aria-label="Application pipeline"
         className="pipeline-board"
@@ -345,6 +415,7 @@ export function App({ gateway }: AppProps) {
       {selectedApplication ? (
         <ApplicationDetails
           application={selectedApplication}
+          onCreateFollowUp={handleCreateFollowUp}
           onScheduleInterview={handleScheduleInterview}
         />
       ) : null}
@@ -457,15 +528,18 @@ function stageActionLabel(
 
 type ApplicationDetailsProps = {
   application: JobApplication;
+  onCreateFollowUp: (command: CreateFollowUpReminderCommand) => Promise<void>;
   onScheduleInterview: (command: ScheduleInterviewCommand) => Promise<void>;
 };
 
 function ApplicationDetails({
   application,
+  onCreateFollowUp,
   onScheduleInterview
 }: ApplicationDetailsProps) {
   const timeline = [...application.timeline].sort(compareTimelineEvents);
   const interviews = [...application.interviews].sort(compareInterviews);
+  const followUps = [...application.followUps].sort(compareFollowUps);
   const [interviewForm, setInterviewForm] = useState<
     Omit<ScheduleInterviewCommand, "applicationId">
   >({
@@ -473,6 +547,12 @@ function ApplicationDetails({
     scheduledAt: "",
     notes: "",
     outcome: "Scheduled"
+  });
+  const [followUpForm, setFollowUpForm] = useState<
+    Omit<CreateFollowUpReminderCommand, "applicationId">
+  >({
+    dueAt: "",
+    note: ""
   });
 
   async function handleInterviewSubmit(event: FormEvent<HTMLFormElement>) {
@@ -487,6 +567,19 @@ function ApplicationDetails({
       scheduledAt: "",
       notes: "",
       outcome: "Scheduled"
+    });
+  }
+
+  async function handleFollowUpSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    await onCreateFollowUp({
+      applicationId: application.id,
+      ...followUpForm
+    });
+    setFollowUpForm({
+      dueAt: "",
+      note: ""
     });
   }
 
@@ -525,6 +618,54 @@ function ApplicationDetails({
           </dd>
         </div>
       </dl>
+
+      <section aria-label="Follow-ups">
+        <h3>Follow-ups</h3>
+        {followUps.length > 0 ? (
+          <ol aria-label="Application follow-ups" className="follow-up-list">
+            {followUps.map((followUp) => (
+              <li key={followUp.id}>
+                <time dateTime={followUp.dueAt}>
+                  {formatTimelineDate(followUp.dueAt)}
+                </time>
+                <span>{followUp.note}</span>
+                {followUp.completedAt ? <strong>Complete</strong> : null}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No follow-ups scheduled</p>
+        )}
+
+        <form className="follow-up-form" onSubmit={handleFollowUpSubmit}>
+          <label>
+            Follow-up due date
+            <input
+              onChange={(event) =>
+                setFollowUpForm((current) => ({
+                  ...current,
+                  dueAt: event.target.value
+                }))
+              }
+              type="datetime-local"
+              value={followUpForm.dueAt}
+            />
+          </label>
+          <label>
+            Follow-up note
+            <textarea
+              onChange={(event) =>
+                setFollowUpForm((current) => ({
+                  ...current,
+                  note: event.target.value
+                }))
+              }
+              value={followUpForm.note}
+            />
+          </label>
+          <button type="submit">Create follow-up</button>
+        </form>
+      </section>
 
       <section aria-label="Interviews">
         <h3>Interviews</h3>
@@ -632,6 +773,94 @@ function ApplicationDetails({
   );
 }
 
+type FollowUpWorkItem = {
+  application: JobApplication;
+  followUp: FollowUpReminder;
+};
+
+type FollowUpWorkProps = {
+  overdueItems: FollowUpWorkItem[];
+  upcomingItems: FollowUpWorkItem[];
+  onCompleteFollowUp: (
+    command: CompleteFollowUpReminderCommand
+  ) => Promise<void>;
+};
+
+function FollowUpWork({
+  overdueItems,
+  upcomingItems,
+  onCompleteFollowUp
+}: FollowUpWorkProps) {
+  return (
+    <section aria-label="Follow-up work" className="follow-up-work">
+      <div>
+        <h2>Overdue follow-ups</h2>
+        {overdueItems.length > 0 ? (
+          <FollowUpWorkList
+            items={overdueItems}
+            label="Overdue follow-ups"
+            onCompleteFollowUp={onCompleteFollowUp}
+          />
+        ) : (
+          <p>No overdue follow-ups</p>
+        )}
+      </div>
+      <div>
+        <h2>Upcoming follow-ups</h2>
+        {upcomingItems.length > 0 ? (
+          <FollowUpWorkList
+            items={upcomingItems}
+            label="Upcoming follow-ups"
+            onCompleteFollowUp={onCompleteFollowUp}
+          />
+        ) : (
+          <p>No upcoming follow-ups</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+type FollowUpWorkListProps = {
+  items: FollowUpWorkItem[];
+  label: string;
+  onCompleteFollowUp: (
+    command: CompleteFollowUpReminderCommand
+  ) => Promise<void>;
+};
+
+function FollowUpWorkList({
+  items,
+  label,
+  onCompleteFollowUp
+}: FollowUpWorkListProps) {
+  return (
+    <ol aria-label={label} className="follow-up-work-list">
+      {items.map(({ application, followUp }) => (
+        <li key={followUp.id}>
+          <strong>{application.company}</strong>
+          <span>{followUp.note}</span>
+          <time dateTime={followUp.dueAt}>
+            {formatTimelineDate(followUp.dueAt)}
+          </time>
+          <button
+            className="card-action secondary"
+            onClick={() =>
+              void onCompleteFollowUp({
+                applicationId: application.id,
+                reminderId: followUp.id
+              })
+            }
+            type="button"
+          >
+            Complete follow-up for {application.company}
+          </button>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function compareTimelineEvents(left: TimelineEvent, right: TimelineEvent) {
   return (
     new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime()
@@ -642,6 +871,16 @@ function compareInterviews(left: Interview, right: Interview) {
   return (
     new Date(left.scheduledAt).getTime() - new Date(right.scheduledAt).getTime()
   );
+}
+
+function compareFollowUps(left: FollowUpReminder, right: FollowUpReminder) {
+  return (
+    new Date(left.dueAt).getTime() - new Date(right.dueAt).getTime()
+  );
+}
+
+function compareFollowUpItems(left: FollowUpWorkItem, right: FollowUpWorkItem) {
+  return compareFollowUps(left.followUp, right.followUp);
 }
 
 function formatTimelineDate(value: string) {

@@ -10,6 +10,11 @@ import type {
   StageTransitionFailure
 } from "../domain/stageTransition";
 import type {
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand,
+  FollowUpReminderFailure
+} from "../domain/followUpReminder";
+import type {
   ScheduleInterviewCommand,
   ScheduleInterviewFailure
 } from "../domain/interviewScheduling";
@@ -26,6 +31,14 @@ export type AdvanceApplicationStageResult =
 export type ScheduleApplicationInterviewResult =
   | { ok: true; application: JobApplication }
   | { ok: false; failure: ScheduleInterviewFailure };
+
+export type CreateApplicationFollowUpReminderResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: FollowUpReminderFailure };
+
+export type CompleteApplicationFollowUpReminderResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: FollowUpReminderFailure };
 
 export function listApplications(gateway: JobApplicationGateway) {
   return gateway.listApplications();
@@ -86,6 +99,50 @@ export async function scheduleApplicationInterview(
           error instanceof Error
             ? error.message
             : "Could not schedule the interview."
+      }
+    };
+  }
+}
+
+export async function createApplicationFollowUpReminder(
+  gateway: JobApplicationGateway,
+  command: CreateFollowUpReminderCommand
+): Promise<CreateApplicationFollowUpReminderResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.createFollowUpReminder(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not create the follow-up reminder."
+      }
+    };
+  }
+}
+
+export async function completeApplicationFollowUpReminder(
+  gateway: JobApplicationGateway,
+  command: CompleteFollowUpReminderCommand
+): Promise<CompleteApplicationFollowUpReminderResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.completeFollowUpReminder(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not complete the follow-up reminder."
       }
     };
   }
