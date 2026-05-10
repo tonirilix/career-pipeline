@@ -66,6 +66,11 @@ The user will be able to save job opportunities, track applications by stage, ma
 ## Implementation Decisions
 
 - Build the frontend first as the initial implementation.
+- Use a workspace-style repository layout organized around deployable applications.
+- Place the frontend implementation under an `apps/web` application.
+- Keep the future backend under an `apps/api` application, but do not implement it during this frontend milestone.
+- Let `apps/web` own the first implementation of domain rules and application use cases because MSW is acting as the backend substitute.
+- Avoid introducing shared packages at the start; add shared packages later only when a stable cross-app contract exists.
 - Use React and TypeScript for the user interface.
 - Use a hexagonal architecture with domain, application, infrastructure, and presentation boundaries.
 - Treat the domain model as a deep module with a small public interface and meaningful internal rules.

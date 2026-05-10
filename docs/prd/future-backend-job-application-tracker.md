@@ -61,6 +61,12 @@ The backend is definition-only for now. It should serve as the target architectu
 ## Implementation Decisions
 
 - Treat this backend as future definition only; implementation will happen after the frontend-first version.
+- Use a workspace-style repository layout organized around deployable applications.
+- Place the future backend implementation under an `apps/api` application.
+- Keep `apps/api` as documentation or placeholder structure until backend work begins.
+- Keep the frontend implementation under `apps/web`.
+- Let the backend domain and use cases become authoritative when the real API replaces the MSW-backed frontend mock API.
+- Avoid sharing frontend and backend domain code initially; revisit shared packages only after the backend contract stabilizes.
 - Use Node.js and TypeScript for the backend runtime.
 - Use GraphQL Yoga as the HTTP GraphQL server.
 - Use Pothos as the TypeScript-first GraphQL schema builder.
