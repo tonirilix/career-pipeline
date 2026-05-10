@@ -1,0 +1,508 @@
+import { FormEvent, useEffect, useMemo, useState } from "react";
+
+import {
+  advanceApplicationStage,
+  createSavedOpportunity,
+  listApplications
+} from "../application/jobApplications";
+import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
+import {
+  type ApplicationStage,
+  applicationStages
+} from "../domain/applicationStage";
+import { isActiveApplication, isClosedApplication } from "../domain/closedWork";
+import {
+  type CreateSavedJobOpportunityCommand,
+  type FieldError,
+  employmentTypes,
+  type JobApplication,
+  jobSources,
+  type TimelineEvent
+} from "../domain/jobOpportunity";
+import { getNextStages } from "../domain/stageTransition";
+import "./App.css";
+
+type AppProps = {
+  gateway: JobApplicationGateway;
+};
+
+export function App({ gateway }: AppProps) {
+  const stableGateway = useMemo(() => gateway, [gateway]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    string | null
+  >(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
+  const [commandError, setCommandError] = useState<string | null>(null);
+  const [form, setForm] = useState<CreateSavedJobOpportunityCommand>({
+    company: "",
+    roleTitle: "",
+    postingUrl: "",
+    source: "LinkedIn",
+    location: "",
+    compensation: "",
+    employmentType: "Full-time"
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void listApplications(stableGateway)
+      .then((loadedApplications) => {
+        if (isMounted) {
+          setApplications(loadedApplications);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setCommandError("Could not load saved opportunities.");
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [stableGateway]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFieldErrors([]);
+    setCommandError(null);
+
+    try {
+      const result = await createSavedOpportunity(stableGateway, form);
+
+      if (!result.ok) {
+        setFieldErrors(result.errors);
+        return;
+      }
+
+      setApplications((current) => [...current, result.opportunity]);
+      setIsFormOpen(false);
+      setForm({
+        company: "",
+        roleTitle: "",
+        postingUrl: "",
+        source: "LinkedIn",
+        location: "",
+        compensation: "",
+        employmentType: "Full-time"
+      });
+    } catch {
+      setCommandError("Could not save the opportunity. Try again.");
+    }
+  }
+
+  const activeApplicationCount = applications.filter(isActiveApplication).length;
+  const selectedApplication = applications.find(
+    (application) => application.id === selectedApplicationId
+  );
+
+  async function handleStageChange(
+    application: JobApplication,
+    toStage: ApplicationStage
+  ) {
+    setCommandError(null);
+
+    const result = await advanceApplicationStage(stableGateway, {
+      applicationId: application.id,
+      toStage
+    });
+
+    if (!result.ok) {
+      setCommandError(result.failure.message);
+      return;
+    }
+
+    setApplications((current) =>
+      current.map((candidate) =>
+        candidate.id === result.application.id ? result.application : candidate
+      )
+    );
+  }
+
+  return (
+    <main className="app-shell">
+      <header className="workspace-header">
+        <div>
+          <p className="eyebrow">Pipeline workspace</p>
+          <h1>Job Application Tracker</h1>
+        </div>
+        <button type="button" onClick={() => setIsFormOpen(true)}>
+          Add opportunity
+        </button>
+      </header>
+
+      {isFormOpen ? (
+        <section aria-label="New saved opportunity" className="entry-panel">
+          <form noValidate onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <label>
+                Company
+                <input
+                  name="company"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      company: event.target.value
+                    }))
+                  }
+                  value={form.company}
+                />
+              </label>
+              <label>
+                Role title
+                <input
+                  name="roleTitle"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      roleTitle: event.target.value
+                    }))
+                  }
+                  value={form.roleTitle}
+                />
+              </label>
+              <label>
+                Posting URL
+                <input
+                  name="postingUrl"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      postingUrl: event.target.value
+                    }))
+                  }
+                  type="url"
+                  value={form.postingUrl}
+                />
+              </label>
+              <label>
+                Source
+                <select
+                  name="source"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      source: event.target.value as CreateSavedJobOpportunityCommand["source"]
+                    }))
+                  }
+                  value={form.source}
+                >
+                  {jobSources.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Location
+                <input
+                  name="location"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      location: event.target.value
+                    }))
+                  }
+                  value={form.location}
+                />
+              </label>
+              <label>
+                Compensation
+                <input
+                  name="compensation"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      compensation: event.target.value
+                    }))
+                  }
+                  value={form.compensation}
+                />
+              </label>
+              <label>
+                Employment type
+                <select
+                  name="employmentType"
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      employmentType:
+                        event.target.value as CreateSavedJobOpportunityCommand["employmentType"]
+                    }))
+                  }
+                  value={form.employmentType}
+                >
+                  {employmentTypes.map((employmentType) => (
+                    <option key={employmentType} value={employmentType}>
+                      {employmentType}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {fieldErrors.length > 0 ? (
+              <ul className="form-errors">
+                {fieldErrors.map((error) => (
+                  <li key={`${error.field}-${error.message}`}>
+                    {error.message}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {commandError ? (
+              <p className="form-errors" role="alert">
+                {commandError}
+              </p>
+            ) : null}
+
+            <div className="form-actions">
+              <button type="button" onClick={() => setIsFormOpen(false)}>
+                Cancel
+              </button>
+              <button type="submit">Save opportunity</button>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
+      {commandError ? (
+        <p className="command-error" role="alert">
+          {commandError}
+        </p>
+      ) : null}
+
+      <section aria-label="Active work summary" className="work-summary">
+        <strong>
+          {activeApplicationCount} active{" "}
+          {activeApplicationCount === 1 ? "application" : "applications"}
+        </strong>
+      </section>
+
+      <section
+        aria-label="Application pipeline"
+        className="pipeline-board"
+      >
+        {applicationStages.map((stage) => {
+          const stageApplications = applications.filter(
+            (application) => application.stage === stage
+          );
+
+          return (
+          <article className="stage-column" key={stage}>
+            <header>
+              <h2>{stage}</h2>
+              <span aria-label={`${stage} applications`}>
+                {stageApplications.length}
+              </span>
+            </header>
+            {stageApplications.length > 0 ? (
+              <div className="opportunity-list">
+                {stageApplications.map((application) => (
+                  <ApplicationCard
+                    application={application}
+                    key={application.id}
+                    onStageChange={handleStageChange}
+                    onViewDetails={setSelectedApplicationId}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p>No applications yet</p>
+            )}
+          </article>
+          );
+        })}
+      </section>
+
+      {selectedApplication ? (
+        <ApplicationDetails application={selectedApplication} />
+      ) : null}
+    </main>
+  );
+}
+
+type ApplicationCardProps = {
+  application: JobApplication;
+  onStageChange: (
+    application: JobApplication,
+    toStage: ApplicationStage
+  ) => Promise<void>;
+  onViewDetails: (applicationId: string) => void;
+};
+
+function ApplicationCard({
+  application,
+  onStageChange,
+  onViewDetails
+}: ApplicationCardProps) {
+  const [selectedStage, setSelectedStage] = useState<ApplicationStage>(
+    application.stage
+  );
+  const nextStages = getNextStages(application.stage);
+  const primaryNextStage = nextStages[0];
+
+  return (
+    <article
+      className={`opportunity-card${
+        isClosedApplication(application) ? " closed" : ""
+      }`}
+    >
+      <h3>{application.company}</h3>
+      {isClosedApplication(application) ? (
+        <span className="status-pill">Closed</span>
+      ) : null}
+      <p>{application.roleTitle}</p>
+      <dl>
+        <div>
+          <dt>Source</dt>
+          <dd>{application.source}</dd>
+        </div>
+        <div>
+          <dt>Location</dt>
+          <dd>{application.location || "Not set"}</dd>
+        </div>
+      </dl>
+      <button
+        className="card-action secondary"
+        onClick={() => onViewDetails(application.id)}
+        type="button"
+      >
+        View {application.company} details
+      </button>
+      {primaryNextStage ? (
+        <button
+          className="card-action"
+          onClick={() => void onStageChange(application, primaryNextStage)}
+          type="button"
+        >
+          {stageActionLabel(application, primaryNextStage)}
+        </button>
+      ) : null}
+      <div className="stage-update">
+        <label>
+          Move {application.company} to stage
+          <select
+            onChange={(event) =>
+              setSelectedStage(event.target.value as ApplicationStage)
+            }
+            value={selectedStage}
+          >
+            {applicationStages.map((stage) => (
+              <option key={stage} value={stage}>
+                {stage}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="card-action secondary"
+          onClick={() => void onStageChange(application, selectedStage)}
+          type="button"
+        >
+          Update {application.company} stage
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function stageActionLabel(
+  application: JobApplication,
+  nextStage: ApplicationStage
+) {
+  if (application.stage === "Saved" && nextStage === "Applied") {
+    return `Mark ${application.company} as applied`;
+  }
+
+  if (
+    (application.stage === "Rejected" || application.stage === "Withdrawn") &&
+    nextStage === "Applied"
+  ) {
+    return `Reopen ${application.company}`;
+  }
+
+  return `Move ${application.company} to ${nextStage}`;
+}
+
+type ApplicationDetailsProps = {
+  application: JobApplication;
+};
+
+function ApplicationDetails({ application }: ApplicationDetailsProps) {
+  const timeline = [...application.timeline].sort(compareTimelineEvents);
+
+  return (
+    <aside aria-label="Application details" className="detail-panel">
+      <header>
+        <div>
+          <p className="eyebrow">Application details</p>
+          <h2>{application.company}</h2>
+        </div>
+        <span>{application.stage}</span>
+      </header>
+      <p>{application.roleTitle}</p>
+
+      <dl className="detail-grid">
+        <div>
+          <dt>Source</dt>
+          <dd>{application.source}</dd>
+        </div>
+        <div>
+          <dt>Location</dt>
+          <dd>{application.location || "Not set"}</dd>
+        </div>
+        <div>
+          <dt>Compensation</dt>
+          <dd>{application.compensation || "Not set"}</dd>
+        </div>
+        <div>
+          <dt>Employment type</dt>
+          <dd>{application.employmentType}</dd>
+        </div>
+        <div>
+          <dt>Posting URL</dt>
+          <dd>
+            <a href={application.postingUrl}>{application.postingUrl}</a>
+          </dd>
+        </div>
+      </dl>
+
+      <section aria-label="Timeline">
+        <h3>Timeline</h3>
+        {timeline.length > 0 ? (
+          <ol aria-label="Timeline events" className="timeline-list">
+            {timeline.map((event) => (
+              <li key={event.id}>
+                <time dateTime={event.occurredAt}>
+                  {formatTimelineDate(event.occurredAt)}
+                </time>
+                <span>{event.description}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No timeline events yet</p>
+        )}
+      </section>
+    </aside>
+  );
+}
+
+function compareTimelineEvents(left: TimelineEvent, right: TimelineEvent) {
+  return (
+    new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime()
+  );
+}
+
+function formatTimelineDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
+}

@@ -1,0 +1,17 @@
+{
+  "name": "react-hexagonal-architecture",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces",
+    "dev": "npm run dev --workspace apps/web"
+  },
+  "msw": {
+    "workerDirectory": [
+      "apps/web/public"
+    ]
+  }
+}
