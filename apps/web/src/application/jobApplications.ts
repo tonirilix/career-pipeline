@@ -1,17 +1,26 @@
 import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
+  type JobApplication,
   type SavedJobOpportunity,
   validateSavedJobOpportunity
 } from "../domain/jobOpportunity";
+import type {
+  StageTransitionCommand,
+  StageTransitionFailure
+} from "../domain/stageTransition";
 import type { JobApplicationGateway } from "./ports/jobApplicationGateway";
 
 export type CreateSavedOpportunityResult =
   | { ok: true; opportunity: SavedJobOpportunity }
   | { ok: false; errors: FieldError[] };
 
-export function listSavedOpportunities(gateway: JobApplicationGateway) {
-  return gateway.listSavedOpportunities();
+export type AdvanceApplicationStageResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: StageTransitionFailure };
+
+export function listApplications(gateway: JobApplicationGateway) {
+  return gateway.listApplications();
 }
 
 export async function createSavedOpportunity(
@@ -28,4 +37,26 @@ export async function createSavedOpportunity(
     ok: true,
     opportunity: await gateway.createSavedOpportunity(validation.value)
   };
+}
+
+export async function advanceApplicationStage(
+  gateway: JobApplicationGateway,
+  command: StageTransitionCommand
+): Promise<AdvanceApplicationStageResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.advanceApplicationStage(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not update the application stage."
+      }
+    };
+  }
 }

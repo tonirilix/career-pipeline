@@ -120,6 +120,17 @@ select {
   margin: 12px 0 0;
 }
 
+.command-error {
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 6px;
+  color: #b42318;
+  font-size: 0.875rem;
+  margin: 0 auto 16px;
+  max-width: 1440px;
+  padding: 10px 12px;
+}
+
 .stage-column {
   background: #ffffff;
   border: 1px solid #d7dde4;
@@ -206,6 +217,34 @@ select {
 .opportunity-card dd {
   color: #1f2933;
   font-size: 0.8125rem;
+}
+
+.card-action {
+  font-size: 0.8125rem;
+  margin-top: 12px;
+  min-height: 34px;
+  width: 100%;
+}
+
+.card-action.secondary {
+  background: #ffffff;
+  border-color: #cbd5df;
+  color: #1f2933;
+  margin-top: 8px;
+}
+
+.stage-update {
+  border-top: 1px solid #dce3ea;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.stage-update label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 6px;
 }
 
 @media (max-width: 720px) {

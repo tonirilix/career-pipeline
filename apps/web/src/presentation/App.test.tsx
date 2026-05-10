@@ -85,4 +85,118 @@ describe("Job application tracker shell", () => {
       screen.getByText("Posting URL must be a valid URL")
     ).toBeInTheDocument();
   });
+
+  it("lets a user mark a saved opportunity as applied", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.click(
+      await screen.findByRole("button", { name: "Mark Linear as applied" })
+    );
+
+    const savedColumn = screen
+      .getByRole("heading", { name: "Saved" })
+      .closest("article");
+    const appliedColumn = screen
+      .getByRole("heading", { name: "Applied" })
+      .closest("article");
+
+    expect(savedColumn).not.toBeNull();
+    expect(appliedColumn).not.toBeNull();
+    expect(
+      within(savedColumn as HTMLElement).queryByText("Linear")
+    ).not.toBeInTheDocument();
+    expect(
+      await within(appliedColumn as HTMLElement).findByText("Linear")
+    ).toBeInTheDocument();
+  });
+
+  it("shows an understandable error when a stage transition is invalid", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.selectOptions(
+      await screen.findByLabelText("Move Linear to stage"),
+      "Offer"
+    );
+    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+
+    expect(
+      await screen.findByText("Cannot move an application from Saved to Offer.")
+    ).toBeInTheDocument();
+  });
+
+  it("lets a user advance active stages, reject an application, and reopen it", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.click(
+      await screen.findByRole("button", { name: "Mark Linear as applied" })
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Move Linear to Screening" })
+    );
+
+    const screeningColumn = screen
+      .getByRole("heading", { name: "Screening" })
+      .closest("article");
+
+    expect(screeningColumn).not.toBeNull();
+    expect(
+      await within(screeningColumn as HTMLElement).findByText("Linear")
+    ).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Move Linear to stage"), "Rejected");
+    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+
+    const rejectedColumn = screen
+      .getByRole("heading", { name: "Rejected" })
+      .closest("article");
+
+    expect(rejectedColumn).not.toBeNull();
+    expect(
+      await within(rejectedColumn as HTMLElement).findByText("Linear")
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Reopen Linear" }));
+
+    const appliedColumn = screen
+      .getByRole("heading", { name: "Applied" })
+      .closest("article");
+
+    expect(appliedColumn).not.toBeNull();
+    expect(
+      await within(appliedColumn as HTMLElement).findByText("Linear")
+    ).toBeInTheDocument();
+  });
 });

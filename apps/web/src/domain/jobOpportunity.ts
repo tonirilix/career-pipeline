@@ -17,7 +17,13 @@ export const employmentTypes = [
 export type JobSource = (typeof jobSources)[number];
 export type EmploymentType = (typeof employmentTypes)[number];
 
-export type SavedJobOpportunity = {
+export type TimelineEvent = {
+  id: string;
+  occurredAt: string;
+  description: string;
+};
+
+export type JobApplication = {
   id: string;
   company: string;
   roleTitle: string;
@@ -26,8 +32,11 @@ export type SavedJobOpportunity = {
   location: string;
   compensation: string;
   employmentType: EmploymentType;
-  stage: "Saved";
+  stage: ApplicationStage;
+  timeline: TimelineEvent[];
 };
+
+export type SavedJobOpportunity = JobApplication & { stage: "Saved" };
 
 export type CreateSavedJobOpportunityCommand = {
   company: string;
@@ -91,3 +100,4 @@ export function validateSavedJobOpportunity(
 
   return { ok: true, value: trimmed };
 }
+import type { ApplicationStage } from "./applicationStage";

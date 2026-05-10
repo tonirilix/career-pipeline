@@ -1,17 +1,17 @@
 import type { JobApplicationGateway } from "../../application/ports/jobApplicationGateway";
 import type {
   CreateSavedJobOpportunityCommand,
+  JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 type GraphqlResponse<TData> = {
   data?: TData;
   errors?: { message: string }[];
 };
 
-const listSavedOpportunitiesQuery = `
-  query ListSavedOpportunities {
-    savedOpportunities {
+const applicationFields = `
       id
       company
       roleTitle
@@ -21,6 +21,17 @@ const listSavedOpportunitiesQuery = `
       compensation
       employmentType
       stage
+      timeline {
+        id
+        occurredAt
+        description
+      }
+`;
+
+const listApplicationsQuery = `
+  query ListApplications {
+    applications {
+      ${applicationFields}
     }
   }
 `;
@@ -28,15 +39,15 @@ const listSavedOpportunitiesQuery = `
 const createSavedOpportunityMutation = `
   mutation CreateSavedOpportunity($input: CreateSavedOpportunityInput!) {
     createSavedOpportunity(input: $input) {
-      id
-      company
-      roleTitle
-      postingUrl
-      source
-      location
-      compensation
-      employmentType
-      stage
+      ${applicationFields}
+    }
+  }
+`;
+
+const advanceApplicationStageMutation = `
+  mutation AdvanceApplicationStage($input: AdvanceApplicationStageInput!) {
+    advanceApplicationStage(input: $input) {
+      ${applicationFields}
     }
   }
 `;
@@ -45,15 +56,15 @@ export function createJobApplicationGraphqlGateway(
   endpoint = graphqlEndpoint()
 ): JobApplicationGateway {
   return {
-    async listSavedOpportunities() {
+    async listApplications() {
       const response = await requestGraphql<{
-        savedOpportunities: SavedJobOpportunity[];
+        applications: JobApplication[];
       }>(endpoint, {
-        query: listSavedOpportunitiesQuery,
-        operationName: "ListSavedOpportunities"
+        query: listApplicationsQuery,
+        operationName: "ListApplications"
       });
 
-      return response.savedOpportunities;
+      return response.applications;
     },
 
     async createSavedOpportunity(command: CreateSavedJobOpportunityCommand) {
@@ -68,6 +79,20 @@ export function createJobApplicationGraphqlGateway(
       });
 
       return response.createSavedOpportunity;
+    },
+
+    async advanceApplicationStage(command: StageTransitionCommand) {
+      const response = await requestGraphql<{
+        advanceApplicationStage: JobApplication;
+      }>(endpoint, {
+        query: advanceApplicationStageMutation,
+        operationName: "AdvanceApplicationStage",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.advanceApplicationStage;
     }
   };
 }

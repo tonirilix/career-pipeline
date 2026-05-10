@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { JobApplicationGateway } from "./ports/jobApplicationGateway";
-import { createSavedOpportunity } from "./jobApplications";
+import {
+  advanceApplicationStage,
+  createSavedOpportunity
+} from "./jobApplications";
 
 describe("job application use cases", () => {
   it("rejects invalid saved opportunities before calling the gateway", async () => {
     const gateway: JobApplicationGateway = {
-      listSavedOpportunities: vi.fn(),
-      createSavedOpportunity: vi.fn()
+      listApplications: vi.fn(),
+      createSavedOpportunity: vi.fn(),
+      advanceApplicationStage: vi.fn()
     };
 
     const result = await createSavedOpportunity(gateway, {
@@ -33,7 +37,7 @@ describe("job application use cases", () => {
 
   it("sends valid saved opportunities through the gateway port", async () => {
     const gateway: JobApplicationGateway = {
-      listSavedOpportunities: vi.fn(),
+      listApplications: vi.fn(),
       createSavedOpportunity: vi.fn().mockResolvedValue({
         id: "job-1",
         company: "Linear",
@@ -43,8 +47,10 @@ describe("job application use cases", () => {
         location: "Remote",
         compensation: "$160k-$190k",
         employmentType: "Full-time",
-        stage: "Saved"
-      })
+        stage: "Saved",
+        timeline: []
+      }),
+      advanceApplicationStage: vi.fn()
     };
 
     const result = await createSavedOpportunity(gateway, {
@@ -72,6 +78,48 @@ describe("job application use cases", () => {
         id: "job-1",
         company: "Linear",
         stage: "Saved"
+      }
+    });
+  });
+
+  it("advances applications through the gateway port", async () => {
+    const gateway: JobApplicationGateway = {
+      listApplications: vi.fn(),
+      createSavedOpportunity: vi.fn(),
+      advanceApplicationStage: vi.fn().mockResolvedValue({
+        id: "job-1",
+        company: "Linear",
+        roleTitle: "Frontend Engineer",
+        postingUrl: "https://linear.app/careers/frontend-engineer",
+        source: "Referral",
+        location: "Remote",
+        compensation: "$160k-$190k",
+        employmentType: "Full-time",
+        stage: "Applied",
+        timeline: [
+          {
+            id: "event-1",
+            occurredAt: "2026-05-10T01:00:00.000Z",
+            description: "Moved from Saved to Applied"
+          }
+        ]
+      })
+    };
+
+    const result = await advanceApplicationStage(gateway, {
+      applicationId: "job-1",
+      toStage: "Applied"
+    });
+
+    expect(gateway.advanceApplicationStage).toHaveBeenCalledWith({
+      applicationId: "job-1",
+      toStage: "Applied"
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      application: {
+        id: "job-1",
+        stage: "Applied"
       }
     });
   });

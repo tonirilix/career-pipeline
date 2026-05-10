@@ -1,18 +1,23 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
+  advanceApplicationStage,
   createSavedOpportunity,
-  listSavedOpportunities
+  listApplications
 } from "../application/jobApplications";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
-import { applicationStages } from "../domain/applicationStage";
+import {
+  type ApplicationStage,
+  applicationStages
+} from "../domain/applicationStage";
 import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
   employmentTypes,
+  type JobApplication,
   jobSources,
-  type SavedJobOpportunity
 } from "../domain/jobOpportunity";
+import { getNextStages } from "../domain/stageTransition";
 import "./App.css";
 
 type AppProps = {
@@ -22,7 +27,7 @@ type AppProps = {
 export function App({ gateway }: AppProps) {
   const stableGateway = useMemo(() => gateway, [gateway]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [opportunities, setOpportunities] = useState<SavedJobOpportunity[]>([]);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [commandError, setCommandError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateSavedJobOpportunityCommand>({
@@ -38,10 +43,10 @@ export function App({ gateway }: AppProps) {
   useEffect(() => {
     let isMounted = true;
 
-    void listSavedOpportunities(stableGateway)
-      .then((savedOpportunities) => {
+    void listApplications(stableGateway)
+      .then((loadedApplications) => {
         if (isMounted) {
-          setOpportunities(savedOpportunities);
+          setApplications(loadedApplications);
         }
       })
       .catch(() => {
@@ -68,7 +73,7 @@ export function App({ gateway }: AppProps) {
         return;
       }
 
-      setOpportunities((current) => [...current, result.opportunity]);
+      setApplications((current) => [...current, result.opportunity]);
       setIsFormOpen(false);
       setForm({
         company: "",
@@ -84,9 +89,28 @@ export function App({ gateway }: AppProps) {
     }
   }
 
-  const savedOpportunities = opportunities.filter(
-    (opportunity) => opportunity.stage === "Saved"
-  );
+  async function handleStageChange(
+    application: JobApplication,
+    toStage: ApplicationStage
+  ) {
+    setCommandError(null);
+
+    const result = await advanceApplicationStage(stableGateway, {
+      applicationId: application.id,
+      toStage
+    });
+
+    if (!result.ok) {
+      setCommandError(result.failure.message);
+      return;
+    }
+
+    setApplications((current) =>
+      current.map((candidate) =>
+        candidate.id === result.application.id ? result.application : candidate
+      )
+    );
+  }
 
   return (
     <main className="app-shell">
@@ -237,43 +261,133 @@ export function App({ gateway }: AppProps) {
         </section>
       ) : null}
 
+      {commandError ? (
+        <p className="command-error" role="alert">
+          {commandError}
+        </p>
+      ) : null}
+
       <section
         aria-label="Application pipeline"
         className="pipeline-board"
       >
-        {applicationStages.map((stage) => (
+        {applicationStages.map((stage) => {
+          const stageApplications = applications.filter(
+            (application) => application.stage === stage
+          );
+
+          return (
           <article className="stage-column" key={stage}>
             <header>
               <h2>{stage}</h2>
               <span aria-label={`${stage} applications`}>
-                {stage === "Saved" ? savedOpportunities.length : 0}
+                {stageApplications.length}
               </span>
             </header>
-            {stage === "Saved" && savedOpportunities.length > 0 ? (
+            {stageApplications.length > 0 ? (
               <div className="opportunity-list">
-                {savedOpportunities.map((opportunity) => (
-                  <article className="opportunity-card" key={opportunity.id}>
-                    <h3>{opportunity.company}</h3>
-                    <p>{opportunity.roleTitle}</p>
-                    <dl>
-                      <div>
-                        <dt>Source</dt>
-                        <dd>{opportunity.source}</dd>
-                      </div>
-                      <div>
-                        <dt>Location</dt>
-                        <dd>{opportunity.location || "Not set"}</dd>
-                      </div>
-                    </dl>
-                  </article>
+                {stageApplications.map((application) => (
+                  <ApplicationCard
+                    application={application}
+                    key={application.id}
+                    onStageChange={handleStageChange}
+                  />
                 ))}
               </div>
             ) : (
               <p>No applications yet</p>
             )}
           </article>
-        ))}
+          );
+        })}
       </section>
     </main>
   );
+}
+
+type ApplicationCardProps = {
+  application: JobApplication;
+  onStageChange: (
+    application: JobApplication,
+    toStage: ApplicationStage
+  ) => Promise<void>;
+};
+
+function ApplicationCard({
+  application,
+  onStageChange
+}: ApplicationCardProps) {
+  const [selectedStage, setSelectedStage] = useState<ApplicationStage>(
+    application.stage
+  );
+  const nextStages = getNextStages(application.stage);
+  const primaryNextStage = nextStages[0];
+
+  return (
+    <article className="opportunity-card">
+      <h3>{application.company}</h3>
+      <p>{application.roleTitle}</p>
+      <dl>
+        <div>
+          <dt>Source</dt>
+          <dd>{application.source}</dd>
+        </div>
+        <div>
+          <dt>Location</dt>
+          <dd>{application.location || "Not set"}</dd>
+        </div>
+      </dl>
+      {primaryNextStage ? (
+        <button
+          className="card-action"
+          onClick={() => void onStageChange(application, primaryNextStage)}
+          type="button"
+        >
+          {stageActionLabel(application, primaryNextStage)}
+        </button>
+      ) : null}
+      <div className="stage-update">
+        <label>
+          Move {application.company} to stage
+          <select
+            onChange={(event) =>
+              setSelectedStage(event.target.value as ApplicationStage)
+            }
+            value={selectedStage}
+          >
+            {applicationStages.map((stage) => (
+              <option key={stage} value={stage}>
+                {stage}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="card-action secondary"
+          onClick={() => void onStageChange(application, selectedStage)}
+          type="button"
+        >
+          Update {application.company} stage
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function stageActionLabel(
+  application: JobApplication,
+  nextStage: ApplicationStage
+) {
+  if (application.stage === "Saved" && nextStage === "Applied") {
+    return `Mark ${application.company} as applied`;
+  }
+
+  if (
+    (application.stage === "Rejected" || application.stage === "Withdrawn") &&
+    nextStage === "Applied"
+  ) {
+    return `Reopen ${application.company}`;
+  }
+
+  return `Move ${application.company} to ${nextStage}`;
 }
