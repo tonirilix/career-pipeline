@@ -6,6 +6,10 @@ import type {
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
 import {
+  type ScheduleInterviewCommand,
+  scheduleInterview
+} from "../../domain/interviewScheduling";
+import {
   type StageTransitionCommand,
   transitionApplicationStage
 } from "../../domain/stageTransition";
@@ -13,6 +17,7 @@ import {
 let applications: JobApplication[] = [];
 let nextApplicationId = 1;
 let nextTimelineEventId = 1;
+let nextInterviewId = 1;
 
 export const jobApplicationHandlers = [
   graphql.query("ListApplications", () => {
@@ -37,7 +42,8 @@ export const jobApplicationHandlers = [
           occurredAt: new Date().toISOString(),
           description: "Saved opportunity"
         }
-      ]
+      ],
+      interviews: []
     };
 
     nextApplicationId += 1;
@@ -87,6 +93,45 @@ export const jobApplicationHandlers = [
         advanceApplicationStage: result.application
       }
     });
+  }),
+
+  graphql.mutation("ScheduleInterview", ({ variables }) => {
+    const { input } = variables as {
+      input: ScheduleInterviewCommand;
+    };
+    const application = applications.find(
+      (candidate) => candidate.id === input.applicationId
+    );
+
+    if (!application) {
+      return HttpResponse.json({
+        errors: [{ message: "Application could not be found." }]
+      });
+    }
+
+    const result = scheduleInterview(application, input, {
+      interviewId: String(nextInterviewId),
+      timelineEventId: String(nextTimelineEventId),
+      occurredAt: new Date().toISOString()
+    });
+
+    if (!result.ok) {
+      return HttpResponse.json({
+        errors: [{ message: result.failure.message }]
+      });
+    }
+
+    nextInterviewId += 1;
+    nextTimelineEventId += 1;
+    applications = applications.map((candidate) =>
+      candidate.id === result.application.id ? result.application : candidate
+    );
+
+    return HttpResponse.json({
+      data: {
+        scheduleInterview: result.application
+      }
+    });
   })
 ];
 
@@ -94,4 +139,5 @@ export function resetJobApplicationMockData() {
   applications = [];
   nextApplicationId = 1;
   nextTimelineEventId = 1;
+  nextInterviewId = 1;
 }

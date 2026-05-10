@@ -30,7 +30,8 @@ button {
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid #cbd5df;
   border-radius: 6px;
   color: #1f2933;
@@ -38,6 +39,11 @@ select {
   min-height: 40px;
   padding: 8px 10px;
   width: 100%;
+}
+
+textarea {
+  min-height: 88px;
+  resize: vertical;
 }
 
 .app-shell {
@@ -314,6 +320,7 @@ select {
 }
 
 .detail-grid dt,
+.interview-list time,
 .timeline-list time {
   color: #687381;
   font-size: 0.72rem;
@@ -328,6 +335,49 @@ select {
 .detail-grid a {
   color: #205c4f;
   overflow-wrap: anywhere;
+}
+
+.interview-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding-left: 20px;
+}
+
+.interview-list li {
+  padding-left: 4px;
+}
+
+.interview-list strong,
+.interview-list span,
+.interview-list time {
+  display: block;
+}
+
+.interview-list p {
+  color: #334155;
+  margin: 4px 0 0;
+}
+
+.interview-form {
+  border-top: 1px solid #dce3ea;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  margin-bottom: 18px;
+  padding-top: 14px;
+}
+
+.interview-form label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.interview-form button {
+  align-self: end;
 }
 
 .timeline-list {
@@ -365,6 +415,10 @@ select {
   }
 
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-form {
     grid-template-columns: 1fr;
   }
 }

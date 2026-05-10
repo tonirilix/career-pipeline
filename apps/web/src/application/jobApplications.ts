@@ -9,6 +9,10 @@ import type {
   StageTransitionCommand,
   StageTransitionFailure
 } from "../domain/stageTransition";
+import type {
+  ScheduleInterviewCommand,
+  ScheduleInterviewFailure
+} from "../domain/interviewScheduling";
 import type { JobApplicationGateway } from "./ports/jobApplicationGateway";
 
 export type CreateSavedOpportunityResult =
@@ -18,6 +22,10 @@ export type CreateSavedOpportunityResult =
 export type AdvanceApplicationStageResult =
   | { ok: true; application: JobApplication }
   | { ok: false; failure: StageTransitionFailure };
+
+export type ScheduleApplicationInterviewResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: ScheduleInterviewFailure };
 
 export function listApplications(gateway: JobApplicationGateway) {
   return gateway.listApplications();
@@ -56,6 +64,28 @@ export async function advanceApplicationStage(
           error instanceof Error
             ? error.message
             : "Could not update the application stage."
+      }
+    };
+  }
+}
+
+export async function scheduleApplicationInterview(
+  gateway: JobApplicationGateway,
+  command: ScheduleInterviewCommand
+): Promise<ScheduleApplicationInterviewResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.scheduleInterview(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not schedule the interview."
       }
     };
   }

@@ -19,7 +19,8 @@ const savedApplication: JobApplication = {
       occurredAt: "2026-05-10T01:00:00.000Z",
       description: "Saved opportunity"
     }
-  ]
+  ],
+  interviews: []
 };
 
 describe("application stage transitions", () => {

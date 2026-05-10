@@ -316,4 +316,75 @@ describe("Job application tracker shell", () => {
     expect(events[0]).toHaveTextContent("Saved opportunity");
     expect(events[1]).toHaveTextContent("Moved from Saved to Applied");
   });
+
+  it("lets a user schedule an interview for an applied application and see it in details", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Mark Linear as applied" })
+    );
+    await user.click(screen.getByRole("button", { name: "View Linear details" }));
+
+    await user.selectOptions(
+      screen.getByLabelText("Interview type"),
+      "Recruiter screen"
+    );
+    await user.type(screen.getByLabelText("Date and time"), "2026-05-12T15:00");
+    await user.type(screen.getByLabelText("Notes"), "Ask about team shape");
+    await user.selectOptions(screen.getByLabelText("Outcome"), "Scheduled");
+    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    const interviews = within(detail).getByRole("list", {
+      name: "Scheduled interviews"
+    });
+
+    expect(
+      await within(interviews).findByText("Recruiter screen")
+    ).toBeInTheDocument();
+    expect(within(interviews).getByText("Scheduled")).toBeInTheDocument();
+    expect(within(interviews).getByText("Ask about team shape")).toBeInTheDocument();
+    expect(
+      within(detail).getByText("Scheduled Recruiter screen interview")
+    ).toBeInTheDocument();
+  });
+
+  it("shows an understandable error when scheduling an interview for a saved opportunity", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "View Linear details" })
+    );
+
+    await user.type(screen.getByLabelText("Date and time"), "2026-05-12T15:00");
+    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
+
+    expect(
+      await screen.findByText(
+        "Interviews can only be scheduled after an opportunity has been applied to."
+      )
+    ).toBeInTheDocument();
+  });
 });

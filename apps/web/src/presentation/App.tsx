@@ -3,7 +3,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   advanceApplicationStage,
   createSavedOpportunity,
-  listApplications
+  listApplications,
+  scheduleApplicationInterview
 } from "../application/jobApplications";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import {
@@ -15,10 +16,14 @@ import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
   employmentTypes,
+  type Interview,
+  interviewOutcomes,
+  interviewTypes,
   type JobApplication,
   jobSources,
   type TimelineEvent
 } from "../domain/jobOpportunity";
+import type { ScheduleInterviewCommand } from "../domain/interviewScheduling";
 import { getNextStages } from "../domain/stageTransition";
 import "./App.css";
 
@@ -109,6 +114,23 @@ export function App({ gateway }: AppProps) {
       applicationId: application.id,
       toStage
     });
+
+    if (!result.ok) {
+      setCommandError(result.failure.message);
+      return;
+    }
+
+    setApplications((current) =>
+      current.map((candidate) =>
+        candidate.id === result.application.id ? result.application : candidate
+      )
+    );
+  }
+
+  async function handleScheduleInterview(command: ScheduleInterviewCommand) {
+    setCommandError(null);
+
+    const result = await scheduleApplicationInterview(stableGateway, command);
 
     if (!result.ok) {
       setCommandError(result.failure.message);
@@ -321,7 +343,10 @@ export function App({ gateway }: AppProps) {
       </section>
 
       {selectedApplication ? (
-        <ApplicationDetails application={selectedApplication} />
+        <ApplicationDetails
+          application={selectedApplication}
+          onScheduleInterview={handleScheduleInterview}
+        />
       ) : null}
     </main>
   );
@@ -432,10 +457,38 @@ function stageActionLabel(
 
 type ApplicationDetailsProps = {
   application: JobApplication;
+  onScheduleInterview: (command: ScheduleInterviewCommand) => Promise<void>;
 };
 
-function ApplicationDetails({ application }: ApplicationDetailsProps) {
+function ApplicationDetails({
+  application,
+  onScheduleInterview
+}: ApplicationDetailsProps) {
   const timeline = [...application.timeline].sort(compareTimelineEvents);
+  const interviews = [...application.interviews].sort(compareInterviews);
+  const [interviewForm, setInterviewForm] = useState<
+    Omit<ScheduleInterviewCommand, "applicationId">
+  >({
+    type: "Recruiter screen",
+    scheduledAt: "",
+    notes: "",
+    outcome: "Scheduled"
+  });
+
+  async function handleInterviewSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    await onScheduleInterview({
+      applicationId: application.id,
+      ...interviewForm
+    });
+    setInterviewForm({
+      type: "Recruiter screen",
+      scheduledAt: "",
+      notes: "",
+      outcome: "Scheduled"
+    });
+  }
 
   return (
     <aside aria-label="Application details" className="detail-panel">
@@ -473,6 +526,91 @@ function ApplicationDetails({ application }: ApplicationDetailsProps) {
         </div>
       </dl>
 
+      <section aria-label="Interviews">
+        <h3>Interviews</h3>
+        {interviews.length > 0 ? (
+          <ol aria-label="Scheduled interviews" className="interview-list">
+            {interviews.map((interview) => (
+              <li key={interview.id}>
+                <strong>{interview.type}</strong>
+                <time dateTime={interview.scheduledAt}>
+                  {formatTimelineDate(interview.scheduledAt)}
+                </time>
+                <span>{interview.outcome}</span>
+                {interview.notes ? <p>{interview.notes}</p> : null}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No interviews scheduled</p>
+        )}
+
+        <form className="interview-form" onSubmit={handleInterviewSubmit}>
+          <label>
+            Interview type
+            <select
+              onChange={(event) =>
+                setInterviewForm((current) => ({
+                  ...current,
+                  type: event.target.value as Interview["type"]
+                }))
+              }
+              value={interviewForm.type}
+            >
+              {interviewTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Date and time
+            <input
+              onChange={(event) =>
+                setInterviewForm((current) => ({
+                  ...current,
+                  scheduledAt: event.target.value
+                }))
+              }
+              type="datetime-local"
+              value={interviewForm.scheduledAt}
+            />
+          </label>
+          <label>
+            Notes
+            <textarea
+              onChange={(event) =>
+                setInterviewForm((current) => ({
+                  ...current,
+                  notes: event.target.value
+                }))
+              }
+              value={interviewForm.notes}
+            />
+          </label>
+          <label>
+            Outcome
+            <select
+              onChange={(event) =>
+                setInterviewForm((current) => ({
+                  ...current,
+                  outcome: event.target.value as Interview["outcome"]
+                }))
+              }
+              value={interviewForm.outcome}
+            >
+              {interviewOutcomes.map((outcome) => (
+                <option key={outcome} value={outcome}>
+                  {outcome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Schedule interview</button>
+        </form>
+      </section>
+
       <section aria-label="Timeline">
         <h3>Timeline</h3>
         {timeline.length > 0 ? (
@@ -497,6 +635,12 @@ function ApplicationDetails({ application }: ApplicationDetailsProps) {
 function compareTimelineEvents(left: TimelineEvent, right: TimelineEvent) {
   return (
     new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime()
+  );
+}
+
+function compareInterviews(left: Interview, right: Interview) {
+  return (
+    new Date(left.scheduledAt).getTime() - new Date(right.scheduledAt).getTime()
   );
 }
 

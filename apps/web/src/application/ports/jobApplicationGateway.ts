@@ -3,6 +3,7 @@ import type {
   JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 export type JobApplicationGateway = {
@@ -13,4 +14,5 @@ export type JobApplicationGateway = {
   advanceApplicationStage(
     command: StageTransitionCommand
   ): Promise<JobApplication>;
+  scheduleInterview(command: ScheduleInterviewCommand): Promise<JobApplication>;
 };

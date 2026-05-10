@@ -18,7 +18,8 @@ const baseApplication: JobApplication = {
   compensation: "$160k-$190k",
   employmentType: "Full-time",
   stage: "Applied",
-  timeline: []
+  timeline: [],
+  interviews: []
 };
 
 describe("closed work", () => {

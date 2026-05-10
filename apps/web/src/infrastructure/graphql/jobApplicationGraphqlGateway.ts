@@ -4,6 +4,7 @@ import type {
   JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 type GraphqlResponse<TData> = {
@@ -26,6 +27,13 @@ const applicationFields = `
         occurredAt
         description
       }
+      interviews {
+        id
+        type
+        scheduledAt
+        notes
+        outcome
+      }
 `;
 
 const listApplicationsQuery = `
@@ -47,6 +55,14 @@ const createSavedOpportunityMutation = `
 const advanceApplicationStageMutation = `
   mutation AdvanceApplicationStage($input: AdvanceApplicationStageInput!) {
     advanceApplicationStage(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const scheduleInterviewMutation = `
+  mutation ScheduleInterview($input: ScheduleInterviewInput!) {
+    scheduleInterview(input: $input) {
       ${applicationFields}
     }
   }
@@ -93,6 +109,20 @@ export function createJobApplicationGraphqlGateway(
       });
 
       return response.advanceApplicationStage;
+    },
+
+    async scheduleInterview(command: ScheduleInterviewCommand) {
+      const response = await requestGraphql<{
+        scheduleInterview: JobApplication;
+      }>(endpoint, {
+        query: scheduleInterviewMutation,
+        operationName: "ScheduleInterview",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.scheduleInterview;
     }
   };
 }
