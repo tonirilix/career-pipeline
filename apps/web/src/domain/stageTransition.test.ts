@@ -21,7 +21,8 @@ const savedApplication: JobApplication = {
     }
   ],
   interviews: [],
-  followUps: []
+  followUps: [],
+  notes: []
 };
 
 describe("application stage transitions", () => {

@@ -4,6 +4,7 @@ import type {
   JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
 import type {
   CompleteFollowUpReminderCommand,
   CreateFollowUpReminderCommand
@@ -44,6 +45,11 @@ const applicationFields = `
         dueAt
         note
         completedAt
+      }
+      notes {
+        id
+        body
+        createdAt
       }
 `;
 
@@ -90,6 +96,14 @@ const createFollowUpReminderMutation = `
 const completeFollowUpReminderMutation = `
   mutation CompleteFollowUpReminder($input: CompleteFollowUpReminderInput!) {
     completeFollowUpReminder(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const addApplicationNoteMutation = `
+  mutation AddApplicationNote($input: AddApplicationNoteInput!) {
+    addApplicationNote(input: $input) {
       ${applicationFields}
     }
   }
@@ -178,6 +192,20 @@ export function createJobApplicationGraphqlGateway(
       });
 
       return response.completeFollowUpReminder;
+    },
+
+    async addApplicationNote(command: AddApplicationNoteCommand) {
+      const response = await requestGraphql<{
+        addApplicationNote: JobApplication;
+      }>(endpoint, {
+        query: addApplicationNoteMutation,
+        operationName: "AddApplicationNote",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.addApplicationNote;
     }
   };
 }

@@ -15,6 +15,10 @@ import type {
   FollowUpReminderFailure
 } from "../domain/followUpReminder";
 import type {
+  AddApplicationNoteCommand,
+  ApplicationNoteFailure
+} from "../domain/applicationNote";
+import type {
   ScheduleInterviewCommand,
   ScheduleInterviewFailure
 } from "../domain/interviewScheduling";
@@ -39,6 +43,10 @@ export type CreateApplicationFollowUpReminderResult =
 export type CompleteApplicationFollowUpReminderResult =
   | { ok: true; application: JobApplication }
   | { ok: false; failure: FollowUpReminderFailure };
+
+export type AddNoteToApplicationResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: ApplicationNoteFailure };
 
 export function listApplications(gateway: JobApplicationGateway) {
   return gateway.listApplications();
@@ -143,6 +151,26 @@ export async function completeApplicationFollowUpReminder(
           error instanceof Error
             ? error.message
             : "Could not complete the follow-up reminder."
+      }
+    };
+  }
+}
+
+export async function addNoteToApplication(
+  gateway: JobApplicationGateway,
+  command: AddApplicationNoteCommand
+): Promise<AddNoteToApplicationResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.addApplicationNote(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error ? error.message : "Could not add the note."
       }
     };
   }

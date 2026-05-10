@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { JobApplicationGateway } from "./ports/jobApplicationGateway";
 import {
+  addNoteToApplication,
   advanceApplicationStage,
   completeApplicationFollowUpReminder,
   createApplicationFollowUpReminder,
@@ -17,7 +18,8 @@ describe("job application use cases", () => {
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
       createFollowUpReminder: vi.fn(),
-      completeFollowUpReminder: vi.fn()
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn()
     };
 
     const result = await createSavedOpportunity(gateway, {
@@ -56,12 +58,14 @@ describe("job application use cases", () => {
         stage: "Saved",
         timeline: [],
         interviews: [],
-        followUps: []
+        followUps: [],
+        notes: []
       }),
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
       createFollowUpReminder: vi.fn(),
-      completeFollowUpReminder: vi.fn()
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn()
     };
 
     const result = await createSavedOpportunity(gateway, {
@@ -115,11 +119,13 @@ describe("job application use cases", () => {
           }
         ],
         interviews: [],
-        followUps: []
+        followUps: [],
+        notes: []
       }),
       scheduleInterview: vi.fn(),
       createFollowUpReminder: vi.fn(),
-      completeFollowUpReminder: vi.fn()
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn()
     };
 
     const result = await advanceApplicationStage(gateway, {
@@ -171,10 +177,12 @@ describe("job application use cases", () => {
             outcome: "Scheduled"
           }
         ],
-        followUps: []
+        followUps: [],
+        notes: []
       }),
       createFollowUpReminder: vi.fn(),
-      completeFollowUpReminder: vi.fn()
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn()
     };
 
     const result = await scheduleApplicationInterview(gateway, {
@@ -238,9 +246,11 @@ describe("job application use cases", () => {
             note: "Send recruiter a thank-you note",
             completedAt: null
           }
-        ]
+        ],
+        notes: []
       }),
-      completeFollowUpReminder: vi.fn()
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn()
     };
 
     const result = await createApplicationFollowUpReminder(gateway, {
@@ -301,8 +311,10 @@ describe("job application use cases", () => {
             note: "Send recruiter a thank-you note",
             completedAt: "2026-05-10T13:00:00.000Z"
           }
-        ]
-      })
+        ],
+        notes: []
+      }),
+      addApplicationNote: vi.fn()
     };
 
     const result = await completeApplicationFollowUpReminder(gateway, {
@@ -322,6 +334,65 @@ describe("job application use cases", () => {
           {
             id: "follow-up-1",
             completedAt: "2026-05-10T13:00:00.000Z"
+          }
+        ]
+      }
+    });
+  });
+
+  it("adds application notes through the gateway port", async () => {
+    const gateway: JobApplicationGateway = {
+      listApplications: vi.fn(),
+      createSavedOpportunity: vi.fn(),
+      advanceApplicationStage: vi.fn(),
+      scheduleInterview: vi.fn(),
+      createFollowUpReminder: vi.fn(),
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn().mockResolvedValue({
+        id: "job-1",
+        company: "Linear",
+        roleTitle: "Frontend Engineer",
+        postingUrl: "https://linear.app/careers/frontend-engineer",
+        source: "Referral",
+        location: "Remote",
+        compensation: "$160k-$190k",
+        employmentType: "Full-time",
+        stage: "Applied",
+        timeline: [
+          {
+            id: "event-1",
+            occurredAt: "2026-05-10T13:00:00.000Z",
+            description: "Added note"
+          }
+        ],
+        interviews: [],
+        followUps: [],
+        notes: [
+          {
+            id: "note-1",
+            body: "Recruiter mentioned the team is expanding.",
+            createdAt: "2026-05-10T13:00:00.000Z"
+          }
+        ]
+      })
+    };
+
+    const result = await addNoteToApplication(gateway, {
+      applicationId: "job-1",
+      body: "Recruiter mentioned the team is expanding."
+    });
+
+    expect(gateway.addApplicationNote).toHaveBeenCalledWith({
+      applicationId: "job-1",
+      body: "Recruiter mentioned the team is expanding."
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      application: {
+        id: "job-1",
+        notes: [
+          {
+            body: "Recruiter mentioned the team is expanding."
           }
         ]
       }

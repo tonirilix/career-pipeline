@@ -373,6 +373,7 @@ textarea {
 .detail-grid dt,
 .follow-up-list time,
 .interview-list time,
+.note-list time,
 .timeline-list time {
   color: #687381;
   font-size: 0.72rem;
@@ -387,6 +388,43 @@ textarea {
 .detail-grid a {
   color: #205c4f;
   overflow-wrap: anywhere;
+}
+
+.note-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding-left: 20px;
+}
+
+.note-list li {
+  padding-left: 4px;
+}
+
+.note-list span,
+.note-list time {
+  display: block;
+}
+
+.note-form {
+  border-top: 1px solid #dce3ea;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  margin-bottom: 18px;
+  padding-top: 14px;
+}
+
+.note-form label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.note-form button {
+  align-self: end;
 }
 
 .follow-up-list {
@@ -511,6 +549,10 @@ textarea {
   .follow-up-work,
   .follow-up-form,
   .interview-form {
+    grid-template-columns: 1fr;
+  }
+
+  .note-form {
     grid-template-columns: 1fr;
   }
 }

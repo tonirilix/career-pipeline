@@ -21,7 +21,8 @@ const appliedApplication: JobApplication = {
     }
   ],
   interviews: [],
-  followUps: []
+  followUps: [],
+  notes: []
 };
 
 describe("interview scheduling", () => {

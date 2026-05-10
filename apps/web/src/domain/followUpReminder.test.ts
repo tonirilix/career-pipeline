@@ -26,7 +26,8 @@ const application: JobApplication = {
     }
   ],
   interviews: [],
-  followUps: []
+  followUps: [],
+  notes: []
 };
 
 describe("follow-up reminders", () => {

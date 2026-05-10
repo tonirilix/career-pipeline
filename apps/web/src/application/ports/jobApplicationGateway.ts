@@ -7,6 +7,7 @@ import type {
   CompleteFollowUpReminderCommand,
   CreateFollowUpReminderCommand
 } from "../../domain/followUpReminder";
+import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
 import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
@@ -25,4 +26,5 @@ export type JobApplicationGateway = {
   completeFollowUpReminder(
     command: CompleteFollowUpReminderCommand
   ): Promise<JobApplication>;
+  addApplicationNote(command: AddApplicationNoteCommand): Promise<JobApplication>;
 };

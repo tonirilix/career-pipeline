@@ -20,7 +20,8 @@ const baseApplication: JobApplication = {
   stage: "Applied",
   timeline: [],
   interviews: [],
-  followUps: []
+  followUps: [],
+  notes: []
 };
 
 describe("closed work", () => {

@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
+  addNoteToApplication,
   advanceApplicationStage,
   completeApplicationFollowUpReminder,
   createApplicationFollowUpReminder,
@@ -14,6 +15,7 @@ import {
   applicationStages
 } from "../domain/applicationStage";
 import { isActiveApplication, isClosedApplication } from "../domain/closedWork";
+import type { AddApplicationNoteCommand } from "../domain/applicationNote";
 import type {
   CompleteFollowUpReminderCommand,
   CreateFollowUpReminderCommand
@@ -22,6 +24,7 @@ import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
   employmentTypes,
+  type ApplicationNote,
   type FollowUpReminder,
   type Interview,
   interviewOutcomes,
@@ -195,6 +198,23 @@ export function App({ gateway }: AppProps) {
       stableGateway,
       command
     );
+
+    if (!result.ok) {
+      setCommandError(result.failure.message);
+      return;
+    }
+
+    setApplications((current) =>
+      current.map((candidate) =>
+        candidate.id === result.application.id ? result.application : candidate
+      )
+    );
+  }
+
+  async function handleAddNote(command: AddApplicationNoteCommand) {
+    setCommandError(null);
+
+    const result = await addNoteToApplication(stableGateway, command);
 
     if (!result.ok) {
       setCommandError(result.failure.message);
@@ -415,6 +435,7 @@ export function App({ gateway }: AppProps) {
       {selectedApplication ? (
         <ApplicationDetails
           application={selectedApplication}
+          onAddNote={handleAddNote}
           onCreateFollowUp={handleCreateFollowUp}
           onScheduleInterview={handleScheduleInterview}
         />
@@ -528,16 +549,19 @@ function stageActionLabel(
 
 type ApplicationDetailsProps = {
   application: JobApplication;
+  onAddNote: (command: AddApplicationNoteCommand) => Promise<void>;
   onCreateFollowUp: (command: CreateFollowUpReminderCommand) => Promise<void>;
   onScheduleInterview: (command: ScheduleInterviewCommand) => Promise<void>;
 };
 
 function ApplicationDetails({
   application,
+  onAddNote,
   onCreateFollowUp,
   onScheduleInterview
 }: ApplicationDetailsProps) {
   const timeline = [...application.timeline].sort(compareTimelineEvents);
+  const notes = [...application.notes].sort(compareNotes);
   const interviews = [...application.interviews].sort(compareInterviews);
   const followUps = [...application.followUps].sort(compareFollowUps);
   const [interviewForm, setInterviewForm] = useState<
@@ -554,6 +578,7 @@ function ApplicationDetails({
     dueAt: "",
     note: ""
   });
+  const [noteBody, setNoteBody] = useState("");
 
   async function handleInterviewSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -581,6 +606,16 @@ function ApplicationDetails({
       dueAt: "",
       note: ""
     });
+  }
+
+  async function handleNoteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    await onAddNote({
+      applicationId: application.id,
+      body: noteBody
+    });
+    setNoteBody("");
   }
 
   return (
@@ -618,6 +653,35 @@ function ApplicationDetails({
           </dd>
         </div>
       </dl>
+
+      <section aria-label="Notes">
+        <h3>Notes</h3>
+        {notes.length > 0 ? (
+          <ol aria-label="Application notes" className="note-list">
+            {notes.map((note) => (
+              <li key={note.id}>
+                <time dateTime={note.createdAt}>
+                  {formatTimelineDate(note.createdAt)}
+                </time>
+                <span>{note.body}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No notes yet</p>
+        )}
+
+        <form className="note-form" onSubmit={handleNoteSubmit}>
+          <label>
+            Application note
+            <textarea
+              onChange={(event) => setNoteBody(event.target.value)}
+              value={noteBody}
+            />
+          </label>
+          <button type="submit">Add note</button>
+        </form>
+      </section>
 
       <section aria-label="Follow-ups">
         <h3>Follow-ups</h3>
@@ -719,7 +783,7 @@ function ApplicationDetails({
             />
           </label>
           <label>
-            Notes
+            Interview notes
             <textarea
               onChange={(event) =>
                 setInterviewForm((current) => ({
@@ -864,6 +928,12 @@ function FollowUpWorkList({
 function compareTimelineEvents(left: TimelineEvent, right: TimelineEvent) {
   return (
     new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime()
+  );
+}
+
+function compareNotes(left: ApplicationNote, right: ApplicationNote) {
+  return (
+    new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
   );
 }
 

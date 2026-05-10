@@ -340,7 +340,10 @@ describe("Job application tracker shell", () => {
       "Recruiter screen"
     );
     await user.type(screen.getByLabelText("Date and time"), "2026-05-12T15:00");
-    await user.type(screen.getByLabelText("Notes"), "Ask about team shape");
+    await user.type(
+      screen.getByLabelText("Interview notes"),
+      "Ask about team shape"
+    );
     await user.selectOptions(screen.getByLabelText("Outcome"), "Scheduled");
     await user.click(screen.getByRole("button", { name: "Schedule interview" }));
 
@@ -516,5 +519,41 @@ describe("Job application tracker shell", () => {
     expect(
       await screen.findByText("Follow-up due date is required.")
     ).toBeInTheDocument();
+  });
+
+  it("lets a user add a note and see it in application details and timeline", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "View Linear details" })
+    );
+
+    await user.type(
+      screen.getByLabelText("Application note"),
+      "Recruiter mentioned the team is expanding."
+    );
+    await user.click(screen.getByRole("button", { name: "Add note" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    const notes = within(detail).getByRole("list", {
+      name: "Application notes"
+    });
+
+    expect(
+      await within(notes).findByText("Recruiter mentioned the team is expanding.")
+    ).toBeInTheDocument();
+    expect(within(detail).getByText("Added note")).toBeInTheDocument();
   });
 });
