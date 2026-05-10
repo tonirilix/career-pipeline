@@ -240,4 +240,80 @@ describe("Job application tracker shell", () => {
 
     expect(await screen.findByText("1 active application")).toBeInTheDocument();
   });
+
+  it("lets a user inspect application details and timeline without leaving the board", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.selectOptions(screen.getByLabelText("Source"), "Referral");
+    await user.type(screen.getByLabelText("Location"), "Remote");
+    await user.type(screen.getByLabelText("Compensation"), "$160k-$190k");
+    await user.selectOptions(screen.getByLabelText("Employment type"), "Full-time");
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.click(
+      await screen.findByRole("button", { name: "View Linear details" })
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Application pipeline" })
+    ).toBeInTheDocument();
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
+    expect(
+      within(detail).getByRole("heading", { name: "Linear" })
+    ).toBeInTheDocument();
+    expect(within(detail).getByText("Frontend Engineer")).toBeInTheDocument();
+    expect(within(detail).getByText("Saved")).toBeInTheDocument();
+    expect(within(detail).getByText("Referral")).toBeInTheDocument();
+    expect(within(detail).getByText("Remote")).toBeInTheDocument();
+    expect(within(detail).getByText("$160k-$190k")).toBeInTheDocument();
+    expect(within(detail).getByText("Full-time")).toBeInTheDocument();
+    expect(
+      within(detail).getByRole("link", {
+        name: "https://linear.app/careers/frontend-engineer"
+      })
+    ).toHaveAttribute("href", "https://linear.app/careers/frontend-engineer");
+    expect(within(detail).getByText("Saved opportunity")).toBeInTheDocument();
+  });
+
+  it("keeps selected application timeline updated after stage changes", async () => {
+    const user = userEvent.setup();
+
+    render(<App gateway={createJobApplicationGraphqlGateway()} />);
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(
+      await screen.findByRole("button", { name: "View Linear details" })
+    );
+    await user.click(screen.getByRole("button", { name: "Mark Linear as applied" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    const timeline = within(detail).getByRole("list", { name: "Timeline events" });
+    const events = within(timeline).getAllByRole("listitem");
+
+    expect(events).toHaveLength(2);
+    expect(events[0]).toHaveTextContent("Saved opportunity");
+    expect(events[1]).toHaveTextContent("Moved from Saved to Applied");
+  });
 });

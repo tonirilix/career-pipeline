@@ -17,6 +17,7 @@ import {
   employmentTypes,
   type JobApplication,
   jobSources,
+  type TimelineEvent
 } from "../domain/jobOpportunity";
 import { getNextStages } from "../domain/stageTransition";
 import "./App.css";
@@ -29,6 +30,9 @@ export function App({ gateway }: AppProps) {
   const stableGateway = useMemo(() => gateway, [gateway]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    string | null
+  >(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [commandError, setCommandError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateSavedJobOpportunityCommand>({
@@ -91,6 +95,9 @@ export function App({ gateway }: AppProps) {
   }
 
   const activeApplicationCount = applications.filter(isActiveApplication).length;
+  const selectedApplication = applications.find(
+    (application) => application.id === selectedApplicationId
+  );
 
   async function handleStageChange(
     application: JobApplication,
@@ -301,6 +308,7 @@ export function App({ gateway }: AppProps) {
                     application={application}
                     key={application.id}
                     onStageChange={handleStageChange}
+                    onViewDetails={setSelectedApplicationId}
                   />
                 ))}
               </div>
@@ -311,6 +319,10 @@ export function App({ gateway }: AppProps) {
           );
         })}
       </section>
+
+      {selectedApplication ? (
+        <ApplicationDetails application={selectedApplication} />
+      ) : null}
     </main>
   );
 }
@@ -321,11 +333,13 @@ type ApplicationCardProps = {
     application: JobApplication,
     toStage: ApplicationStage
   ) => Promise<void>;
+  onViewDetails: (applicationId: string) => void;
 };
 
 function ApplicationCard({
   application,
-  onStageChange
+  onStageChange,
+  onViewDetails
 }: ApplicationCardProps) {
   const [selectedStage, setSelectedStage] = useState<ApplicationStage>(
     application.stage
@@ -354,6 +368,13 @@ function ApplicationCard({
           <dd>{application.location || "Not set"}</dd>
         </div>
       </dl>
+      <button
+        className="card-action secondary"
+        onClick={() => onViewDetails(application.id)}
+        type="button"
+      >
+        View {application.company} details
+      </button>
       {primaryNextStage ? (
         <button
           className="card-action"
@@ -407,4 +428,81 @@ function stageActionLabel(
   }
 
   return `Move ${application.company} to ${nextStage}`;
+}
+
+type ApplicationDetailsProps = {
+  application: JobApplication;
+};
+
+function ApplicationDetails({ application }: ApplicationDetailsProps) {
+  const timeline = [...application.timeline].sort(compareTimelineEvents);
+
+  return (
+    <aside aria-label="Application details" className="detail-panel">
+      <header>
+        <div>
+          <p className="eyebrow">Application details</p>
+          <h2>{application.company}</h2>
+        </div>
+        <span>{application.stage}</span>
+      </header>
+      <p>{application.roleTitle}</p>
+
+      <dl className="detail-grid">
+        <div>
+          <dt>Source</dt>
+          <dd>{application.source}</dd>
+        </div>
+        <div>
+          <dt>Location</dt>
+          <dd>{application.location || "Not set"}</dd>
+        </div>
+        <div>
+          <dt>Compensation</dt>
+          <dd>{application.compensation || "Not set"}</dd>
+        </div>
+        <div>
+          <dt>Employment type</dt>
+          <dd>{application.employmentType}</dd>
+        </div>
+        <div>
+          <dt>Posting URL</dt>
+          <dd>
+            <a href={application.postingUrl}>{application.postingUrl}</a>
+          </dd>
+        </div>
+      </dl>
+
+      <section aria-label="Timeline">
+        <h3>Timeline</h3>
+        {timeline.length > 0 ? (
+          <ol aria-label="Timeline events" className="timeline-list">
+            {timeline.map((event) => (
+              <li key={event.id}>
+                <time dateTime={event.occurredAt}>
+                  {formatTimelineDate(event.occurredAt)}
+                </time>
+                <span>{event.description}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No timeline events yet</p>
+        )}
+      </section>
+    </aside>
+  );
+}
+
+function compareTimelineEvents(left: TimelineEvent, right: TimelineEvent) {
+  return (
+    new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime()
+  );
+}
+
+function formatTimelineDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(value));
 }

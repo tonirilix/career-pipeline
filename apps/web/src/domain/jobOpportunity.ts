@@ -1,3 +1,5 @@
+import type { ApplicationStage } from "./applicationStage";
+
 export const jobSources = [
   "LinkedIn",
   "Referral",
@@ -100,4 +102,3 @@ export function validateSavedJobOpportunity(
 
   return { ok: true, value: trimmed };
 }
-import type { ApplicationStage } from "./applicationStage";
