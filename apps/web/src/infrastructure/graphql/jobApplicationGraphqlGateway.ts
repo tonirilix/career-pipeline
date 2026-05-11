@@ -1,9 +1,17 @@
 import type { JobApplicationGateway } from "../../application/ports/jobApplicationGateway";
 import type {
   CreateSavedJobOpportunityCommand,
+  EmploymentType,
+  FollowUpReminder,
+  Interview,
+  InterviewOutcome,
+  InterviewType,
   JobApplication,
+  JobSource,
+  TimelineEvent,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type { ApplicationStage } from "../../domain/applicationStage";
 import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
 import type {
   CompleteFollowUpReminderCommand,
@@ -15,6 +23,59 @@ import type { StageTransitionCommand } from "../../domain/stageTransition";
 type GraphqlResponse<TData> = {
   data?: TData;
   errors?: { message: string }[];
+};
+
+type GraphqlTimelineEventDto = {
+  __typename?: string;
+  id: string;
+  occurredAt: string;
+  description: string;
+};
+
+type GraphqlInterviewDto = {
+  __typename?: string;
+  id: string;
+  type: InterviewType;
+  scheduledAt: string;
+  notes: string;
+  outcome: InterviewOutcome;
+};
+
+type GraphqlFollowUpReminderDto = {
+  __typename?: string;
+  id: string;
+  applicationId: string;
+  dueAt: string;
+  note: string;
+  completedAt: string | null;
+};
+
+type GraphqlApplicationNoteDto = {
+  __typename?: string;
+  id: string;
+  body: string;
+  createdAt: string;
+};
+
+type GraphqlJobApplicationDto = {
+  __typename?: string;
+  id: string;
+  company: string;
+  roleTitle: string;
+  postingUrl: string;
+  source: JobSource;
+  location: string;
+  compensation: string;
+  employmentType: EmploymentType;
+  stage: ApplicationStage;
+  timeline: GraphqlTimelineEventDto[];
+  interviews: GraphqlInterviewDto[];
+  followUps: GraphqlFollowUpReminderDto[];
+  notes: GraphqlApplicationNoteDto[];
+};
+
+type GraphqlSavedJobOpportunityDto = GraphqlJobApplicationDto & {
+  stage: "Saved";
 };
 
 const applicationFields = `
@@ -115,18 +176,18 @@ export function createJobApplicationGraphqlGateway(
   return {
     async listApplications() {
       const response = await requestGraphql<{
-        applications: JobApplication[];
+        applications: GraphqlJobApplicationDto[];
       }>(endpoint, {
         query: listApplicationsQuery,
         operationName: "ListApplications"
       });
 
-      return response.applications;
+      return response.applications.map(mapJobApplication);
     },
 
     async createSavedOpportunity(command: CreateSavedJobOpportunityCommand) {
       const response = await requestGraphql<{
-        createSavedOpportunity: SavedJobOpportunity;
+        createSavedOpportunity: GraphqlSavedJobOpportunityDto;
       }>(endpoint, {
         query: createSavedOpportunityMutation,
         operationName: "CreateSavedOpportunity",
@@ -135,12 +196,12 @@ export function createJobApplicationGraphqlGateway(
         }
       });
 
-      return response.createSavedOpportunity;
+      return mapSavedJobOpportunity(response.createSavedOpportunity);
     },
 
     async advanceApplicationStage(command: StageTransitionCommand) {
       const response = await requestGraphql<{
-        advanceApplicationStage: JobApplication;
+        advanceApplicationStage: GraphqlJobApplicationDto;
       }>(endpoint, {
         query: advanceApplicationStageMutation,
         operationName: "AdvanceApplicationStage",
@@ -149,12 +210,12 @@ export function createJobApplicationGraphqlGateway(
         }
       });
 
-      return response.advanceApplicationStage;
+      return mapJobApplication(response.advanceApplicationStage);
     },
 
     async scheduleInterview(command: ScheduleInterviewCommand) {
       const response = await requestGraphql<{
-        scheduleInterview: JobApplication;
+        scheduleInterview: GraphqlJobApplicationDto;
       }>(endpoint, {
         query: scheduleInterviewMutation,
         operationName: "ScheduleInterview",
@@ -163,12 +224,12 @@ export function createJobApplicationGraphqlGateway(
         }
       });
 
-      return response.scheduleInterview;
+      return mapJobApplication(response.scheduleInterview);
     },
 
     async createFollowUpReminder(command: CreateFollowUpReminderCommand) {
       const response = await requestGraphql<{
-        createFollowUpReminder: JobApplication;
+        createFollowUpReminder: GraphqlJobApplicationDto;
       }>(endpoint, {
         query: createFollowUpReminderMutation,
         operationName: "CreateFollowUpReminder",
@@ -177,12 +238,12 @@ export function createJobApplicationGraphqlGateway(
         }
       });
 
-      return response.createFollowUpReminder;
+      return mapJobApplication(response.createFollowUpReminder);
     },
 
     async completeFollowUpReminder(command: CompleteFollowUpReminderCommand) {
       const response = await requestGraphql<{
-        completeFollowUpReminder: JobApplication;
+        completeFollowUpReminder: GraphqlJobApplicationDto;
       }>(endpoint, {
         query: completeFollowUpReminderMutation,
         operationName: "CompleteFollowUpReminder",
@@ -191,12 +252,12 @@ export function createJobApplicationGraphqlGateway(
         }
       });
 
-      return response.completeFollowUpReminder;
+      return mapJobApplication(response.completeFollowUpReminder);
     },
 
     async addApplicationNote(command: AddApplicationNoteCommand) {
       const response = await requestGraphql<{
-        addApplicationNote: JobApplication;
+        addApplicationNote: GraphqlJobApplicationDto;
       }>(endpoint, {
         query: addApplicationNoteMutation,
         operationName: "AddApplicationNote",
@@ -205,8 +266,75 @@ export function createJobApplicationGraphqlGateway(
         }
       });
 
-      return response.addApplicationNote;
+      return mapJobApplication(response.addApplicationNote);
     }
+  };
+}
+
+function mapSavedJobOpportunity(
+  dto: GraphqlSavedJobOpportunityDto
+): SavedJobOpportunity {
+  return {
+    ...mapJobApplication(dto),
+    stage: "Saved"
+  };
+}
+
+function mapJobApplication(dto: GraphqlJobApplicationDto): JobApplication {
+  return {
+    id: dto.id,
+    company: dto.company,
+    roleTitle: dto.roleTitle,
+    postingUrl: dto.postingUrl,
+    source: dto.source,
+    location: dto.location,
+    compensation: dto.compensation,
+    employmentType: dto.employmentType,
+    stage: dto.stage,
+    timeline: dto.timeline.map(mapTimelineEvent),
+    interviews: dto.interviews.map(mapInterview),
+    followUps: dto.followUps.map(mapFollowUpReminder),
+    notes: dto.notes.map(mapApplicationNote)
+  };
+}
+
+function mapTimelineEvent(dto: GraphqlTimelineEventDto): TimelineEvent {
+  return {
+    id: dto.id,
+    occurredAt: dto.occurredAt,
+    description: dto.description
+  };
+}
+
+function mapInterview(dto: GraphqlInterviewDto): Interview {
+  return {
+    id: dto.id,
+    type: dto.type,
+    scheduledAt: dto.scheduledAt,
+    notes: dto.notes,
+    outcome: dto.outcome
+  };
+}
+
+function mapFollowUpReminder(
+  dto: GraphqlFollowUpReminderDto
+): FollowUpReminder {
+  return {
+    id: dto.id,
+    applicationId: dto.applicationId,
+    dueAt: dto.dueAt,
+    note: dto.note,
+    completedAt: dto.completedAt
+  };
+}
+
+function mapApplicationNote(
+  dto: GraphqlApplicationNoteDto
+): JobApplication["notes"][number] {
+  return {
+    id: dto.id,
+    body: dto.body,
+    createdAt: dto.createdAt
   };
 }
 
