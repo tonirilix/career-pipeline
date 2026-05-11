@@ -9,6 +9,19 @@ import type {
   StageTransitionCommand,
   StageTransitionFailure
 } from "../domain/stageTransition";
+import type {
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand,
+  FollowUpReminderFailure
+} from "../domain/followUpReminder";
+import type {
+  AddApplicationNoteCommand,
+  ApplicationNoteFailure
+} from "../domain/applicationNote";
+import type {
+  ScheduleInterviewCommand,
+  ScheduleInterviewFailure
+} from "../domain/interviewScheduling";
 import type { JobApplicationGateway } from "./ports/jobApplicationGateway";
 
 export type CreateSavedOpportunityResult =
@@ -18,6 +31,22 @@ export type CreateSavedOpportunityResult =
 export type AdvanceApplicationStageResult =
   | { ok: true; application: JobApplication }
   | { ok: false; failure: StageTransitionFailure };
+
+export type ScheduleApplicationInterviewResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: ScheduleInterviewFailure };
+
+export type CreateApplicationFollowUpReminderResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: FollowUpReminderFailure };
+
+export type CompleteApplicationFollowUpReminderResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: FollowUpReminderFailure };
+
+export type AddNoteToApplicationResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: ApplicationNoteFailure };
 
 export function listApplications(gateway: JobApplicationGateway) {
   return gateway.listApplications();
@@ -56,6 +85,92 @@ export async function advanceApplicationStage(
           error instanceof Error
             ? error.message
             : "Could not update the application stage."
+      }
+    };
+  }
+}
+
+export async function scheduleApplicationInterview(
+  gateway: JobApplicationGateway,
+  command: ScheduleInterviewCommand
+): Promise<ScheduleApplicationInterviewResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.scheduleInterview(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not schedule the interview."
+      }
+    };
+  }
+}
+
+export async function createApplicationFollowUpReminder(
+  gateway: JobApplicationGateway,
+  command: CreateFollowUpReminderCommand
+): Promise<CreateApplicationFollowUpReminderResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.createFollowUpReminder(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not create the follow-up reminder."
+      }
+    };
+  }
+}
+
+export async function completeApplicationFollowUpReminder(
+  gateway: JobApplicationGateway,
+  command: CompleteFollowUpReminderCommand
+): Promise<CompleteApplicationFollowUpReminderResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.completeFollowUpReminder(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not complete the follow-up reminder."
+      }
+    };
+  }
+}
+
+export async function addNoteToApplication(
+  gateway: JobApplicationGateway,
+  command: AddApplicationNoteCommand
+): Promise<AddNoteToApplicationResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.addApplicationNote(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error ? error.message : "Could not add the note."
       }
     };
   }

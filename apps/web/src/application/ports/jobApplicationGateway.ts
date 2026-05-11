@@ -3,6 +3,12 @@ import type {
   JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type {
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand
+} from "../../domain/followUpReminder";
+import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
+import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 export type JobApplicationGateway = {
@@ -13,4 +19,12 @@ export type JobApplicationGateway = {
   advanceApplicationStage(
     command: StageTransitionCommand
   ): Promise<JobApplication>;
+  scheduleInterview(command: ScheduleInterviewCommand): Promise<JobApplication>;
+  createFollowUpReminder(
+    command: CreateFollowUpReminderCommand
+  ): Promise<JobApplication>;
+  completeFollowUpReminder(
+    command: CompleteFollowUpReminderCommand
+  ): Promise<JobApplication>;
+  addApplicationNote(command: AddApplicationNoteCommand): Promise<JobApplication>;
 };

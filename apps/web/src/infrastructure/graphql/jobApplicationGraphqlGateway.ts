@@ -4,6 +4,12 @@ import type {
   JobApplication,
   SavedJobOpportunity
 } from "../../domain/jobOpportunity";
+import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
+import type {
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand
+} from "../../domain/followUpReminder";
+import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 type GraphqlResponse<TData> = {
@@ -26,6 +32,25 @@ const applicationFields = `
         occurredAt
         description
       }
+      interviews {
+        id
+        type
+        scheduledAt
+        notes
+        outcome
+      }
+      followUps {
+        id
+        applicationId
+        dueAt
+        note
+        completedAt
+      }
+      notes {
+        id
+        body
+        createdAt
+      }
 `;
 
 const listApplicationsQuery = `
@@ -47,6 +72,38 @@ const createSavedOpportunityMutation = `
 const advanceApplicationStageMutation = `
   mutation AdvanceApplicationStage($input: AdvanceApplicationStageInput!) {
     advanceApplicationStage(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const scheduleInterviewMutation = `
+  mutation ScheduleInterview($input: ScheduleInterviewInput!) {
+    scheduleInterview(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const createFollowUpReminderMutation = `
+  mutation CreateFollowUpReminder($input: CreateFollowUpReminderInput!) {
+    createFollowUpReminder(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const completeFollowUpReminderMutation = `
+  mutation CompleteFollowUpReminder($input: CompleteFollowUpReminderInput!) {
+    completeFollowUpReminder(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
+const addApplicationNoteMutation = `
+  mutation AddApplicationNote($input: AddApplicationNoteInput!) {
+    addApplicationNote(input: $input) {
       ${applicationFields}
     }
   }
@@ -93,6 +150,62 @@ export function createJobApplicationGraphqlGateway(
       });
 
       return response.advanceApplicationStage;
+    },
+
+    async scheduleInterview(command: ScheduleInterviewCommand) {
+      const response = await requestGraphql<{
+        scheduleInterview: JobApplication;
+      }>(endpoint, {
+        query: scheduleInterviewMutation,
+        operationName: "ScheduleInterview",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.scheduleInterview;
+    },
+
+    async createFollowUpReminder(command: CreateFollowUpReminderCommand) {
+      const response = await requestGraphql<{
+        createFollowUpReminder: JobApplication;
+      }>(endpoint, {
+        query: createFollowUpReminderMutation,
+        operationName: "CreateFollowUpReminder",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.createFollowUpReminder;
+    },
+
+    async completeFollowUpReminder(command: CompleteFollowUpReminderCommand) {
+      const response = await requestGraphql<{
+        completeFollowUpReminder: JobApplication;
+      }>(endpoint, {
+        query: completeFollowUpReminderMutation,
+        operationName: "CompleteFollowUpReminder",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.completeFollowUpReminder;
+    },
+
+    async addApplicationNote(command: AddApplicationNoteCommand) {
+      const response = await requestGraphql<{
+        addApplicationNote: JobApplication;
+      }>(endpoint, {
+        query: addApplicationNoteMutation,
+        operationName: "AddApplicationNote",
+        variables: {
+          input: command
+        }
+      });
+
+      return response.addApplicationNote;
     }
   };
 }

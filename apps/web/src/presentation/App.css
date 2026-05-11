@@ -30,7 +30,8 @@ button {
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid #cbd5df;
   border-radius: 6px;
   color: #1f2933;
@@ -38,6 +39,11 @@ select {
   min-height: 40px;
   padding: 8px 10px;
   width: 100%;
+}
+
+textarea {
+  min-height: 88px;
+  resize: vertical;
 }
 
 .app-shell {
@@ -135,6 +141,74 @@ select {
   color: #334155;
   margin: 0 auto 16px;
   max-width: 1440px;
+}
+
+.pipeline-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  margin: 0 auto 20px;
+  max-width: 1440px;
+}
+
+.pipeline-controls label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.follow-up-work {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  margin: 0 auto 20px;
+  max-width: 1440px;
+}
+
+.follow-up-work > div {
+  background: #ffffff;
+  border: 1px solid #d7dde4;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.follow-up-work h2 {
+  font-size: 0.95rem;
+  margin: 0 0 10px;
+}
+
+.follow-up-work p {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.follow-up-work-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.follow-up-work-list li {
+  padding-left: 4px;
+}
+
+.follow-up-work-list strong,
+.follow-up-work-list span,
+.follow-up-work-list time {
+  display: block;
+}
+
+.follow-up-work-list time {
+  color: #687381;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-top: 2px;
+  text-transform: uppercase;
 }
 
 .stage-column {
@@ -314,6 +388,9 @@ select {
 }
 
 .detail-grid dt,
+.follow-up-list time,
+.interview-list time,
+.note-list time,
 .timeline-list time {
   color: #687381;
   font-size: 0.72rem;
@@ -328,6 +405,124 @@ select {
 .detail-grid a {
   color: #205c4f;
   overflow-wrap: anywhere;
+}
+
+.note-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding-left: 20px;
+}
+
+.note-list li {
+  padding-left: 4px;
+}
+
+.note-list span,
+.note-list time {
+  display: block;
+}
+
+.note-form {
+  border-top: 1px solid #dce3ea;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  margin-bottom: 18px;
+  padding-top: 14px;
+}
+
+.note-form label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.note-form button {
+  align-self: end;
+}
+
+.follow-up-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding-left: 20px;
+}
+
+.follow-up-list li {
+  padding-left: 4px;
+}
+
+.follow-up-list strong,
+.follow-up-list span,
+.follow-up-list time {
+  display: block;
+}
+
+.follow-up-form {
+  border-top: 1px solid #dce3ea;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  margin-bottom: 18px;
+  padding-top: 14px;
+}
+
+.follow-up-form label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.follow-up-form button {
+  align-self: end;
+}
+
+.interview-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding-left: 20px;
+}
+
+.interview-list li {
+  padding-left: 4px;
+}
+
+.interview-list strong,
+.interview-list span,
+.interview-list time {
+  display: block;
+}
+
+.interview-list p {
+  color: #334155;
+  margin: 4px 0 0;
+}
+
+.interview-form {
+  border-top: 1px solid #dce3ea;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  margin-bottom: 18px;
+  padding-top: 14px;
+}
+
+.interview-form label {
+  color: #3f4a57;
+  display: grid;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.interview-form button {
+  align-self: end;
 }
 
 .timeline-list {
@@ -365,6 +560,16 @@ select {
   }
 
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .follow-up-work,
+  .follow-up-form,
+  .interview-form {
+    grid-template-columns: 1fr;
+  }
+
+  .note-form {
     grid-template-columns: 1fr;
   }
 }

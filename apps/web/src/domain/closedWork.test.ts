@@ -18,7 +18,10 @@ const baseApplication: JobApplication = {
   compensation: "$160k-$190k",
   employmentType: "Full-time",
   stage: "Applied",
-  timeline: []
+  timeline: [],
+  interviews: [],
+  followUps: [],
+  notes: []
 };
 
 describe("closed work", () => {
@@ -43,24 +46,28 @@ describe("closed work", () => {
         id: "reminder-1",
         applicationId: "active-job",
         dueAt: "2026-05-11T12:00:00.000Z",
+        note: "Follow up with recruiter",
         completedAt: null
       },
       {
         id: "reminder-2",
         applicationId: "rejected-job",
         dueAt: "2026-05-11T12:00:00.000Z",
+        note: "Follow up with recruiter",
         completedAt: null
       },
       {
         id: "reminder-3",
         applicationId: "withdrawn-job",
         dueAt: "2026-05-11T12:00:00.000Z",
+        note: "Follow up with recruiter",
         completedAt: null
       },
       {
         id: "reminder-4",
         applicationId: "active-job",
         dueAt: "2026-05-11T12:00:00.000Z",
+        note: "Follow up with recruiter",
         completedAt: "2026-05-10T12:00:00.000Z"
       }
     ];

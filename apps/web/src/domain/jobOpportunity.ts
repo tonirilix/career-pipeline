@@ -25,6 +25,46 @@ export type TimelineEvent = {
   description: string;
 };
 
+export const interviewTypes = [
+  "Recruiter screen",
+  "Hiring manager",
+  "Technical",
+  "Onsite",
+  "Other"
+] as const;
+
+export const interviewOutcomes = [
+  "Scheduled",
+  "Passed",
+  "Rejected",
+  "No decision"
+] as const;
+
+export type InterviewType = (typeof interviewTypes)[number];
+export type InterviewOutcome = (typeof interviewOutcomes)[number];
+
+export type Interview = {
+  id: string;
+  type: InterviewType;
+  scheduledAt: string;
+  notes: string;
+  outcome: InterviewOutcome;
+};
+
+export type FollowUpReminder = {
+  id: string;
+  applicationId: string;
+  dueAt: string;
+  note: string;
+  completedAt: string | null;
+};
+
+export type ApplicationNote = {
+  id: string;
+  body: string;
+  createdAt: string;
+};
+
 export type JobApplication = {
   id: string;
   company: string;
@@ -36,6 +76,9 @@ export type JobApplication = {
   employmentType: EmploymentType;
   stage: ApplicationStage;
   timeline: TimelineEvent[];
+  interviews: Interview[];
+  followUps: FollowUpReminder[];
+  notes: ApplicationNote[];
 };
 
 export type SavedJobOpportunity = JobApplication & { stage: "Saved" };
