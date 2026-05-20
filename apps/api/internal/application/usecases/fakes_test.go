@@ -1,0 +1,208 @@
+package usecases_test
+
+import (
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
+	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+)
+
+// fakeClock always returns the fixed time.
+type fakeClock struct{ t time.Time }
+
+func (c *fakeClock) Now() time.Time { return c.t }
+
+// fakeIDs returns sequential IDs.
+type fakeIDs struct{ n int }
+
+func (g *fakeIDs) New() string {
+	g.n++
+	return fmt.Sprintf("id-%d", g.n)
+}
+
+// fakeAppRepo is an in-memory JobApplicationRepository.
+type fakeAppRepo struct {
+	apps map[string]*domain.JobApplication
+}
+
+func newFakeAppRepo() *fakeAppRepo { return &fakeAppRepo{apps: map[string]*domain.JobApplication{}} }
+
+func (r *fakeAppRepo) Save(app *domain.JobApplication) error {
+	r.apps[app.ID] = app
+	return nil
+}
+func (r *fakeAppRepo) FindByID(id string) (*domain.JobApplication, error) {
+	app, ok := r.apps[id]
+	if !ok {
+		return nil, domain.ErrApplicationNotFound
+	}
+	return app, nil
+}
+func (r *fakeAppRepo) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
+	var out []*domain.JobApplication
+	for _, app := range r.apps {
+		out = append(out, app)
+	}
+	return out, nil
+}
+func (r *fakeAppRepo) UpdateStage(id string, stage domain.ApplicationStage) error {
+	app, ok := r.apps[id]
+	if !ok {
+		return domain.ErrApplicationNotFound
+	}
+	app.Stage = stage
+	return nil
+}
+
+// fakeTimelineRepo is an in-memory TimelineRepository.
+type fakeTimelineRepo struct {
+	events map[string][]*domain.TimelineEvent
+}
+
+func newFakeTimelineRepo() *fakeTimelineRepo {
+	return &fakeTimelineRepo{events: map[string][]*domain.TimelineEvent{}}
+}
+func (r *fakeTimelineRepo) Save(applicationID string, event *domain.TimelineEvent) error {
+	r.events[applicationID] = append(r.events[applicationID], event)
+	return nil
+}
+func (r *fakeTimelineRepo) ListByApplication(applicationID string) ([]*domain.TimelineEvent, error) {
+	return r.events[applicationID], nil
+}
+
+// fakeInterviewRepo is an in-memory InterviewRepository.
+type fakeInterviewRepo struct {
+	interviews map[string]*domain.Interview
+	byApp      map[string][]string
+}
+
+func newFakeInterviewRepo() *fakeInterviewRepo {
+	return &fakeInterviewRepo{
+		interviews: map[string]*domain.Interview{},
+		byApp:      map[string][]string{},
+	}
+}
+func (r *fakeInterviewRepo) Save(applicationID string, iv *domain.Interview) error {
+	r.interviews[iv.ID] = iv
+	r.byApp[applicationID] = append(r.byApp[applicationID], iv.ID)
+	return nil
+}
+func (r *fakeInterviewRepo) FindByID(id string) (*domain.Interview, error) {
+	iv, ok := r.interviews[id]
+	if !ok {
+		return nil, domain.ErrInterviewNotFound
+	}
+	return iv, nil
+}
+func (r *fakeInterviewRepo) UpdateOutcome(id string, outcome domain.InterviewOutcome) error {
+	iv, ok := r.interviews[id]
+	if !ok {
+		return domain.ErrInterviewNotFound
+	}
+	iv.Outcome = outcome
+	return nil
+}
+func (r *fakeInterviewRepo) ListByApplication(applicationID string) ([]*domain.Interview, error) {
+	var out []*domain.Interview
+	for _, id := range r.byApp[applicationID] {
+		out = append(out, r.interviews[id])
+	}
+	return out, nil
+}
+
+// fakeFollowUpRepo is an in-memory FollowUpRepository.
+type fakeFollowUpRepo struct {
+	followUps map[string]*domain.FollowUpReminder
+	byApp     map[string][]string
+}
+
+func newFakeFollowUpRepo() *fakeFollowUpRepo {
+	return &fakeFollowUpRepo{
+		followUps: map[string]*domain.FollowUpReminder{},
+		byApp:     map[string][]string{},
+	}
+}
+func (r *fakeFollowUpRepo) Save(fu *domain.FollowUpReminder) error {
+	r.followUps[fu.ID] = fu
+	r.byApp[fu.ApplicationID] = append(r.byApp[fu.ApplicationID], fu.ID)
+	return nil
+}
+func (r *fakeFollowUpRepo) FindByID(id string) (*domain.FollowUpReminder, error) {
+	fu, ok := r.followUps[id]
+	if !ok {
+		return nil, domain.ErrFollowUpNotFound
+	}
+	return fu, nil
+}
+func (r *fakeFollowUpRepo) UpdateCompleted(id string, completedAt time.Time) error {
+	fu, ok := r.followUps[id]
+	if !ok {
+		return domain.ErrFollowUpNotFound
+	}
+	fu.CompletedAt = &completedAt
+	return nil
+}
+func (r *fakeFollowUpRepo) ListByApplication(applicationID string) ([]*domain.FollowUpReminder, error) {
+	var out []*domain.FollowUpReminder
+	for _, id := range r.byApp[applicationID] {
+		out = append(out, r.followUps[id])
+	}
+	return out, nil
+}
+func (r *fakeFollowUpRepo) ListUpcoming(now time.Time) ([]*domain.FollowUpReminder, error) {
+	var out []*domain.FollowUpReminder
+	for _, fu := range r.followUps {
+		if fu.CompletedAt == nil && fu.DueAt.After(now) {
+			out = append(out, fu)
+		}
+	}
+	return out, nil
+}
+func (r *fakeFollowUpRepo) ListOverdue(now time.Time) ([]*domain.FollowUpReminder, error) {
+	var out []*domain.FollowUpReminder
+	for _, fu := range r.followUps {
+		if fu.CompletedAt == nil && fu.DueAt.Before(now) {
+			out = append(out, fu)
+		}
+	}
+	return out, nil
+}
+func (r *fakeFollowUpRepo) DeactivateByApplication(applicationID string, completedAt time.Time) error {
+	for _, id := range r.byApp[applicationID] {
+		fu := r.followUps[id]
+		if fu.CompletedAt == nil {
+			fu.CompletedAt = &completedAt
+		}
+	}
+	return nil
+}
+
+// fakeNoteRepo is an in-memory NoteRepository.
+type fakeNoteRepo struct {
+	notes map[string]*domain.ApplicationNote
+	byApp map[string][]string
+}
+
+func newFakeNoteRepo() *fakeNoteRepo {
+	return &fakeNoteRepo{
+		notes: map[string]*domain.ApplicationNote{},
+		byApp: map[string][]string{},
+	}
+}
+func (r *fakeNoteRepo) Save(applicationID string, note *domain.ApplicationNote) error {
+	r.notes[note.ID] = note
+	r.byApp[applicationID] = append(r.byApp[applicationID], note.ID)
+	return nil
+}
+func (r *fakeNoteRepo) ListByApplication(applicationID string) ([]*domain.ApplicationNote, error) {
+	var out []*domain.ApplicationNote
+	for _, id := range r.byApp[applicationID] {
+		out = append(out, r.notes[id])
+	}
+	return out, nil
+}
+
+// errNotFound is used to distinguish not-found from other errors.
+var errNotFound = errors.New("not found")

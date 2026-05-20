@@ -13,7 +13,7 @@ if (!rootElement) {
 }
 
 async function enableMockBackend() {
-  if (import.meta.env.DEV) {
+  if (import.meta.env.MODE !== "production") {
     const { worker } = await import("./infrastructure/msw/browser");
 
     await worker.start({
