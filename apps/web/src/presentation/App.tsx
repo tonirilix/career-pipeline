@@ -46,6 +46,7 @@ type AppProps = {
 export function App({ gateway, usePipelineControls }: AppProps) {
   const stableGateway = useMemo(() => gateway, [gateway]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
@@ -200,7 +201,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar>
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)}>
         <div className="border-b border-border px-4 py-4 shrink-0">
           <p className="text-[0.6rem] text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
             Pipeline workspace
@@ -250,21 +251,35 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         />
       </Sidebar>
 
-      <main className="flex-1 overflow-auto px-6 py-6">
-        {commandError ? (
-          <p
-            className="border border-border text-destructive text-xs px-4 py-3 mb-5"
-            role="alert"
+      <main className="flex-1 overflow-auto flex flex-col">
+        {/* Mobile top bar */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border md:hidden shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open sidebar"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
           >
-            <span className="font-bold uppercase tracking-widest">Error:</span> {commandError}
-          </p>
-        ) : null}
+            ☰
+          </button>
+          <span className="text-sm font-bold text-foreground">Job Application Tracker</span>
+        </div>
+        <div className="flex-1 overflow-auto px-6 py-6">
+          {commandError ? (
+            <p
+              className="border border-border text-destructive text-xs px-4 py-3 mb-5"
+              role="alert"
+            >
+              <span className="font-bold uppercase tracking-widest">Error:</span> {commandError}
+            </p>
+          ) : null}
 
         <PipelineBoard
           applications={visibleApplications}
           onStageChange={handleStageChange}
           onViewDetails={setSelectedApplicationId}
         />
+        </div>
       </main>
 
       <SlideOver

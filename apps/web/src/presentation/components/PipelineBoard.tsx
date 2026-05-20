@@ -11,6 +11,11 @@ const PHASES: { label: string; stages: ApplicationStage[] }[] = [
   { label: "Closed", stages: ["Offer", "Rejected", "Withdrawn"] }
 ];
 
+const GRID_COLS: Record<number, string> = {
+  2: "md:grid-cols-2",
+  3: "md:grid-cols-3",
+};
+
 const CLOSED_STAGES: ApplicationStage[] = ["Offer", "Rejected", "Withdrawn"];
 
 type PipelineBoardProps = {
@@ -27,7 +32,7 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
   const isClosedCollapsed = hasClosedApps ? false : closedCollapsed;
 
   return (
-    <section aria-label="Application pipeline" className="overflow-x-auto pb-2">
+    <section aria-label="Application pipeline" className="pb-2">
       {PHASES.map(({ label, stages }) => {
         const isClosed = label === "Closed";
         const collapsed = isClosed && isClosedCollapsed;
@@ -39,7 +44,7 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                 <button
                   type="button"
                   onClick={() => setClosedCollapsed((c) => !c)}
-                  className="flex items-center gap-2 text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors min-h-[44px] min-w-[44px]"
                 >
                   <span>{collapsed ? "▶" : "▼"}</span>
                   {label}
@@ -53,8 +58,7 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
 
             {!collapsed && (
               <div
-                className="grid gap-0 overflow-x-auto border border-border divide-x divide-border"
-                style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(200px, 1fr))` }}
+                className={`grid grid-cols-1 ${GRID_COLS[stages.length] ?? ""} gap-0 border border-border divide-y md:divide-y-0 md:divide-x divide-border`}
               >
                 {stages.map((stage) => {
                   const stageApplications = applications.filter((a) => a.stage === stage);
