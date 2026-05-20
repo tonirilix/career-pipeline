@@ -31,9 +31,9 @@ export function PipelineControls({
   return (
     <section
       aria-label="Pipeline controls"
-      className="border border-border p-4 mb-5"
+      className="px-4 py-3 border-b border-border"
     >
-      <div className="grid items-end gap-3 grid-cols-[repeat(4,minmax(160px,1fr))]">
+      <div className="grid items-end gap-3 grid-cols-1">
         <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
           Filter by stage
           <Select

@@ -93,20 +93,54 @@ describe("Job application tracker shell", () => {
       name: "Application pipeline"
     });
 
-    [
-      "Saved",
-      "Applied",
-      "Screening",
-      "Technical interview",
-      "Onsite",
-      "Offer",
-      "Rejected",
-      "Withdrawn"
-    ].forEach((stage) => {
-      expect(
-        within(board).getByText(stage)
-      ).toBeInTheDocument();
+    // Active and Interviewing phases are always visible
+    ["Saved", "Applied", "Screening", "Technical interview", "Onsite"].forEach((stage) => {
+      expect(within(board).getByText(stage)).toBeInTheDocument();
     });
+
+    // Phase region labels are always present
+    expect(within(board).getByRole("region", { name: "Active phase" })).toBeInTheDocument();
+    expect(within(board).getByRole("region", { name: "Interviewing phase" })).toBeInTheDocument();
+    expect(within(board).getByRole("region", { name: "Closed phase" })).toBeInTheDocument();
+
+    // Closed phase is collapsed by default; stage columns are not rendered
+    ["Offer", "Rejected", "Withdrawn"].forEach((stage) => {
+      expect(within(board).queryByText(stage, { selector: "div" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("collapses the Closed phase when empty and expands it when populated", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    const board = screen.getByRole("region", { name: "Application pipeline" });
+    const closedPhase = within(board).getByRole("region", { name: "Closed phase" });
+
+    // Collapsed by default — toggle button visible, stage columns hidden
+    expect(within(closedPhase).getByRole("button", { name: /Closed/i })).toBeInTheDocument();
+    expect(within(closedPhase).queryByText("Offer", { selector: "div" })).not.toBeInTheDocument();
+
+    // Manually expand via toggle
+    await user.click(within(closedPhase).getByRole("button", { name: /Closed/i }));
+    expect(within(closedPhase).getByText("Offer", { selector: "div" })).toBeInTheDocument();
+
+    // Collapse again
+    await user.click(within(closedPhase).getByRole("button", { name: /Closed/i }));
+    expect(within(closedPhase).queryByText("Offer", { selector: "div" })).not.toBeInTheDocument();
+
+    // Add an application and move it to a closed stage — Closed phase auto-expands
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(screen.getByLabelText("Posting URL"), "https://linear.app/careers/frontend-engineer");
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    await user.click(await screen.findByRole("button", { name: "Mark Linear as applied" }));
+    await user.selectOptions(await screen.findByLabelText("Move Linear to stage"), "Rejected");
+    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+
+    expect(await within(closedPhase).findByText("Rejected", { selector: "div" })).toBeInTheDocument();
   });
 
   it("lets a user create a saved job opportunity and see it in the Saved column", async () => {

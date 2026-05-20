@@ -39,7 +39,7 @@ export function OpportunityForm({
       </div>
 
       <form noValidate onSubmit={onSubmit} className="p-5">
-        <div className="grid gap-4 grid-cols-[repeat(4,minmax(180px,1fr))]">
+        <div className="grid gap-4 grid-cols-2">
           <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Company
             <Input

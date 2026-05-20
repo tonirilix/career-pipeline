@@ -29,12 +29,14 @@ import type {
   UsePipelineControls
 } from "./ports/pipelineControls";
 import { ApplicationDetails } from "./components/ApplicationDetails";
-import { ApplicationCard } from "./components/ApplicationCard";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
 import { PipelineControls } from "./components/PipelineControls";
+import { StatsBar } from "./components/StatsBar";
 import { Button } from "./components/ui/button";
+import { Sidebar } from "./components/ui/sidebar";
+import { SlideOver } from "./components/ui/slide-over";
 
 type AppProps = {
   gateway: JobApplicationGateway;
@@ -48,6 +50,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [commandError, setCommandError] = useState<string | null>(null);
+  const [formCommandError, setFormCommandError] = useState<string | null>(null);
   const [form, setForm] = useState<CreateSavedJobOpportunityCommand>({
     company: "",
     roleTitle: "",
@@ -86,7 +89,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFieldErrors([]);
-    setCommandError(null);
+    setFormCommandError(null);
 
     try {
       const result = await createSavedOpportunity(stableGateway, form);
@@ -108,7 +111,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         employmentType: "Full-time"
       });
     } catch {
-      setCommandError("Could not save the opportunity. Try again.");
+      setFormCommandError("Could not save the opportunity. Try again.");
     }
   }
 
@@ -196,58 +199,38 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="max-w-[1440px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-[0.6rem] text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
-              Pipeline workspace
-            </p>
-            <h1 className="text-xl font-bold text-foreground leading-tight m-0">
-              Job Application Tracker
-            </h1>
-          </div>
+    <div className="flex h-screen bg-background overflow-hidden">
+      <Sidebar>
+        <div className="border-b border-border px-4 py-4 shrink-0">
+          <p className="text-[0.6rem] text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
+            Pipeline workspace
+          </p>
+          <h1 className="text-xl font-bold text-foreground leading-tight m-0 mb-3">
+            Job Application Tracker
+          </h1>
           <Button
             type="button"
             onClick={() => setIsFormOpen(true)}
             variant="outline"
-            className="bg-transparent hover:bg-muted rounded-none"
+            className="w-full bg-transparent hover:bg-muted rounded-none"
           >
             Add opportunity
           </Button>
         </div>
-      </header>
 
-      <main className="max-w-[1440px] mx-auto px-6 py-6">
-        {isFormOpen ? (
-          <OpportunityForm
-            commandError={commandError}
-            fieldErrors={fieldErrors}
-            form={form}
-            onChange={setForm}
-            onCancel={() => setIsFormOpen(false)}
-            onSubmit={handleSubmit}
-          />
-        ) : null}
-
-        {commandError ? (
-          <p
-            className="border border-border text-destructive text-xs px-4 py-3 mb-5"
-            role="alert"
-          >
-            <span className="font-bold uppercase tracking-widest">Error:</span> {commandError}
-          </p>
-        ) : null}
-
-        <section aria-label="Active work summary" className="mb-5">
-          <span className={`inline-flex items-center border px-3 py-1.5 text-xs uppercase tracking-widest ${
-            activeApplicationCount > 0
-              ? "border-accent/40 text-accent"
-              : "border-border text-muted-foreground"
+        <section aria-label="Active work summary" className="px-4 py-3 border-b border-border shrink-0">
+          <span className={`inline-flex items-center text-xs uppercase tracking-widest ${
+            activeApplicationCount > 0 ? "text-accent" : "text-muted-foreground"
           }`}>
             {activeApplicationCount} active {activeApplicationCount === 1 ? "application" : "applications"}
           </span>
         </section>
+
+        <StatsBar
+          activeCount={activeApplicationCount}
+          overdueCount={overdueFollowUpItems.length}
+          upcomingCount={upcomingFollowUpItems.length}
+        />
 
         <PipelineControls
           searchTerm={searchTerm}
@@ -265,13 +248,45 @@ export function App({ gateway, usePipelineControls }: AppProps) {
           overdueItems={overdueFollowUpItems}
           upcomingItems={upcomingFollowUpItems}
         />
+      </Sidebar>
+
+      <main className="flex-1 overflow-auto px-6 py-6">
+        {commandError ? (
+          <p
+            className="border border-border text-destructive text-xs px-4 py-3 mb-5"
+            role="alert"
+          >
+            <span className="font-bold uppercase tracking-widest">Error:</span> {commandError}
+          </p>
+        ) : null}
 
         <PipelineBoard
           applications={visibleApplications}
           onStageChange={handleStageChange}
           onViewDetails={setSelectedApplicationId}
         />
+      </main>
 
+      <SlideOver
+        isOpen={isFormOpen}
+        onClose={() => { setIsFormOpen(false); setFieldErrors([]); setFormCommandError(null); }}
+        title="Add opportunity"
+      >
+        <OpportunityForm
+          commandError={formCommandError}
+          fieldErrors={fieldErrors}
+          form={form}
+          onChange={setForm}
+          onCancel={() => { setIsFormOpen(false); setFieldErrors([]); setFormCommandError(null); }}
+          onSubmit={handleSubmit}
+        />
+      </SlideOver>
+
+      <SlideOver
+        isOpen={!!selectedApplicationId}
+        onClose={() => setSelectedApplicationId(null)}
+        title="Application details"
+      >
         {selectedApplication ? (
           <ApplicationDetails
             application={selectedApplication}
@@ -280,7 +295,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             onScheduleInterview={handleScheduleInterview}
           />
         ) : null}
-      </main>
+      </SlideOver>
     </div>
   );
 }
