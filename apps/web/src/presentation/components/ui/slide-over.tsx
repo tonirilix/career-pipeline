@@ -59,9 +59,9 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
         aria-modal={isOpen ? "true" : undefined}
         aria-label={isOpen ? title : undefined}
         aria-hidden={!isOpen ? true : undefined}
-        className={`fixed inset-y-0 right-0 z-50 w-[480px] max-w-full bg-card border-l border-border flex flex-col transition-transform duration-200 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed z-50 bg-card flex flex-col transition-transform duration-200
+          inset-0 md:inset-y-0 md:left-auto md:right-0 md:w-[480px] md:max-w-full md:border-l md:border-border
+          ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
           <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest">
@@ -71,7 +71,7 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
             type="button"
             onClick={onClose}
             aria-label="Close panel"
-            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 border border-border hover:bg-muted transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
           >
             ✕
           </button>
