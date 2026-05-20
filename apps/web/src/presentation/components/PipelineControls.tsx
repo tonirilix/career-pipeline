@@ -31,10 +31,10 @@ export function PipelineControls({
   return (
     <section
       aria-label="Pipeline controls"
-      className="bg-white border border-[var(--color-border)] rounded-xl shadow-sm p-4 mb-5"
+      className="border border-border p-4 mb-5"
     >
       <div className="grid items-end gap-3 grid-cols-[repeat(4,minmax(160px,1fr))]">
-        <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
           Filter by stage
           <Select
             onChange={(e) =>
@@ -50,7 +50,7 @@ export function PipelineControls({
             ))}
           </Select>
         </label>
-        <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
           Filter by source
           <Select
             onChange={(e) => setSourceFilter(e.target.value as JobSource | "All")}
@@ -64,7 +64,7 @@ export function PipelineControls({
             ))}
           </Select>
         </label>
-        <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
           Search applications
           <Input
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -73,7 +73,7 @@ export function PipelineControls({
             placeholder="Company or role…"
           />
         </label>
-        <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
           Sort applications
           <Select
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}

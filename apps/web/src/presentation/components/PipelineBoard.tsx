@@ -6,28 +6,6 @@ import type { JobApplication } from "../../domain/jobOpportunity";
 import { ApplicationCard } from "./ApplicationCard";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
-const stageAccent: Record<ApplicationStage, string> = {
-  Saved: "border-t-slate-400",
-  Applied: "border-t-blue-400",
-  Screening: "border-t-indigo-400",
-  "Technical interview": "border-t-violet-500",
-  Onsite: "border-t-purple-500",
-  Offer: "border-t-emerald-500",
-  Rejected: "border-t-red-400",
-  Withdrawn: "border-t-gray-400"
-};
-
-const stageBadge: Record<ApplicationStage, string> = {
-  Saved: "bg-slate-100 text-slate-700",
-  Applied: "bg-blue-100 text-blue-700",
-  Screening: "bg-indigo-100 text-indigo-700",
-  "Technical interview": "bg-violet-100 text-violet-700",
-  Onsite: "bg-purple-100 text-purple-700",
-  Offer: "bg-emerald-100 text-emerald-700",
-  Rejected: "bg-red-100 text-red-700",
-  Withdrawn: "bg-gray-100 text-gray-600"
-};
-
 type PipelineBoardProps = {
   applications: JobApplication[];
   onStageChange: (
@@ -45,7 +23,7 @@ export function PipelineBoard({
   return (
     <section
       aria-label="Application pipeline"
-      className="grid gap-3 grid-cols-[repeat(8,minmax(200px,1fr))] overflow-x-auto pb-2"
+      className="grid gap-0 grid-cols-[repeat(8,minmax(200px,1fr))] overflow-x-auto border border-border divide-x divide-border mb-5"
     >
       {applicationStages.map((stage) => {
         const stageApplications = applications.filter(
@@ -54,19 +32,23 @@ export function PipelineBoard({
 
         return (
           <article key={stage}>
-            <Card className={`min-h-[320px] border-t-4 shadow-sm ${stageAccent[stage]}`}>
-              <CardHeader className="flex-row items-center justify-between space-y-0 py-3 px-3">
-                <CardTitle className="text-xs font-bold uppercase tracking-wide text-[var(--color-muted-foreground)]">
+            <Card className="min-h-[320px] rounded-none shadow-none border-0">
+              <CardHeader className="flex-row items-center justify-between space-y-0 py-2 px-3 border-b border-border">
+                <CardTitle className="text-[0.6rem] font-bold uppercase tracking-widest text-muted-foreground">
                   {stage}
                 </CardTitle>
                 <span
                   aria-label={`${stage} applications`}
-                  className={`inline-flex items-center justify-center rounded-full text-xs font-bold h-5 min-w-5 px-1.5 ${stageBadge[stage]}`}
+                  className={`text-[0.65rem] font-bold tabular-nums ${
+                    stageApplications.length > 0
+                      ? "text-accent"
+                      : "text-muted-foreground"
+                  }`}
                 >
                   {stageApplications.length}
                 </span>
               </CardHeader>
-              <CardContent className="px-3 pb-3 pt-0">
+              <CardContent className="px-2 pb-2 pt-2">
                 {stageApplications.length > 0 ? (
                   <div className="grid gap-2">
                     {stageApplications.map((application) => (
@@ -79,8 +61,8 @@ export function PipelineBoard({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-[var(--color-muted-foreground)] mt-3 text-center italic">
-                    No applications yet
+                  <p className="text-[0.6rem] text-muted-foreground mt-3 text-center uppercase tracking-widest">
+                    empty
                   </p>
                 )}
               </CardContent>

@@ -196,22 +196,22 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-      {/* Top navigation bar */}
-      <header className="bg-[var(--color-primary)] shadow-lg">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border">
         <div className="max-w-[1440px] mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <p className="text-[0.7rem] font-bold text-[#a7d4c7] uppercase tracking-widest m-0 mb-0.5">
+            <p className="text-[0.6rem] text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
               Pipeline workspace
             </p>
-            <h1 className="text-2xl font-bold text-white leading-tight m-0">
+            <h1 className="text-xl font-bold text-foreground leading-tight m-0">
               Job Application Tracker
             </h1>
           </div>
           <Button
             type="button"
             onClick={() => setIsFormOpen(true)}
-            className="bg-white text-[var(--color-primary)] hover:bg-white/90 font-bold shadow-sm"
+            variant="outline"
+            className="bg-transparent hover:bg-muted rounded-none"
           >
             Add opportunity
           </Button>
@@ -232,18 +232,20 @@ export function App({ gateway, usePipelineControls }: AppProps) {
 
         {commandError ? (
           <p
-            className="rounded-lg border border-red-200 bg-red-50 text-[var(--color-destructive)] text-sm px-4 py-3 mb-5 flex items-center gap-2"
+            className="border border-border text-destructive text-xs px-4 py-3 mb-5"
             role="alert"
           >
-            <span className="font-semibold">Error:</span> {commandError}
+            <span className="font-bold uppercase tracking-widest">Error:</span> {commandError}
           </p>
         ) : null}
 
         <section aria-label="Active work summary" className="mb-5">
-          <span className="inline-flex items-center gap-2 bg-white border border-[var(--color-border)] rounded-full px-4 py-1.5 text-sm font-semibold text-[var(--color-primary)] shadow-sm">
-            <span className="inline-block w-2 h-2 rounded-full bg-[var(--color-primary)]" />
-            {activeApplicationCount} active{" "}
-            {activeApplicationCount === 1 ? "application" : "applications"}
+          <span className={`inline-flex items-center border px-3 py-1.5 text-xs uppercase tracking-widest ${
+            activeApplicationCount > 0
+              ? "border-accent/40 text-accent"
+              : "border-border text-muted-foreground"
+          }`}>
+            {activeApplicationCount} active {activeApplicationCount === 1 ? "application" : "applications"}
           </span>
         </section>
 

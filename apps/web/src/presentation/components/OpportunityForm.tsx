@@ -30,20 +30,17 @@ export function OpportunityForm({
   return (
     <section
       aria-label="New saved opportunity"
-      className="mb-5 rounded-xl border border-[var(--color-border)] bg-white shadow-sm overflow-hidden"
+      className="mb-5 border border-border overflow-hidden"
     >
-      <div className="bg-[var(--color-primary)]/5 border-b border-[var(--color-border)] px-5 py-3">
-        <h2 className="text-sm font-bold text-[var(--color-primary)] m-0">
+      <div className="border-b border-border px-5 py-3">
+        <h2 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest m-0">
           New opportunity
         </h2>
-        <p className="text-xs text-[var(--color-muted-foreground)] mt-0.5 mb-0">
-          Fill in the details below to save a job opportunity to your pipeline.
-        </p>
       </div>
 
       <form noValidate onSubmit={onSubmit} className="p-5">
         <div className="grid gap-4 grid-cols-[repeat(4,minmax(180px,1fr))]">
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Company
             <Input
               name="company"
@@ -52,7 +49,7 @@ export function OpportunityForm({
               value={form.company}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Role title
             <Input
               name="roleTitle"
@@ -61,7 +58,7 @@ export function OpportunityForm({
               value={form.roleTitle}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Posting URL
             <Input
               name="postingUrl"
@@ -71,7 +68,7 @@ export function OpportunityForm({
               value={form.postingUrl}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Source
             <Select
               name="source"
@@ -88,7 +85,7 @@ export function OpportunityForm({
               ))}
             </Select>
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Location
             <Input
               name="location"
@@ -97,7 +94,7 @@ export function OpportunityForm({
               value={form.location}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Compensation
             <Input
               name="compensation"
@@ -106,7 +103,7 @@ export function OpportunityForm({
               value={form.compensation}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Employment type
             <Select
               name="employmentType"
@@ -127,7 +124,7 @@ export function OpportunityForm({
         </div>
 
         {fieldErrors.length > 0 ? (
-          <ul className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-[var(--color-destructive)] space-y-1">
+          <ul className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-destructive space-y-1">
             {fieldErrors.map((error) => (
               <li key={`${error.field}-${error.message}`}>{error.message}</li>
             ))}
@@ -135,16 +132,16 @@ export function OpportunityForm({
         ) : null}
 
         {commandError ? (
-          <p className="mt-4 text-sm text-[var(--color-destructive)]" role="alert">
+          <p className="mt-4 text-sm text-destructive" role="alert">
             {commandError}
           </p>
         ) : null}
 
-        <div className="mt-5 flex gap-2.5 justify-end border-t border-[var(--color-border)] pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <div className="mt-5 flex gap-2.5 justify-end border-t border-border pt-4">
+          <Button type="button" variant="outline" className="rounded-none bg-transparent hover:bg-muted" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">Save opportunity</Button>
+          <Button type="submit" className="rounded-none">Save opportunity</Button>
         </div>
       </form>
     </section>

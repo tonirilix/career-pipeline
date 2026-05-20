@@ -21,14 +21,15 @@ export function FollowUpWork({
   return (
     <section
       aria-label="Follow-up work"
-      className="grid gap-4 grid-cols-[repeat(2,minmax(240px,1fr))] mb-5"
+      className="grid gap-3 grid-cols-[repeat(2,minmax(240px,1fr))] mb-5"
     >
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+      <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-          <h2 className="text-sm font-bold text-red-700 m-0">Overdue follow-ups</h2>
+          <h2 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest m-0">
+            Overdue follow-ups
+          </h2>
           {overdueItems.length > 0 && (
-            <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-200 text-red-800 text-xs font-bold h-5 min-w-5 px-1.5">
+            <span className="ml-auto text-[0.65rem] font-bold text-accent">
               {overdueItems.length}
             </span>
           )}
@@ -41,16 +42,17 @@ export function FollowUpWork({
             urgent
           />
         ) : (
-          <p className="text-sm text-red-400 italic">No overdue follow-ups</p>
+          <p className="text-[0.65rem] text-muted-foreground italic">No overdue follow-ups</p>
         )}
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+      <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
-          <h2 className="text-sm font-bold text-amber-700 m-0">Upcoming follow-ups</h2>
+          <h2 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest m-0">
+            Upcoming follow-ups
+          </h2>
           {upcomingItems.length > 0 && (
-            <span className="ml-auto inline-flex items-center justify-center rounded-full bg-amber-200 text-amber-800 text-xs font-bold h-5 min-w-5 px-1.5">
+            <span className="ml-auto text-[0.65rem] font-bold text-muted-foreground">
               {upcomingItems.length}
             </span>
           )}
@@ -63,7 +65,7 @@ export function FollowUpWork({
             urgent={false}
           />
         ) : (
-          <p className="text-sm text-amber-500 italic">No upcoming follow-ups</p>
+          <p className="text-[0.65rem] text-muted-foreground italic">No upcoming follow-ups</p>
         )}
       </div>
     </section>
@@ -79,27 +81,27 @@ type FollowUpWorkListProps = {
 
 function FollowUpWorkList({ items, label, urgent, onCompleteFollowUp }: FollowUpWorkListProps) {
   return (
-    <ol aria-label={label} className="grid gap-3 m-0 list-none p-0">
+    <ol aria-label={label} className="grid gap-0 m-0 list-none p-0 divide-y divide-border">
       {items.map(({ application, followUp }) => (
-        <li key={followUp.id} className="bg-white rounded-lg border border-white/80 shadow-xs p-3">
+        <li key={followUp.id} className="py-3 first:pt-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <strong className="text-sm font-semibold text-[var(--color-foreground)]">
+            <strong className="text-xs font-bold text-foreground">
               {application.company}
             </strong>
             <time
-              className={`text-[0.65rem] font-bold uppercase tracking-wide whitespace-nowrap ${
-                urgent ? "text-red-600" : "text-amber-600"
+              className={`text-[0.55rem] font-bold uppercase tracking-widest whitespace-nowrap ${
+                urgent ? "text-accent" : "text-muted-foreground"
               }`}
               dateTime={followUp.dueAt}
             >
               {formatDate(followUp.dueAt)}
             </time>
           </div>
-          <span className="block text-xs text-[var(--color-muted-foreground)] mb-2">
+          <span className="block text-[0.65rem] text-muted-foreground mb-2">
             {followUp.note}
           </span>
           <Button
-            className="w-full h-7 text-xs"
+            className="w-full h-7 text-[0.65rem] rounded-none bg-transparent hover:bg-muted"
             variant="outline"
             onClick={() =>
               void onCompleteFollowUp({

@@ -34,41 +34,38 @@ export function ApplicationCard({
 
   return (
     <div
-      className={`rounded-lg border p-3 bg-white shadow-sm transition-shadow hover:shadow-md ${
-        isClosed ? "border-red-200 bg-red-50/40 opacity-80" : "border-[var(--color-border)]"
+      className={`border border-border p-3 bg-card transition-colors hover:border-muted-foreground ${
+        isClosed ? "opacity-50" : ""
       }`}
     >
-      {/* Header row */}
       <div className="flex items-start justify-between gap-1 mb-1">
-        <h3 className="text-sm font-semibold text-[var(--color-foreground)] leading-tight">
+        <h3 className="text-xs font-bold text-foreground leading-tight">
           {application.company}
         </h3>
         {isClosed ? (
-          <Badge variant="destructive" className="text-[0.65rem] px-1.5 py-0 shrink-0">
+          <Badge variant="outline" className="text-[0.55rem] px-1 py-0 shrink-0 rounded-none text-muted-foreground border-border uppercase tracking-wider">
             Closed
           </Badge>
         ) : null}
       </div>
 
-      <p className="text-xs text-[var(--color-muted-foreground)] mb-2 leading-tight">
+      <p className="text-[0.65rem] text-muted-foreground mb-2 leading-tight">
         {application.roleTitle}
       </p>
 
-      {/* Meta chips */}
       <div className="flex flex-wrap gap-1 mb-3">
-        <span className="inline-flex items-center rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[0.65rem] font-medium text-[var(--color-muted-foreground)]">
+        <span className="inline-flex items-center border border-border px-1.5 py-0.5 text-[0.55rem] font-medium text-muted-foreground uppercase tracking-wider">
           {application.source}
         </span>
         {application.location ? (
-          <span className="inline-flex items-center rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[0.65rem] font-medium text-[var(--color-muted-foreground)]">
+          <span className="inline-flex items-center border border-border px-1.5 py-0.5 text-[0.55rem] font-medium text-muted-foreground">
             {application.location}
           </span>
         ) : null}
       </div>
 
-      {/* Actions */}
       <Button
-        className="w-full h-7 text-xs mb-1.5"
+        className="w-full h-7 text-[0.65rem] mb-1.5 rounded-none bg-transparent hover:bg-muted"
         variant="outline"
         onClick={() => onViewDetails(application.id)}
         type="button"
@@ -78,7 +75,7 @@ export function ApplicationCard({
 
       {primaryNextStage ? (
         <Button
-          className="w-full h-7 text-xs mb-2"
+          className="w-full h-7 text-[0.65rem] mb-2 rounded-none"
           onClick={() => void onStageChange(application, primaryNextStage)}
           type="button"
         >
@@ -86,12 +83,11 @@ export function ApplicationCard({
         </Button>
       ) : null}
 
-      {/* Stage update */}
-      <div className="border-t border-[var(--color-border)] pt-2 mt-1">
-        <label className="grid gap-1 text-[0.65rem] font-semibold text-[var(--color-muted-foreground)] uppercase tracking-wide">
+      <div className="border-t border-border pt-2 mt-1">
+        <label className="grid gap-1 text-[0.55rem] font-bold text-muted-foreground uppercase tracking-widest">
           Move {application.company} to stage
           <Select
-            className="h-8 text-xs"
+            className="h-7 text-[0.65rem] rounded-none"
             onChange={(e) =>
               setSelectedStage(e.target.value as ApplicationStage)
             }
@@ -105,7 +101,7 @@ export function ApplicationCard({
           </Select>
         </label>
         <Button
-          className="w-full h-7 text-xs mt-1.5"
+          className="w-full h-7 text-[0.65rem] mt-1.5 rounded-none bg-transparent hover:bg-muted"
           variant="outline"
           onClick={() => void onStageChange(application, selectedStage)}
           type="button"
