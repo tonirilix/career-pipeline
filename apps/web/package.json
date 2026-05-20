@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:api": "vite --mode production --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsc -b && vite build"

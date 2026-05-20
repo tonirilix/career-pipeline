@@ -1,0 +1,6 @@
+# compiled binary
+api
+
+# database
+data/
+*.db

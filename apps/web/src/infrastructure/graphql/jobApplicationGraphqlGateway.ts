@@ -372,9 +372,9 @@ async function requestGraphql<TData>(
 }
 
 function graphqlEndpoint() {
-  if (typeof window === "undefined") {
-    return "http://localhost/graphql";
+  const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (apiUrl) {
+    return apiUrl.replace(/\/$/, "") + "/graphql";
   }
-
-  return new URL("/graphql", window.location.origin).toString();
+  return "http://localhost:8080/graphql";
 }

@@ -1,0 +1,139 @@
+scalar DateTime
+
+enum ApplicationStage {
+  Saved
+  Applied
+  Screening
+  TechnicalInterview
+  Onsite
+  Offer
+  Rejected
+  Withdrawn
+}
+
+enum JobSource {
+  LinkedIn
+  Referral
+  Recruiter
+  CompanySite
+  Other
+}
+
+enum EmploymentType {
+  FullTime
+  Contract
+  PartTime
+  Internship
+  Other
+}
+
+enum InterviewType {
+  RecruiterScreen
+  HiringManager
+  Technical
+  Onsite
+  Other
+}
+
+enum InterviewOutcome {
+  Scheduled
+  Passed
+  Rejected
+  NoDecision
+}
+
+type TimelineEvent {
+  id: ID!
+  occurredAt: String!
+  description: String!
+}
+
+type Interview {
+  id: ID!
+  type: String!
+  scheduledAt: String!
+  notes: String!
+  outcome: String!
+}
+
+type FollowUpReminder {
+  id: ID!
+  applicationId: ID!
+  dueAt: String!
+  note: String!
+  completedAt: String
+}
+
+type ApplicationNote {
+  id: ID!
+  body: String!
+  createdAt: String!
+}
+
+type JobApplication {
+  id: ID!
+  company: String!
+  roleTitle: String!
+  postingUrl: String!
+  source: String!
+  location: String!
+  compensation: String!
+  employmentType: String!
+  stage: String!
+  timeline: [TimelineEvent!]!
+  interviews: [Interview!]!
+  followUps: [FollowUpReminder!]!
+  notes: [ApplicationNote!]!
+}
+
+input CreateSavedOpportunityInput {
+  company: String!
+  roleTitle: String!
+  postingUrl: String!
+  source: String!
+  location: String!
+  compensation: String!
+  employmentType: String!
+}
+
+input AdvanceApplicationStageInput {
+  applicationId: ID!
+  toStage: String!
+}
+
+input ScheduleInterviewInput {
+  applicationId: ID!
+  type: String!
+  scheduledAt: String!
+  notes: String!
+  outcome: String!
+}
+
+input CreateFollowUpReminderInput {
+  applicationId: ID!
+  dueAt: String!
+  note: String!
+}
+
+input CompleteFollowUpReminderInput {
+  applicationId: ID!
+  reminderId: ID!
+}
+
+input AddApplicationNoteInput {
+  applicationId: ID!
+  body: String!
+}
+
+type Query {
+  applications: [JobApplication!]!
+}
+
+type Mutation {
+  createSavedOpportunity(input: CreateSavedOpportunityInput!): JobApplication!
+  advanceApplicationStage(input: AdvanceApplicationStageInput!): JobApplication!
+  scheduleInterview(input: ScheduleInterviewInput!): JobApplication!
+  createFollowUpReminder(input: CreateFollowUpReminderInput!): JobApplication!
+  completeFollowUpReminder(input: CompleteFollowUpReminderInput!): JobApplication!
+  addApplicationNote(input: AddApplicationNoteInput!): JobApplication!
+}
