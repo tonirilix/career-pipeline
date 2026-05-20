@@ -24,7 +24,7 @@ export function Sidebar({ className, isOpen = false, onClose, children }: Sideba
       <nav
         aria-label="Sidebar"
         className={cn(
-          "hidden md:flex w-[220px] shrink-0 border-r border-border flex-col h-screen overflow-y-auto",
+          "hidden md:flex w-[220px] shrink-0 border-r border-border flex-col h-screen overflow-y-auto bg-background",
           isOpen && "fixed inset-y-0 left-0 z-50 flex w-[280px] md:static md:w-[220px]",
           className
         )}
