@@ -28,7 +28,7 @@ Specific replacements:
 | GraphQL Yoga | gqlgen | Schema-first, generates type-safe Go resolver interfaces |
 | Pothos | gqlgen | gqlgen covers both the server and the schema/codegen layer |
 | Effect | Go interfaces + constructor injection + `(T, error)` returns | Native Go patterns achieve the same goals without a framework |
-| TypeORM | sqlc | Generates type-safe Go from SQL; keeps SQL explicit and the repository boundary clean |
+| TypeORM | `database/sql` (direct) | Keeps SQL explicit and the repository boundary clean; sqlc was skipped (not installed) |
 
 ## Rationale
 
@@ -40,7 +40,7 @@ Specific replacements:
 
 **gqlgen keeps GraphQL as a true adapter.** gqlgen is schema-first: you write a `.graphql` schema, run the generator, and implement the generated resolver interfaces. The resolver layer is a thin mapping concern — it cannot accidentally leak into domain code because the generated types are structurally separate.
 
-**sqlc keeps persistence explicit.** Unlike TypeORM, sqlc does not abstract SQL. You write SQL queries, run the generator, and get type-safe Go functions. The generated code lives entirely in the infrastructure layer behind repository interfaces. Domain structs never touch sqlc types directly.
+**`database/sql` keeps persistence explicit.** Repository adapters are written directly against `database/sql` with hand-written SQL queries. sqlc was evaluated but skipped — it is not installed in the toolchain and adding a code-generation step was not justified for the current scope. The repository port interfaces still provide the same boundary; the adapters can be replaced with sqlc-generated code later without touching the domain or use cases.
 
 **No shared type concern with the frontend.** ADR 0001 already ruled out sharing domain code between `apps/web` and `apps/api` until the API contract stabilizes. The language boundary between TypeScript (frontend) and Go (backend) reinforces that decision at the toolchain level.
 
@@ -56,5 +56,5 @@ Specific replacements:
 - The backend will be written in Go; contributors working on `apps/api` need Go tooling installed.
 - Frontend and backend cannot share type definitions directly. This was already accepted in ADR 0001.
 - The GraphQL schema becomes the contract boundary between `apps/web` and `apps/api`. Both sides evolve against the schema independently.
-- sqlc requires SQL migrations to be written explicitly. This is intentional — it keeps database schema changes reviewable and the persistence layer non-magical.
+- SQL migrations are written explicitly with golang-migrate. This keeps schema changes reviewable and the persistence layer non-magical.
 - The compiled Go binary simplifies future deployment: a single executable with no Node.js runtime dependency.

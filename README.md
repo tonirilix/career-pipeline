@@ -1,12 +1,21 @@
 # react-hexagonal-architecture
 
-A toy for practicing about hexagonal architecture
+A toy for practicing hexagonal architecture across a React frontend and a Go backend.
 
-## Architecture Data Flow
+## Workspaces
 
-Ports point inward as interfaces, adapters sit outside and implement them, and
-runtime data flows through the concrete adapter that `main.tsx` wires into
-React.
+| Path | Description |
+|---|---|
+| `apps/web` | React + Vite frontend |
+| `apps/api` | Go GraphQL backend |
+
+## Architecture
+
+The system has two deployment units that share only the GraphQL schema as a contract.
+
+### Frontend (`apps/web`)
+
+Ports point inward as interfaces; adapters sit outside and implement them. `main.tsx` wires the concrete adapters into React at startup.
 
 ```mermaid
 flowchart LR
@@ -30,100 +39,140 @@ flowchart LR
   subgraph Infrastructure
     GraphqlGateway[GraphQL gateway adapter]
     Zustand[Zustand pipeline controls adapter]
-    MSW[MSW GraphQL handlers]
-    MockState[Mock backend state]
   end
 
   User --> App
-
   App --> UseCases
   UseCases --> DomainRules
   UseCases --> GatewayPort
-
   GatewayPort -. implemented by .-> GraphqlGateway
-  GraphqlGateway -->|fetch /graphql| MSW
-  MSW --> MockState
-  MSW --> DomainRules
-  MSW -->|GraphQL DTO response| GraphqlGateway
-  GraphqlGateway -->|maps DTOs to domain objects| UseCases
+  GraphqlGateway -->|POST /graphql| GoBackend[(Go backend)]
+  GraphqlGateway -->|maps DTOs to domain| UseCases
   UseCases --> App
-
   App --> ControlsPort
   ControlsPort -. implemented by .-> Zustand
   Zustand --> App
-
   DomainRules --> DomainTypes
   GatewayPort --> DomainTypes
   GraphqlGateway --> DomainTypes
 ```
 
-The dependency direction is different from the runtime call direction:
+### Backend (`apps/api`)
+
+Follows the same hexagonal architecture: domain → application (use cases + ports) → infrastructure (SQLite adapters) → GraphQL adapter (gqlgen resolvers).
+
+```mermaid
+flowchart LR
+  GQL[GraphQL request]
+
+  subgraph GraphQL["GraphQL Adapter (gqlgen)"]
+    Resolver[Resolvers]
+  end
+
+  subgraph Application
+    UseCases[Use cases]
+    Ports[Repository ports]
+  end
+
+  subgraph Domain
+    DomainRules[Stage transitions, validation]
+    DomainTypes[JobApplication, Interview, etc.]
+  end
+
+  subgraph Infrastructure
+    SQLite[SQLite repository adapters]
+    DB[(tracker.db)]
+  end
+
+  GQL --> Resolver
+  Resolver -->|command / query| UseCases
+  UseCases --> DomainRules
+  UseCases --> Ports
+  Ports -. implemented by .-> SQLite
+  SQLite --> DB
+  Resolver -->|maps domain → DTO| GQL
+```
+
+### Dependency direction (both layers)
 
 ```mermaid
 flowchart TB
-  Domain[Domain: business rules, plain TypeScript]
+  Domain[Domain]
   Application[Application: use cases + ports]
-  Infrastructure[Infrastructure: GraphQL, MSW, Zustand]
-  Presentation[Presentation: React UI]
+  Infrastructure[Infrastructure: adapters]
+  Presentation[Presentation / GraphQL adapter]
 
   Presentation --> Application
   Application --> Domain
   Infrastructure --> Application
   Infrastructure --> Domain
-
   Application -. defines .-> Port[Port interface]
   Infrastructure -. implements .-> Port
 ```
 
-For example, marking an application as applied travels through the app like
-this:
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant App as React App
-  participant UseCase as advanceApplicationStage()
-  participant Port as JobApplicationGateway port
-  participant Gql as GraphQL gateway adapter
-  participant MSW as MSW handler
-  participant Domain as transitionApplicationStage()
-  participant State as Mock applications state
-
-  User->>App: Click "Mark as applied"
-  App->>UseCase: advanceApplicationStage(gateway, command)
-  UseCase->>Port: gateway.advanceApplicationStage(command)
-  Port->>Gql: concrete adapter handles call
-  Gql->>MSW: POST /graphql mutation
-  MSW->>State: Find application
-  MSW->>Domain: Validate transition and create updated application
-  Domain-->>MSW: Result
-  MSW->>State: Save updated application
-  MSW-->>Gql: GraphQL DTO response
-  Gql-->>UseCase: mapped domain JobApplication
-  UseCase-->>App: success result
-  App-->>User: Updated board
-```
-
-The application layer knows only the `JobApplicationGateway` port, not GraphQL
-or MSW. That is what lets the mock backend be replaced later without changing
-the use cases.
-
 ## Development
 
-Install dependencies from the repo root:
+### Prerequisites
+
+- Node.js 20+
+- Go 1.22+
+
+### Install dependencies
 
 ```sh
 npm install
 ```
 
-Run the test suite:
+### Run frontend only (MSW mock backend)
 
-```sh
-npm test
-```
-
-Start the frontend app:
+MSW intercepts all GraphQL requests in-process. No Go server needed.
 
 ```sh
 npm run dev --workspace apps/web
 ```
+
+### Run frontend against the real Go backend
+
+Start the Go server first:
+
+```sh
+cd apps/api
+go run ./cmd/api
+```
+
+Then start the frontend in production mode (MSW disabled):
+
+```sh
+npm run dev:api --workspace apps/web
+```
+
+The frontend defaults to `http://localhost:8080/graphql`. Override with `VITE_API_URL` in `.env.local` if your backend runs elsewhere.
+
+### MSW toggle
+
+| Script | `MODE` | MSW | Backend |
+|---|---|---|---|
+| `npm run dev` | `development` | starts | mock (in-process) |
+| `npm run dev:api` | `production` | skipped | Go server on :8080 |
+
+MSW is controlled by `import.meta.env.MODE !== 'production'` in `apps/web/src/main.tsx`. It is not tied to `VITE_API_URL`.
+
+### Run tests
+
+```sh
+# Frontend
+npm test --workspace apps/web
+
+# Backend
+cd apps/api && go test ./...
+```
+
+### Build the Go binary
+
+```sh
+cd apps/api
+go build -o api ./cmd/api
+./api
+```
+
+See [`apps/api/README.md`](apps/api/README.md) for full backend documentation.

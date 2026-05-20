@@ -1,4 +1,6 @@
-# PRD: Future Backend Job Application Tracker
+# PRD: Backend Job Application Tracker
+
+> **Status: Implemented** — The Go backend described in this document is live in `apps/api`. See [`apps/api/README.md`](../../apps/api/README.md) for how to run it and [`docs/adr/0002-use-go-for-backend.md`](../adr/0002-use-go-for-backend.md) for technology decisions. The only notable deviation from this PRD: sqlc was not used — repository adapters are written directly with `database/sql` (see ADR 0002).
 
 ## Problem Statement
 
@@ -6,9 +8,9 @@ The frontend-first job application tracker will initially use MSW to simulate Gr
 
 ## Solution
 
-Define a future Go backend using gqlgen, sqlc, and a SQL database. The backend will expose a GraphQL API for the React frontend, execute application use cases, enforce domain rules, persist data through repository ports, and keep GraphQL and sqlc decoupled from the domain.
+A Go backend using gqlgen and SQLite exposes a GraphQL API for the React frontend. It executes application use cases, enforces domain rules, and persists data through repository port interfaces. GraphQL resolvers and SQLite adapters are fully decoupled from the domain layer.
 
-The backend is definition-only for now. It should serve as the target architecture that MSW will eventually be replaced by. The frontend should continue to depend on GraphQL operations through its gateway adapter, while the backend will own the authoritative version of application state and business rule enforcement once implemented.
+The frontend continues to depend on GraphQL operations through its gateway adapter. The backend owns the authoritative version of application state and business rule enforcement. MSW remains available for local development without the Go server (see root README for the two development modes).
 
 ## User Stories
 
