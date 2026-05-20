@@ -6,7 +6,7 @@ The frontend-first job application tracker will initially use MSW to simulate Gr
 
 ## Solution
 
-Define a future TypeScript backend using GraphQL Yoga, Pothos, Effect, TypeORM, and a SQL database. The backend will expose a GraphQL API for the React frontend, execute application use cases, enforce domain rules, persist data through repository ports, and keep GraphQL and TypeORM decoupled from the domain.
+Define a future Go backend using gqlgen, sqlc, and a SQL database. The backend will expose a GraphQL API for the React frontend, execute application use cases, enforce domain rules, persist data through repository ports, and keep GraphQL and sqlc decoupled from the domain.
 
 The backend is definition-only for now. It should serve as the target architecture that MSW will eventually be replaced by. The frontend should continue to depend on GraphQL operations through its gateway adapter, while the backend will own the authoritative version of application state and business rule enforcement once implemented.
 
@@ -44,16 +44,16 @@ The backend is definition-only for now. It should serve as the target architectu
 30. As a frontend client, I want mutations to return updated application data, so that the UI can refresh without extra round trips.
 31. As a frontend client, I want query shapes that match user workflows, so that the UI is not forced to compose many low-level calls.
 32. As a learner, I want GraphQL resolvers to call use cases, so that GraphQL remains an adapter.
-33. As a learner, I want TypeORM entities to stay outside the domain model, so that persistence remains an adapter.
-34. As a learner, I want repository ports between use cases and TypeORM, so that persistence can be swapped.
-35. As a learner, I want Effect services and layers to provide backend dependencies, so that dependency wiring is explicit and testable.
-36. As a learner, I want backend use cases to return typed failures, so that expected errors are not hidden in thrown exceptions.
-37. As a learner, I want GraphQL DTOs mapped separately from domain entities, so that the external API can evolve independently.
-38. As a learner, I want TypeORM records mapped separately from domain entities, so that database schema changes do not leak into business rules.
+33. As a learner, I want sqlc-generated query code to stay outside the domain model, so that persistence remains an adapter.
+34. As a learner, I want repository ports between use cases and sqlc, so that persistence can be swapped.
+35. As a learner, I want Go interfaces and constructor injection to provide backend dependencies, so that dependency wiring is explicit and testable without a framework.
+36. As a learner, I want backend use cases to return typed failures via Go's `(T, error)` convention, so that expected errors are not hidden in panics or untyped interfaces.
+37. As a learner, I want GraphQL DTOs mapped separately from domain structs, so that the external API can evolve independently.
+38. As a learner, I want sqlc query results mapped separately from domain structs, so that database schema changes do not leak into business rules.
 39. As a developer, I want database migrations, so that schema changes are reviewable and repeatable.
 40. As a developer, I want seed data for local development, so that the frontend can be exercised against a real backend later.
 41. As a developer, I want backend tests with fake repositories, so that use cases are fast and deterministic.
-42. As a developer, I want repository adapter tests, so that TypeORM mappings are validated against a real test database.
+42. As a developer, I want repository adapter tests, so that sqlc mappings are validated against a real test database.
 43. As a developer, I want GraphQL API tests, so that query and mutation contracts are protected.
 44. As a developer, I want backend error mapping tests, so that domain errors become predictable GraphQL responses.
 45. As a developer, I want the backend to start locally with minimal setup, so that it can replace MSW when the frontend is ready.
@@ -67,25 +67,24 @@ The backend is definition-only for now. It should serve as the target architectu
 - Keep the frontend implementation under `apps/web`.
 - Let the backend domain and use cases become authoritative when the real API replaces the MSW-backed frontend mock API.
 - Avoid sharing frontend and backend domain code initially; revisit shared packages only after the backend contract stabilizes.
-- Use Node.js and TypeScript for the backend runtime.
-- Use GraphQL Yoga as the HTTP GraphQL server.
-- Use Pothos as the TypeScript-first GraphQL schema builder.
-- Use Effect for service definitions, layers, dependency wiring, typed failures, and asynchronous use case composition.
-- Use TypeORM as the persistence technology instead of Prisma.
+- Use Go for the backend runtime.
+- Use gqlgen as the GraphQL server and schema-first code generator.
+- Use sqlc to generate type-safe Go from SQL queries; keep generated code behind repository adapters.
 - Start with SQLite for low-friction local development unless there is a strong reason to start with Postgres.
 - Keep Postgres as the likely later production-style database target.
+- Use Go's standard `database/sql` with the appropriate driver (`modernc.org/sqlite` for SQLite, `lib/pq` or `pgx` for Postgres).
+- Use `golang-migrate` or a similar tool for database migrations.
 - Preserve a hexagonal architecture with domain, application, infrastructure, and GraphQL adapter boundaries.
+- Define domain structs and value objects for job applications, interviews, follow-up reminders, notes, timeline events, and stages. Keep these free of persistence or transport concerns.
+- Define repository ports as Go interfaces in the application layer; implement them with sqlc-backed adapters in the infrastructure layer.
+- Define supporting ports as Go interfaces for clock, ID generation, transaction management, and logging.
+- Wire dependencies through constructor injection; no dependency injection framework is required.
+- Return typed errors from use cases using Go's `(T, error)` pattern with custom error types for expected domain failures.
 - Keep GraphQL resolvers thin: parse inputs, call use cases, and map results or failures.
 - Do not let resolvers directly perform business rule decisions.
-- Do not let resolvers directly call TypeORM repositories for workflow mutations.
-- Define domain entities for job applications, interviews, follow-up reminders, notes, timeline events, offers, and stages.
-- Define application use cases for creating applications, advancing stages, scheduling interviews, recording interview outcomes, adding follow-ups, completing follow-ups, rejecting applications, withdrawing applications, reopening applications, and reading pipeline data.
-- Define repository ports for application persistence and query access.
-- Define supporting ports for clock, ID generation, transaction management, and logging.
-- Implement TypeORM adapters behind repository ports.
-- Keep TypeORM entities as persistence records, not domain models.
-- Map TypeORM records to domain entities at adapter boundaries.
-- Map domain entities to GraphQL DTOs at GraphQL boundaries.
+- Do not let resolvers directly call sqlc queries for workflow mutations.
+- Map sqlc query results to domain structs at the repository adapter boundary.
+- Map domain structs to gqlgen-generated GraphQL types at the resolver boundary.
 - Map GraphQL inputs to application commands before calling use cases.
 - Return workflow-oriented GraphQL mutations rather than generic CRUD-only mutations.
 - Include GraphQL queries for application detail, application pipeline, application search, upcoming follow-ups, and overdue follow-ups.
@@ -99,10 +98,10 @@ The backend is definition-only for now. It should serve as the target architectu
 
 - Good tests should verify behavior at public boundaries rather than implementation details.
 - Domain tests should cover business rules, invariants, and timeline event creation.
-- Use case tests should use fake repositories, fake clocks, fake ID generators, and controlled Effect layers.
+- Use case tests should use fake repositories implementing the repository port interfaces, fake clocks, fake ID generators, and controlled constructor-injected dependencies.
 - GraphQL resolver tests should verify that API operations call the intended use case behavior and return correct data or errors.
 - GraphQL contract tests should cover the operations used by the frontend gateway.
-- TypeORM repository adapter tests should verify persistence mapping using a real local test database.
+- sqlc repository adapter tests should verify persistence mapping using a real local test database.
 - Migration tests or checks should verify that the schema can be applied from an empty database.
 - Error mapping tests should verify that expected domain failures become stable GraphQL responses.
 - Transaction tests should verify that multi-step workflows do not partially persist on failure.
@@ -126,5 +125,6 @@ The backend is definition-only for now. It should serve as the target architectu
 - This backend should eventually replace the MSW GraphQL handlers without forcing a rewrite of frontend domain or presentation code.
 - The backend will become the authoritative owner of business rule enforcement once implemented.
 - The frontend can still keep client-side orchestration and UI state, but server-backed workflows should rely on backend use cases when the backend exists.
-- TypeORM was selected for the future backend persistence adapter in place of Prisma.
-- The most important backend architecture constraint is that GraphQL and TypeORM remain adapters around the domain and application layers.
+- Go was selected for the backend in place of Node.js/TypeScript. See ADR 0002 for rationale.
+- sqlc was selected for persistence in place of TypeORM. Generated SQL query code stays behind repository port interfaces and never leaks into the domain.
+- The most important backend architecture constraint is that GraphQL and sqlc remain adapters around the domain and application layers.
