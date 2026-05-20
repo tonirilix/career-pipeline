@@ -106,9 +106,61 @@ make generate
 
 Implement any new resolver stubs in `graph/resolvers/schema.resolvers.go`.
 
-## Adding a migration
+## Database
 
-Create numbered up/down files in both locations (the embed requires files in `cmd/api/migrations/`):
+### How the database is created
+
+On first `go run ./cmd/api`:
+
+1. `data/tracker.db` is created if it does not exist.
+2. All migrations run automatically (golang-migrate, embedded in the binary).
+3. If the `job_applications` table is empty, seed data is inserted automatically.
+
+Subsequent starts skip step 3 — existing data is never overwritten.
+
+### Seed data
+
+The seed file is `cmd/api/seed.sql`. It inserts one application per pipeline stage so every part of the UI is exercisable immediately:
+
+| ID | Company | Stage | Notes |
+|---|---|---|---|
+| seed-1 | Stripe | Saved | — |
+| seed-2 | Vercel | Applied | Overdue follow-up attached |
+| seed-3 | Linear | Screening | Recruiter screen interview + completed follow-up |
+| seed-4 | Notion | Onsite | Full interview chain + two notes |
+| seed-5 | Figma | Offer | Full interview chain + note |
+| seed-6 | Atlassian | Rejected | — |
+| seed-7 | GitHub | Withdrawn | — |
+
+### Resetting the database
+
+Delete the file and restart — migrations and seeding run again from scratch:
+
+```sh
+rm data/tracker.db
+go run ./cmd/api
+```
+
+### Re-seeding without resetting
+
+Run the seed flag against an existing (empty) database. Only works if the tables are empty, otherwise the INSERT will fail on duplicate IDs.
+
+```sh
+go run ./cmd/api --seed-only
+```
+
+To force a re-seed on a populated database, reset instead (see above).
+
+### Why migrations live in two places
+
+Migration files appear under both `cmd/api/migrations/` and `internal/infrastructure/migrations/`:
+
+- `cmd/api/migrations/` — embedded into the binary via `//go:embed` and run at startup by the server.
+- `internal/infrastructure/migrations/` — used by the repository adapter integration tests, which spin up an in-memory SQLite database and apply the schema before each test run.
+
+Both sets of files must be kept in sync. When adding a migration, create the numbered `.up.sql` / `.down.sql` pair in **both** locations.
+
+### Adding a migration
 
 ```
 apps/api/cmd/api/migrations/006_<name>.up.sql
@@ -117,4 +169,16 @@ apps/api/internal/infrastructure/migrations/006_<name>.up.sql
 apps/api/internal/infrastructure/migrations/006_<name>.down.sql
 ```
 
-Migrations run automatically at startup via golang-migrate.
+Migrations run automatically at startup via golang-migrate. There is no separate migrate command needed.
+
+### Rolling back a migration
+
+golang-migrate supports down migrations but the server does not expose a rollback flag. To roll back manually:
+
+```sh
+# Install the migrate CLI
+go install -tags 'sqlite' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+# Roll back one step
+migrate -source file://cmd/api/migrations -database "sqlite://data/tracker.db" down 1
+```
