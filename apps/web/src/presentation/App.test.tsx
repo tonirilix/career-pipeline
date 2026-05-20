@@ -53,8 +53,14 @@ function createReadOnlyGateway(
   };
 }
 
+function getStageColumn(stage: string) {
+  const board = screen.getByRole("region", { name: "Application pipeline" });
+  return within(board).getByText(stage, { selector: "div" }).closest("article") as HTMLElement;
+}
+
 function getApplicationCompaniesInStage(stage: string) {
-  const column = screen.getByRole("heading", { name: stage }).closest("article");
+  const board = screen.getByRole("region", { name: "Application pipeline" });
+  const column = within(board).getByText(stage, { selector: "div" }).closest("article");
 
   expect(column).not.toBeNull();
 
@@ -98,7 +104,7 @@ describe("Job application tracker shell", () => {
       "Withdrawn"
     ].forEach((stage) => {
       expect(
-        within(board).getByRole("heading", { name: stage })
+        within(board).getByText(stage)
       ).toBeInTheDocument();
     });
   });
@@ -121,19 +127,17 @@ describe("Job application tracker shell", () => {
     await user.selectOptions(screen.getByLabelText("Employment type"), "Full-time");
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
 
-    const savedColumn = screen
-      .getByRole("heading", { name: "Saved" })
-      .closest("article");
+    const savedColumn = getStageColumn("Saved");
 
     expect(savedColumn).not.toBeNull();
     expect(
-      await within(savedColumn as HTMLElement).findByText("Linear")
+      await within(savedColumn).findByText("Linear")
     ).toBeInTheDocument();
     expect(
-      within(savedColumn as HTMLElement).getByText("Frontend Engineer")
+      within(savedColumn).getByText("Frontend Engineer")
     ).toBeInTheDocument();
     expect(
-      within(savedColumn as HTMLElement).getByText("Referral")
+      within(savedColumn).getByText("Referral")
     ).toBeInTheDocument();
   });
 
@@ -171,20 +175,16 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "Mark Linear as applied" })
     );
 
-    const savedColumn = screen
-      .getByRole("heading", { name: "Saved" })
-      .closest("article");
-    const appliedColumn = screen
-      .getByRole("heading", { name: "Applied" })
-      .closest("article");
+    const savedColumn = getStageColumn("Saved");
+    const appliedColumn = getStageColumn("Applied");
 
     expect(savedColumn).not.toBeNull();
     expect(appliedColumn).not.toBeNull();
     expect(
-      within(savedColumn as HTMLElement).queryByText("Linear")
+      within(savedColumn).queryByText("Linear")
     ).not.toBeInTheDocument();
     expect(
-      await within(appliedColumn as HTMLElement).findByText("Linear")
+      await within(appliedColumn).findByText("Linear")
     ).toBeInTheDocument();
   });
 
@@ -234,36 +234,30 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "Move Linear to Screening" })
     );
 
-    const screeningColumn = screen
-      .getByRole("heading", { name: "Screening" })
-      .closest("article");
+    const screeningColumn = getStageColumn("Screening");
 
     expect(screeningColumn).not.toBeNull();
     expect(
-      await within(screeningColumn as HTMLElement).findByText("Linear")
+      await within(screeningColumn).findByText("Linear")
     ).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Move Linear to stage"), "Rejected");
     await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
 
-    const rejectedColumn = screen
-      .getByRole("heading", { name: "Rejected" })
-      .closest("article");
+    const rejectedColumn = getStageColumn("Rejected");
 
     expect(rejectedColumn).not.toBeNull();
     expect(
-      await within(rejectedColumn as HTMLElement).findByText("Linear")
+      await within(rejectedColumn).findByText("Linear")
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Reopen Linear" }));
 
-    const appliedColumn = screen
-      .getByRole("heading", { name: "Applied" })
-      .closest("article");
+    const appliedColumn = getStageColumn("Applied");
 
     expect(appliedColumn).not.toBeNull();
     expect(
-      await within(appliedColumn as HTMLElement).findByText("Linear")
+      await within(appliedColumn).findByText("Linear")
     ).toBeInTheDocument();
   });
 
@@ -290,16 +284,14 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
 
-    const rejectedColumn = screen
-      .getByRole("heading", { name: "Rejected" })
-      .closest("article");
+    const rejectedColumn = getStageColumn("Rejected");
 
     expect(rejectedColumn).not.toBeNull();
     expect(
-      await within(rejectedColumn as HTMLElement).findByText("Linear")
+      await within(rejectedColumn).findByText("Linear")
     ).toBeInTheDocument();
     expect(
-      within(rejectedColumn as HTMLElement).getByText("Closed")
+      within(rejectedColumn).getByText("Closed")
     ).toBeInTheDocument();
     expect(screen.getByText("0 active applications")).toBeInTheDocument();
 
