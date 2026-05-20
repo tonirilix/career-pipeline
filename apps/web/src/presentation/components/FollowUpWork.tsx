@@ -21,7 +21,7 @@ export function FollowUpWork({
   return (
     <section
       aria-label="Follow-up work"
-      className="grid gap-3 grid-cols-[repeat(2,minmax(240px,1fr))] mb-5"
+      className="grid gap-3 grid-cols-1 mb-5"
     >
       <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
