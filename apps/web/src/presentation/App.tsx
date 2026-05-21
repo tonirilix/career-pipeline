@@ -258,7 +258,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             type="button"
             onClick={() => setIsSidebarOpen(true)}
             aria-label="Open sidebar"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
+            className="min-h-11 min-w-11 flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
           >
             ☰
           </button>

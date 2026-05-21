@@ -24,8 +24,8 @@ export function Sidebar({ className, isOpen = false, onClose, children }: Sideba
       <nav
         aria-label="Sidebar"
         className={cn(
-          "hidden md:flex w-[220px] shrink-0 border-r border-border flex-col h-screen overflow-y-auto overflow-x-hidden bg-background pb-4",
-          isOpen && "fixed inset-y-0 left-0 z-50 flex w-[280px] md:static md:w-[220px]",
+          "hidden md:flex w-56 shrink-0 border-r border-border flex-col h-screen overflow-y-auto overflow-x-hidden bg-background pb-4",
+          isOpen && "fixed inset-y-0 left-0 z-50 flex w-72 md:static md:w-56",
           className
         )}
       >
@@ -36,7 +36,7 @@ export function Sidebar({ className, isOpen = false, onClose, children }: Sideba
               type="button"
               onClick={onClose}
               aria-label="Close sidebar"
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
+              className="min-h-11 min-w-11 flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
             >
               ✕
             </button>

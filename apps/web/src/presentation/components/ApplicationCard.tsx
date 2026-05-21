@@ -87,7 +87,7 @@ export function ApplicationCard({
         <label className="grid gap-1 text-[0.55rem] font-bold text-muted-foreground uppercase tracking-widest">
           Move {application.company} to stage
           <Select
-            className="h-7 text-[0.65rem] rounded-none"
+            className="h-8 text-[0.65rem] rounded-none"
             onChange={(e) =>
               setSelectedStage(e.target.value as ApplicationStage)
             }
