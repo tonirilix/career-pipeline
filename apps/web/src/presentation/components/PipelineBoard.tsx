@@ -12,8 +12,8 @@ const PHASES: { label: string; stages: ApplicationStage[] }[] = [
 ];
 
 const GRID_COLS: Record<number, string> = {
-  2: "md:grid-cols-2",
-  3: "md:grid-cols-3",
+  2: "md:grid-cols-2 xl:grid-cols-[repeat(2,minmax(260px,380px))]",
+  3: "md:grid-cols-3 xl:grid-cols-[repeat(3,minmax(260px,360px))]",
 };
 
 const CLOSED_STAGES: ApplicationStage[] = ["Offer", "Rejected", "Withdrawn"];
@@ -32,25 +32,26 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
   const isClosedCollapsed = hasClosedApps ? false : closedCollapsed;
 
   return (
-    <section aria-label="Application pipeline" className="pb-2">
+    <section aria-label="Application pipeline" className="pb-1">
       {PHASES.map(({ label, stages }) => {
         const isClosed = label === "Closed";
         const collapsed = isClosed && isClosedCollapsed;
 
         return (
-          <section key={label} aria-label={`${label} phase`} className="mb-4">
-            <div className="flex items-center gap-3 mb-2">
+          <section key={label} aria-label={`${label} phase`} className="mb-3 last:mb-0">
+            <div className="flex items-center gap-2 mb-1.5">
               {isClosed ? (
                 <button
                   type="button"
                   onClick={() => setClosedCollapsed((c) => !c)}
-                  className="flex items-center gap-2 text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors min-h-[44px] min-w-[44px]"
+                  aria-expanded={!collapsed}
+                  className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
                 >
-                  <span>{collapsed ? "▶" : "▼"}</span>
+                  <span aria-hidden="true">{collapsed ? "▶" : "▼"}</span>
                   {label}
                 </button>
               ) : (
-                <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest">
+                <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest py-1">
                   {label}
                 </span>
               )}
@@ -58,14 +59,14 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
 
             {!collapsed && (
               <div
-                className={`grid grid-cols-1 ${GRID_COLS[stages.length] ?? ""} gap-0 border border-border divide-y md:divide-y-0 md:divide-x divide-border`}
+                className={`grid grid-cols-1 ${GRID_COLS[stages.length] ?? ""} gap-2`}
               >
                 {stages.map((stage) => {
                   const stageApplications = applications.filter((a) => a.stage === stage);
                   return (
                     <article key={stage}>
-                      <Card className="min-h-[280px] rounded-none shadow-none border-0">
-                        <CardHeader className="flex-row items-center justify-between space-y-0 py-2 px-3 border-b border-border">
+                      <Card className="min-h-[104px] rounded-none shadow-none border border-border bg-background/40">
+                        <CardHeader className="flex-row items-center justify-between space-y-0 py-1.5 px-2.5 border-b border-border">
                           <CardTitle className="text-[0.6rem] font-bold uppercase tracking-widest text-muted-foreground">
                             {stage}
                           </CardTitle>
@@ -78,9 +79,9 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                             {stageApplications.length}
                           </span>
                         </CardHeader>
-                        <CardContent className="px-2 pb-2 pt-2">
+                        <CardContent className="px-1.5 pb-1.5 pt-1.5">
                           {stageApplications.length > 0 ? (
-                            <div className="grid gap-2">
+                            <div className="grid gap-1.5">
                               {stageApplications.map((application) => (
                                 <ApplicationCard
                                   application={application}
@@ -91,8 +92,8 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                               ))}
                             </div>
                           ) : (
-                            <p className="text-[0.6rem] text-muted-foreground mt-3 text-center uppercase tracking-widest">
-                              empty
+                            <p className="text-[0.6rem] text-muted-foreground py-3 text-center uppercase tracking-widest">
+                              No applications
                             </p>
                           )}
                         </CardContent>
