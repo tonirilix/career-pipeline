@@ -32,5 +32,5 @@
 - [x] 5.1 Update persistence adapter integration tests to use `TEST_DATABASE_URL` and skip with a clear message when absent.
 - [x] 5.2 Ensure persistence tests isolate data by truncating or recreating schema between test cases.
 - [x] 5.3 Run `go test ./...` for domain, application, GraphQL, and non-database tests.
-- [ ] 5.4 Run PostgreSQL-backed persistence tests with `TEST_DATABASE_URL` configured.
-- [ ] 5.5 Run `go run ./cmd/api --migrate-only` and `go run ./cmd/api --seed-only` against PostgreSQL.
+- [x] 5.4 Run PostgreSQL-backed persistence tests with `TEST_DATABASE_URL` configured.
+- [x] 5.5 Run `go run ./cmd/api --migrate-only` and `go run ./cmd/api --seed-only` against PostgreSQL.
