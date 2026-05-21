@@ -28,19 +28,28 @@ import type {
   PipelineSortOption,
   UsePipelineControls
 } from "./ports/pipelineControls";
-import { ApplicationDetails } from "./components/ApplicationDetails";
+import {
+  ApplicationDetails,
+  type DetailsCommandError
+} from "./components/ApplicationDetails";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
 import { PipelineControls } from "./components/PipelineControls";
 import { StatsBar } from "./components/StatsBar";
 import { Button } from "./components/ui/button";
+import { ErrorNotice } from "./components/ui/error-notice";
 import { Sidebar } from "./components/ui/sidebar";
 import { SlideOver } from "./components/ui/slide-over";
 
 type AppProps = {
   gateway: JobApplicationGateway;
   usePipelineControls: UsePipelineControls;
+};
+
+type BoardCommandError = {
+  title: string;
+  message: string;
 };
 
 export function App({ gateway, usePipelineControls }: AppProps) {
@@ -50,8 +59,10 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
-  const [commandError, setCommandError] = useState<string | null>(null);
+  const [commandError, setCommandError] = useState<BoardCommandError | null>(null);
   const [formCommandError, setFormCommandError] = useState<string | null>(null);
+  const [detailsCommandError, setDetailsCommandError] =
+    useState<DetailsCommandError | null>(null);
   const [form, setForm] = useState<CreateSavedJobOpportunityCommand>({
     company: "",
     roleTitle: "",
@@ -81,7 +92,12 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         if (isMounted) setApplications(loadedApplications);
       })
       .catch(() => {
-        if (isMounted) setCommandError("Could not load saved opportunities.");
+        if (isMounted) {
+          setCommandError({
+            title: "Applications could not load",
+            message: "Refresh the page or try again in a moment."
+          });
+        }
       });
 
     return () => { isMounted = false; };
@@ -157,46 +173,89 @@ export function App({ gateway, usePipelineControls }: AppProps) {
       applicationId: application.id,
       toStage
     });
-    if (!result.ok) { setCommandError(result.failure.message); return; }
+    if (!result.ok) {
+      setCommandError({
+        title: "Stage update failed",
+        message: result.failure.message
+      });
+      return;
+    }
     setApplications((current) =>
       current.map((c) => c.id === result.application.id ? result.application : c)
     );
+  }
+
+  function handleViewDetails(applicationId: string) {
+    setDetailsCommandError(null);
+    setSelectedApplicationId(applicationId);
+  }
+
+  function handleCloseDetails() {
+    setSelectedApplicationId(null);
+    setDetailsCommandError(null);
   }
 
   async function handleScheduleInterview(command: ScheduleInterviewCommand) {
-    setCommandError(null);
+    setDetailsCommandError(null);
     const result = await scheduleApplicationInterview(stableGateway, command);
-    if (!result.ok) { setCommandError(result.failure.message); return; }
+    if (!result.ok) {
+      setDetailsCommandError({
+        workflow: "interview",
+        message: result.failure.message
+      });
+      return false;
+    }
     setApplications((current) =>
       current.map((c) => c.id === result.application.id ? result.application : c)
     );
+    return true;
   }
 
   async function handleCreateFollowUp(command: CreateFollowUpReminderCommand) {
-    setCommandError(null);
+    setDetailsCommandError(null);
     const result = await createApplicationFollowUpReminder(stableGateway, command);
-    if (!result.ok) { setCommandError(result.failure.message); return; }
+    if (!result.ok) {
+      setDetailsCommandError({
+        workflow: "followUp",
+        message: result.failure.message
+      });
+      return false;
+    }
     setApplications((current) =>
       current.map((c) => c.id === result.application.id ? result.application : c)
     );
+    return true;
   }
 
   async function handleCompleteFollowUp(command: CompleteFollowUpReminderCommand) {
     setCommandError(null);
     const result = await completeApplicationFollowUpReminder(stableGateway, command);
-    if (!result.ok) { setCommandError(result.failure.message); return; }
+    if (!result.ok) {
+      setCommandError({
+        title: "Follow-up was not completed",
+        message: result.failure.message
+      });
+      return;
+    }
     setApplications((current) =>
       current.map((c) => c.id === result.application.id ? result.application : c)
     );
   }
 
   async function handleAddNote(command: AddApplicationNoteCommand) {
-    setCommandError(null);
+    setDetailsCommandError(null);
     const result = await addNoteToApplication(stableGateway, command);
-    if (!result.ok) { setCommandError(result.failure.message); return; }
+    if (!result.ok) {
+      setDetailsCommandError({
+        workflow: "note",
+        message: result.failure.message
+      });
+      return false;
+    }
     setApplications((current) =>
       current.map((c) => c.id === result.application.id ? result.application : c)
     );
+    return true;
   }
 
   return (
@@ -266,18 +325,17 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         </div>
         <div className="flex-1 overflow-auto px-6 py-6">
           {commandError ? (
-            <p
-              className="border border-border text-destructive text-xs px-4 py-3 mb-5"
-              role="alert"
-            >
-              <span className="font-bold uppercase tracking-widest">Error:</span> {commandError}
-            </p>
+            <ErrorNotice
+              className="mb-5"
+              message={commandError.message}
+              title={commandError.title}
+            />
           ) : null}
 
         <PipelineBoard
           applications={visibleApplications}
           onStageChange={handleStageChange}
-          onViewDetails={setSelectedApplicationId}
+          onViewDetails={handleViewDetails}
         />
         </div>
       </main>
@@ -299,12 +357,13 @@ export function App({ gateway, usePipelineControls }: AppProps) {
 
       <SlideOver
         isOpen={!!selectedApplicationId}
-        onClose={() => setSelectedApplicationId(null)}
+        onClose={handleCloseDetails}
         title="Application details"
       >
         {selectedApplication ? (
           <ApplicationDetails
             application={selectedApplication}
+            commandError={detailsCommandError}
             onAddNote={handleAddNote}
             onCreateFollowUp={handleCreateFollowUp}
             onScheduleInterview={handleScheduleInterview}
