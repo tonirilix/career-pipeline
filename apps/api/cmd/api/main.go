@@ -15,14 +15,14 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph/resolvers"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/usecases"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/infrastructure/persistence"
-	_ "modernc.org/sqlite"
 )
 
 //go:embed migrations/*.sql
@@ -44,22 +44,30 @@ func main() {
 	seedOnly := flag.Bool("seed-only", false, "seed the database and exit")
 	flag.Parse()
 
-	dbPath := envOrDefault("DB_PATH", "./data/tracker.db")
-	if err := os.MkdirAll("data", 0755); err != nil {
-		log.Fatalf("create data dir: %v", err)
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL is required, for example postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable")
 	}
 
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("pgx", databaseURL)
 	if err != nil {
 		log.Fatalf("open db: %v", err)
 	}
 	defer db.Close()
+	if err := db.Ping(); err != nil {
+		log.Fatalf("connect to PostgreSQL using DATABASE_URL: %v", err)
+	}
 
 	if err := runMigrations(db); err != nil {
 		log.Fatalf("migrations: %v", err)
 	}
 	if *migrateOnly {
 		log.Println("migrations complete")
+		return
+	}
+
+	if *seedOnly && !isEmptyDB(db) {
+		log.Println("seed skipped: database already contains job applications")
 		return
 	}
 
@@ -74,11 +82,11 @@ func main() {
 	}
 
 	// Wire up adapters
-	appRepo := persistence.NewSQLiteJobApplicationRepository(db)
-	interviewRepo := persistence.NewSQLiteInterviewRepository(db)
-	followUpRepo := persistence.NewSQLiteFollowUpRepository(db)
-	noteRepo := persistence.NewSQLiteNoteRepository(db)
-	timelineRepo := persistence.NewSQLiteTimelineRepository(db)
+	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	interviewRepo := persistence.NewPostgreSQLInterviewRepository(db)
+	followUpRepo := persistence.NewPostgreSQLFollowUpRepository(db)
+	noteRepo := persistence.NewPostgreSQLNoteRepository(db)
+	timelineRepo := persistence.NewPostgreSQLTimelineRepository(db)
 
 	clock := &wallClock{}
 	ids := &uuidGenerator{}
@@ -127,11 +135,11 @@ func runMigrations(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("migrations source: %w", err)
 	}
-	driver, err := sqlite.WithInstance(db, &sqlite.Config{})
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("migrations driver: %w", err)
 	}
-	m, err := migrate.NewWithInstance("iofs", source, "sqlite", driver)
+	m, err := migrate.NewWithInstance("iofs", source, "postgres", driver)
 	if err != nil {
 		return fmt.Errorf("migrate instance: %w", err)
 	}

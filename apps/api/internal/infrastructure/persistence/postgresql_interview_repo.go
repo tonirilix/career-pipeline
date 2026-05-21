@@ -1,0 +1,85 @@
+package persistence
+
+import (
+	"database/sql"
+	"time"
+
+	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
+	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+)
+
+type PostgreSQLInterviewRepository struct {
+	db *sql.DB
+}
+
+func NewPostgreSQLInterviewRepository(db *sql.DB) *PostgreSQLInterviewRepository {
+	return &PostgreSQLInterviewRepository{db: db}
+}
+
+var _ ports.InterviewRepository = (*PostgreSQLInterviewRepository)(nil)
+
+func (r *PostgreSQLInterviewRepository) Save(applicationID string, iv *domain.Interview) error {
+	_, err := r.db.Exec(
+		`INSERT INTO interviews (id, application_id, type, scheduled_at, notes, outcome, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		iv.ID, applicationID, string(iv.Type),
+		iv.ScheduledAt.UTC(),
+		iv.Notes, string(iv.Outcome),
+		time.Now().UTC(),
+	)
+	return err
+}
+
+func (r *PostgreSQLInterviewRepository) FindByID(id string) (*domain.Interview, error) {
+	row := r.db.QueryRow(
+		`SELECT id, type, scheduled_at, notes, outcome FROM interviews WHERE id = $1`, id,
+	)
+	return scanInterview(row)
+}
+
+func (r *PostgreSQLInterviewRepository) UpdateOutcome(id string, outcome domain.InterviewOutcome) error {
+	_, err := r.db.Exec(`UPDATE interviews SET outcome = $1 WHERE id = $2`, string(outcome), id)
+	return err
+}
+
+func (r *PostgreSQLInterviewRepository) ListByApplication(applicationID string) ([]*domain.Interview, error) {
+	rows, err := r.db.Query(
+		`SELECT id, type, scheduled_at, notes, outcome FROM interviews WHERE application_id = $1 ORDER BY scheduled_at ASC`,
+		applicationID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []*domain.Interview
+	for rows.Next() {
+		iv, err := scanInterviewRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, iv)
+	}
+	return out, rows.Err()
+}
+
+func scanInterview(row *sql.Row) (*domain.Interview, error) {
+	var iv domain.Interview
+	err := row.Scan(&iv.ID, &iv.Type, &iv.ScheduledAt, &iv.Notes, &iv.Outcome)
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrInterviewNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &iv, nil
+}
+
+func scanInterviewRow(rows *sql.Rows) (*domain.Interview, error) {
+	var iv domain.Interview
+	err := rows.Scan(&iv.ID, &iv.Type, &iv.ScheduledAt, &iv.Notes, &iv.Outcome)
+	if err != nil {
+		return nil, err
+	}
+	return &iv, nil
+}

@@ -2,11 +2,11 @@
 
 ## Status
 
-Open — current implementation uses raw `database/sql`; strategy not yet finalized.
+Open — current implementation uses raw `database/sql` with PostgreSQL; query-generation strategy not yet finalized.
 
 ## Context
 
-The Go backend (`apps/api`) needs to execute SQL queries against SQLite. Go has several well-established approaches for this, ranging from raw standard library code to full ORMs. The choice affects how much boilerplate developers write, how visible the SQL is, and how type-safe the persistence layer is.
+The Go backend (`apps/api`) needs to execute SQL queries against PostgreSQL. Go has several well-established approaches for this, ranging from raw standard library code to full ORMs. The choice affects how much boilerplate developers write, how visible the SQL is, and how type-safe the persistence layer is.
 
 The project is a learning exercise, so the choice should also serve as a clear example of a pattern rather than obscure it.
 
@@ -57,7 +57,7 @@ The Go community broadly favors explicit SQL over heavy ORMs:
 
 ## Decision
 
-**Not yet made.** Current code uses raw `database/sql` because sqlc was not installed at implementation time (see ADR 0002). The repository port interfaces in `internal/application/ports/` mean the persistence internals can be replaced without touching the domain or use-case layers.
+PostgreSQL is the database engine for local development and future deployment alignment. Current code uses raw `database/sql` with pgx stdlib because sqlc was not installed at implementation time (see ADR 0002). The repository port interfaces in `internal/application/ports/` mean the persistence internals can be replaced without touching the domain or use-case layers.
 
 ## Recommended Next Step
 
@@ -71,6 +71,6 @@ Migrate to **sqlc** as a future task:
 
 ## Consequences
 
-- Until this is resolved, the persistence layer is correct but verbose.
+- Until query generation is resolved, the persistence layer is correct but verbose.
 - Any developer adding a new query must write manual scan code.
 - Migrating to sqlc or sqlx is a change confined to `internal/infrastructure/persistence/` — no other layer is affected.
