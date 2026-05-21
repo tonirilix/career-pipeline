@@ -7,6 +7,7 @@ import {
   jobSources
 } from "../../domain/jobOpportunity";
 import { Button } from "./ui/button";
+import { ErrorNotice } from "./ui/error-notice";
 import { Input } from "./ui/input";
 import { Select } from "./ui/select";
 
@@ -27,6 +28,10 @@ export function OpportunityForm({
   onSubmit,
   onCancel
 }: OpportunityFormProps) {
+  const errorsByField = new Map(
+    fieldErrors.map((error) => [error.field, error.message])
+  );
+
   return (
     <section
       aria-label="New saved opportunity"
@@ -43,30 +48,54 @@ export function OpportunityForm({
           <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Company
             <Input
+              aria-describedby={errorsByField.has("company") ? "company-error" : undefined}
+              aria-invalid={errorsByField.has("company") ? true : undefined}
+              className={errorsByField.has("company") ? "border-destructive focus-visible:ring-destructive" : undefined}
               name="company"
               placeholder="e.g. Acme Corp"
               onChange={(e) => onChange({ ...form, company: e.target.value })}
               value={form.company}
             />
+            {errorsByField.has("company") ? (
+              <span id="company-error" className="text-xs normal-case text-destructive">
+                {errorsByField.get("company")}
+              </span>
+            ) : null}
           </label>
           <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Role title
             <Input
+              aria-describedby={errorsByField.has("roleTitle") ? "role-title-error" : undefined}
+              aria-invalid={errorsByField.has("roleTitle") ? true : undefined}
+              className={errorsByField.has("roleTitle") ? "border-destructive focus-visible:ring-destructive" : undefined}
               name="roleTitle"
               placeholder="e.g. Senior Engineer"
               onChange={(e) => onChange({ ...form, roleTitle: e.target.value })}
               value={form.roleTitle}
             />
+            {errorsByField.has("roleTitle") ? (
+              <span id="role-title-error" className="text-xs normal-case text-destructive">
+                {errorsByField.get("roleTitle")}
+              </span>
+            ) : null}
           </label>
           <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Posting URL
             <Input
+              aria-describedby={errorsByField.has("postingUrl") ? "posting-url-error" : undefined}
+              aria-invalid={errorsByField.has("postingUrl") ? true : undefined}
+              className={errorsByField.has("postingUrl") ? "border-destructive focus-visible:ring-destructive" : undefined}
               name="postingUrl"
               onChange={(e) => onChange({ ...form, postingUrl: e.target.value })}
               type="url"
               placeholder="https://…"
               value={form.postingUrl}
             />
+            {errorsByField.has("postingUrl") ? (
+              <span id="posting-url-error" className="text-xs normal-case text-destructive">
+                {errorsByField.get("postingUrl")}
+              </span>
+            ) : null}
           </label>
           <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
             Source
@@ -124,17 +153,27 @@ export function OpportunityForm({
         </div>
 
         {fieldErrors.length > 0 ? (
-          <ul className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-destructive space-y-1">
-            {fieldErrors.map((error) => (
-              <li key={`${error.field}-${error.message}`}>{error.message}</li>
-            ))}
-          </ul>
+          <ErrorNotice
+            className="mt-4"
+            message="Fix the fields marked in red, then save again."
+            title={`Check ${fieldErrors.length} ${
+              fieldErrors.length === 1 ? "field" : "fields"
+            }`}
+          >
+            <ul className="m-0 mt-2 space-y-1 pl-4 text-sm text-foreground">
+              {fieldErrors.map((error) => (
+                <li key={`${error.field}-${error.message}`}>{error.message}</li>
+              ))}
+            </ul>
+          </ErrorNotice>
         ) : null}
 
         {commandError ? (
-          <p className="mt-4 text-sm text-destructive" role="alert">
-            {commandError}
-          </p>
+          <ErrorNotice
+            className="mt-4"
+            message={commandError}
+            title="Opportunity was not saved"
+          />
         ) : null}
 
         <div className="mt-5 flex gap-2.5 justify-end border-t border-border pt-4">

@@ -53,6 +53,25 @@ function createReadOnlyGateway(
   };
 }
 
+function createGateway(
+  overrides: Partial<JobApplicationGateway> = {}
+): JobApplicationGateway {
+  async function unsupportedCommand(): Promise<never> {
+    throw new Error("This test gateway does not support that command.");
+  }
+
+  return {
+    listApplications: async () => [],
+    createSavedOpportunity: unsupportedCommand,
+    advanceApplicationStage: unsupportedCommand,
+    scheduleInterview: unsupportedCommand,
+    createFollowUpReminder: unsupportedCommand,
+    completeFollowUpReminder: unsupportedCommand,
+    addApplicationNote: unsupportedCommand,
+    ...overrides
+  };
+}
+
 function getStageColumn(stage: string) {
   const board = screen.getByRole("region", { name: "Application pipeline" });
   return within(board).getByText(stage, { selector: "div" }).closest("article") as HTMLElement;
@@ -184,11 +203,66 @@ describe("Job application tracker shell", () => {
     await user.type(screen.getByLabelText("Posting URL"), "not-a-url");
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
 
-    expect(await screen.findByText("Company is required")).toBeInTheDocument();
-    expect(screen.getByText("Role title is required")).toBeInTheDocument();
+    const alert = await screen.findByRole("alert");
+
+    expect(within(alert).getByText("Company is required")).toBeInTheDocument();
+    expect(within(alert).getByText("Role title is required")).toBeInTheDocument();
     expect(
-      screen.getByText("Posting URL must be a valid URL")
+      within(alert).getByText("Posting URL must be a valid URL")
     ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^Company/ })).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+    expect(screen.getByRole("textbox", { name: /^Role title/ })).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+    expect(screen.getByRole("textbox", { name: /^Posting URL/ })).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+  });
+
+  it("shows a visible alert when saved opportunities cannot load", async () => {
+    renderApp(
+      createGateway({
+        listApplications: async () => {
+          throw new Error("Network unavailable");
+        }
+      })
+    );
+
+    const alert = await screen.findByRole("alert");
+
+    expect(alert).toHaveTextContent("Applications could not load");
+    expect(alert).toHaveTextContent("Refresh the page or try again in a moment.");
+  });
+
+  it("shows a visible form alert when saving a valid opportunity fails", async () => {
+    const user = userEvent.setup();
+
+    renderApp(
+      createGateway({
+        createSavedOpportunity: async () => {
+          throw new Error("Write failed");
+        }
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Add opportunity" });
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "Could not save the opportunity. Try again."
+    );
   });
 
   it("lets a user mark a saved opportunity as applied", async () => {
@@ -243,8 +317,8 @@ describe("Job application tracker shell", () => {
     await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
 
     expect(
-      await screen.findByText("Cannot move an application from Saved to Offer.")
-    ).toBeInTheDocument();
+      await screen.findByRole("alert")
+    ).toHaveTextContent("Cannot move an application from Saved to Offer.");
   });
 
   it("lets a user advance active stages, reject an application, and reopen it", async () => {
@@ -432,7 +506,9 @@ describe("Job application tracker shell", () => {
       screen.getByLabelText("Interview type"),
       "Recruiter screen"
     );
-    await user.type(screen.getByLabelText("Date and time"), "2026-05-12T15:00");
+    const interviewDateTime = screen.getByRole("group", { name: "Date and time" });
+    await user.type(within(interviewDateTime).getByLabelText("Date"), "2026-05-12");
+    await user.type(within(interviewDateTime).getByLabelText("Time"), "15:00");
     await user.type(
       screen.getByLabelText("Interview notes"),
       "Ask about team shape"
@@ -474,14 +550,22 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "View Linear details" })
     );
 
-    await user.type(screen.getByLabelText("Date and time"), "2026-05-12T15:00");
+    const interviewDateTime = screen.getByRole("group", { name: "Date and time" });
+    await user.type(within(interviewDateTime).getByLabelText("Date"), "2026-05-12");
+    await user.type(within(interviewDateTime).getByLabelText("Time"), "15:00");
     await user.click(screen.getByRole("button", { name: "Schedule interview" }));
 
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
     expect(
-      await screen.findByText(
-        "Interviews can only be scheduled after an opportunity has been applied to."
-      )
-    ).toBeInTheDocument();
+      await within(detail).findByRole("alert")
+    ).toHaveTextContent(
+      "Interviews can only be scheduled after an opportunity has been applied to."
+    );
+    expect(within(interviewDateTime).getByLabelText("Date")).toHaveValue("2026-05-12");
+    expect(within(interviewDateTime).getByLabelText("Time")).toHaveValue("15:00");
   });
 
   it("shows an understandable error when scheduling an interview without a date", async () => {
@@ -504,9 +588,13 @@ describe("Job application tracker shell", () => {
 
     await user.click(screen.getByRole("button", { name: "Schedule interview" }));
 
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
     expect(
-      await screen.findByText("Interview date and time is required.")
-    ).toBeInTheDocument();
+      await within(detail).findByRole("alert")
+    ).toHaveTextContent("Interview date and time is required.");
   });
 
   it("lets a user create and complete an upcoming follow-up reminder", async () => {
@@ -527,7 +615,9 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "View Linear details" }));
 
-    await user.type(screen.getByLabelText("Follow-up due date"), "2026-05-11T12:00");
+    const followUpDueDate = screen.getByRole("group", { name: "Follow-up due date" });
+    await user.type(within(followUpDueDate).getByLabelText("Date"), "2026-05-11");
+    await user.type(within(followUpDueDate).getByLabelText("Time"), "12:00");
     await user.type(
       screen.getByLabelText("Follow-up note"),
       "Send recruiter a thank-you note"
@@ -572,18 +662,27 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "View Linear details" })
     );
 
-    await user.type(screen.getByLabelText("Follow-up due date"), "2026-05-09T12:00");
+    const followUpDueDate = screen.getByRole("group", { name: "Follow-up due date" });
+    await user.type(within(followUpDueDate).getByLabelText("Date"), "2026-05-09");
+    await user.type(within(followUpDueDate).getByLabelText("Time"), "12:00");
     await user.type(
       screen.getByLabelText("Follow-up note"),
       "Send recruiter a thank-you note"
     );
     await user.click(screen.getByRole("button", { name: "Create follow-up" }));
 
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
     expect(
-      await screen.findByText(
-        "Follow-up due date must be after the latest interaction."
-      )
-    ).toBeInTheDocument();
+      await within(detail).findByRole("alert")
+    ).toHaveTextContent("Follow-up due date must be after the latest interaction.");
+    expect(within(followUpDueDate).getByLabelText("Date")).toHaveValue("2026-05-09");
+    expect(within(followUpDueDate).getByLabelText("Time")).toHaveValue("12:00");
+    expect(screen.getByLabelText("Follow-up note")).toHaveValue(
+      "Send recruiter a thank-you note"
+    );
   });
 
   it("shows an understandable error when creating a follow-up without a due date", async () => {
@@ -609,9 +708,101 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "Create follow-up" }));
 
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
     expect(
-      await screen.findByText("Follow-up due date is required.")
-    ).toBeInTheDocument();
+      await within(detail).findByRole("alert")
+    ).toHaveTextContent("Follow-up due date is required.");
+  });
+
+  it("shows details command errors inside the details panel and preserves entered values", async () => {
+    const user = userEvent.setup();
+    const application = createApplication({
+      id: "linear",
+      company: "Linear",
+      roleTitle: "Frontend Engineer",
+      stage: "Applied"
+    });
+
+    renderApp(
+      createGateway({
+        listApplications: async () => [application],
+        addApplicationNote: async () => {
+          throw new Error("Could not add the note right now.");
+        },
+        createFollowUpReminder: async () => {
+          throw new Error("Could not create the follow-up right now.");
+        },
+        scheduleInterview: async () => {
+          throw new Error("Could not schedule the interview right now.");
+        }
+      })
+    );
+
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
+    await user.type(
+      within(detail).getByLabelText("Application note"),
+      "Recruiter mentioned a platform team opening."
+    );
+    await user.click(within(detail).getByRole("button", { name: "Add note" }));
+
+    expect(await within(detail).findByRole("alert")).toHaveTextContent(
+      "Could not add the note right now."
+    );
+    expect(within(detail).getByLabelText("Application note")).toHaveValue(
+      "Recruiter mentioned a platform team opening."
+    );
+
+    const followUpDueDate = within(detail).getByRole("group", {
+      name: "Follow-up due date"
+    });
+    await user.type(within(followUpDueDate).getByLabelText("Date"), "2026-05-20");
+    await user.type(within(followUpDueDate).getByLabelText("Time"), "10:00");
+    await user.type(
+      within(detail).getByLabelText("Follow-up note"),
+      "Ask recruiter for feedback."
+    );
+    await user.click(within(detail).getByRole("button", { name: "Create follow-up" }));
+
+    expect(await within(detail).findByRole("alert")).toHaveTextContent(
+      "Could not create the follow-up right now."
+    );
+    expect(within(followUpDueDate).getByLabelText("Date")).toHaveValue("2026-05-20");
+    expect(within(followUpDueDate).getByLabelText("Time")).toHaveValue("10:00");
+    expect(within(detail).getByLabelText("Follow-up note")).toHaveValue(
+      "Ask recruiter for feedback."
+    );
+
+    await user.selectOptions(within(detail).getByLabelText("Interview type"), "Technical");
+    const interviewDateTime = within(detail).getByRole("group", {
+      name: "Date and time"
+    });
+    await user.type(within(interviewDateTime).getByLabelText("Date"), "2026-05-21");
+    await user.type(within(interviewDateTime).getByLabelText("Time"), "14:30");
+    await user.type(
+      within(detail).getByLabelText("Interview notes"),
+      "Prepare architecture examples."
+    );
+    await user.selectOptions(within(detail).getByLabelText("Outcome"), "No decision");
+    await user.click(within(detail).getByRole("button", { name: "Schedule interview" }));
+
+    expect(await within(detail).findByRole("alert")).toHaveTextContent(
+      "Could not schedule the interview right now."
+    );
+    expect(within(detail).getByLabelText("Interview type")).toHaveValue("Technical");
+    expect(within(interviewDateTime).getByLabelText("Date")).toHaveValue("2026-05-21");
+    expect(within(interviewDateTime).getByLabelText("Time")).toHaveValue("14:30");
+    expect(within(detail).getByLabelText("Interview notes")).toHaveValue(
+      "Prepare architecture examples."
+    );
+    expect(within(detail).getByLabelText("Outcome")).toHaveValue("No decision");
   });
 
   it("lets a user add a note and see it in application details and timeline", async () => {

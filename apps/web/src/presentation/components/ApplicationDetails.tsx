@@ -16,19 +16,41 @@ import {
   interviewTypes
 } from "../../domain/jobOpportunity";
 import { Button } from "./ui/button";
+import { ErrorNotice } from "./ui/error-notice";
 import { Input } from "./ui/input";
 import { Select } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 
+export type DetailsCommandError = {
+  workflow: "note" | "followUp" | "interview";
+  message: string;
+};
+
+type FollowUpFormState = {
+  dueDate: string;
+  dueTime: string;
+  note: string;
+};
+
+type InterviewFormState = {
+  type: Interview["type"];
+  scheduledDate: string;
+  scheduledTime: string;
+  notes: string;
+  outcome: Interview["outcome"];
+};
+
 type ApplicationDetailsProps = {
   application: JobApplication;
-  onAddNote: (command: AddApplicationNoteCommand) => Promise<void>;
-  onCreateFollowUp: (command: CreateFollowUpReminderCommand) => Promise<void>;
-  onScheduleInterview: (command: ScheduleInterviewCommand) => Promise<void>;
+  commandError: DetailsCommandError | null;
+  onAddNote: (command: AddApplicationNoteCommand) => Promise<boolean>;
+  onCreateFollowUp: (command: CreateFollowUpReminderCommand) => Promise<boolean>;
+  onScheduleInterview: (command: ScheduleInterviewCommand) => Promise<boolean>;
 };
 
 export function ApplicationDetails({
   application,
+  commandError,
   onAddNote,
   onCreateFollowUp,
   onScheduleInterview
@@ -38,32 +60,59 @@ export function ApplicationDetails({
   const interviews = [...application.interviews].sort(compareInterviews);
   const followUps = [...application.followUps].sort(compareFollowUps);
 
-  const [interviewForm, setInterviewForm] = useState<
-    Omit<ScheduleInterviewCommand, "applicationId">
-  >({ type: "Recruiter screen", scheduledAt: "", notes: "", outcome: "Scheduled" });
+  const [interviewForm, setInterviewForm] = useState<InterviewFormState>({
+    type: "Recruiter screen",
+    scheduledDate: "",
+    scheduledTime: "",
+    notes: "",
+    outcome: "Scheduled"
+  });
 
-  const [followUpForm, setFollowUpForm] = useState<
-    Omit<CreateFollowUpReminderCommand, "applicationId">
-  >({ dueAt: "", note: "" });
+  const [followUpForm, setFollowUpForm] = useState<FollowUpFormState>({
+    dueDate: "",
+    dueTime: "",
+    note: ""
+  });
 
   const [noteBody, setNoteBody] = useState("");
 
   async function handleInterviewSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await onScheduleInterview({ applicationId: application.id, ...interviewForm });
-    setInterviewForm({ type: "Recruiter screen", scheduledAt: "", notes: "", outcome: "Scheduled" });
+    const didSchedule = await onScheduleInterview({
+      applicationId: application.id,
+      type: interviewForm.type,
+      scheduledAt: combineDateAndTime(
+        interviewForm.scheduledDate,
+        interviewForm.scheduledTime
+      ),
+      notes: interviewForm.notes,
+      outcome: interviewForm.outcome
+    });
+    if (didSchedule) {
+      setInterviewForm({
+        type: "Recruiter screen",
+        scheduledDate: "",
+        scheduledTime: "",
+        notes: "",
+        outcome: "Scheduled"
+      });
+    }
   }
 
   async function handleFollowUpSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await onCreateFollowUp({ applicationId: application.id, ...followUpForm });
-    setFollowUpForm({ dueAt: "", note: "" });
+    const didCreate = await onCreateFollowUp({
+      applicationId: application.id,
+      dueAt: combineDateAndTime(followUpForm.dueDate, followUpForm.dueTime),
+      note: followUpForm.note
+    });
+    if (didCreate) setFollowUpForm({ dueDate: "", dueTime: "", note: "" });
   }
 
   async function handleNoteSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await onAddNote({ applicationId: application.id, body: noteBody });
-    setNoteBody("");
+    const didAdd = await onAddNote({ applicationId: application.id, body: noteBody });
+    if (didAdd) setNoteBody("");
   }
 
   return (
@@ -122,6 +171,17 @@ export function ApplicationDetails({
           ) : (
             <p className="text-sm text-muted-foreground italic mb-4">No notes yet</p>
           )}
+          {commandError?.workflow === "note" ? (
+            <ErrorNotice
+              className="mb-3"
+              message={commandError.message}
+              title="Note was not added"
+            >
+              <p className="m-0 mt-1 text-xs text-foreground/80">
+                Your note is still here. Edit it if needed, then try again.
+              </p>
+            </ErrorNotice>
+          ) : null}
           <form className="grid gap-2" onSubmit={handleNoteSubmit}>
             <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
               Application note
@@ -158,15 +218,44 @@ export function ApplicationDetails({
           ) : (
             <p className="text-sm text-muted-foreground italic mb-4">No follow-ups scheduled</p>
           )}
+          {commandError?.workflow === "followUp" ? (
+            <ErrorNotice
+              className="mb-3"
+              message={commandError.message}
+              title="Follow-up was not created"
+            >
+              <p className="m-0 mt-1 text-xs text-foreground/80">
+                Your due date and note are still here. Adjust them and try again.
+              </p>
+            </ErrorNotice>
+          ) : null}
           <form className="grid gap-3" onSubmit={handleFollowUpSubmit}>
-            <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
-              Follow-up due date
-              <Input
-                onChange={(e) => setFollowUpForm((c) => ({ ...c, dueAt: e.target.value }))}
-                type="datetime-local"
-                value={followUpForm.dueAt}
-              />
-            </label>
+            <div
+              aria-label="Follow-up due date"
+              className="grid grid-cols-[minmax(0,1fr)_minmax(96px,0.55fr)] gap-3"
+              role="group"
+            >
+              <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+                Date
+                <Input
+                  onChange={(e) =>
+                    setFollowUpForm((c) => ({ ...c, dueDate: e.target.value }))
+                  }
+                  type="date"
+                  value={followUpForm.dueDate}
+                />
+              </label>
+              <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+                Time
+                <Input
+                  onChange={(e) =>
+                    setFollowUpForm((c) => ({ ...c, dueTime: e.target.value }))
+                  }
+                  type="time"
+                  value={followUpForm.dueTime}
+                />
+              </label>
+            </div>
             <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
               Follow-up note
               <Textarea
@@ -200,9 +289,20 @@ export function ApplicationDetails({
           ) : (
             <p className="text-sm text-muted-foreground italic mb-4">No interviews scheduled</p>
           )}
+          {commandError?.workflow === "interview" ? (
+            <ErrorNotice
+              className="mb-3"
+              message={commandError.message}
+              title="Interview was not scheduled"
+            >
+              <p className="m-0 mt-1 text-xs text-foreground/80">
+                Your interview details are still here. Adjust them and try again.
+              </p>
+            </ErrorNotice>
+          ) : null}
           <form className="grid gap-3" onSubmit={handleInterviewSubmit}>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+            <div className="grid gap-3">
+              <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
                 Interview type
                 <Select
                   onChange={(e) =>
@@ -215,16 +315,32 @@ export function ApplicationDetails({
                   ))}
                 </Select>
               </label>
-              <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
-                Date and time
-                <Input
-                  onChange={(e) =>
-                    setInterviewForm((c) => ({ ...c, scheduledAt: e.target.value }))
-                  }
-                  type="datetime-local"
-                  value={interviewForm.scheduledAt}
-                />
-              </label>
+              <div
+                aria-label="Date and time"
+                className="grid min-w-0 grid-cols-2 gap-3"
+                role="group"
+              >
+                <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+                  Date
+                  <Input
+                    onChange={(e) =>
+                      setInterviewForm((c) => ({ ...c, scheduledDate: e.target.value }))
+                    }
+                    type="date"
+                    value={interviewForm.scheduledDate}
+                  />
+                </label>
+                <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+                  Time
+                  <Input
+                    onChange={(e) =>
+                      setInterviewForm((c) => ({ ...c, scheduledTime: e.target.value }))
+                    }
+                    type="time"
+                    value={interviewForm.scheduledTime}
+                  />
+                </label>
+              </div>
             </div>
             <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
               Interview notes
@@ -293,6 +409,11 @@ function compareInterviews(left: Interview, right: Interview) {
 }
 function compareFollowUps(left: FollowUpReminder, right: FollowUpReminder) {
   return new Date(left.dueAt).getTime() - new Date(right.dueAt).getTime();
+}
+
+function combineDateAndTime(date: string, time: string) {
+  if (!date || !time) return "";
+  return `${date}T${time}`;
 }
 
 function formatDate(value: string) {
