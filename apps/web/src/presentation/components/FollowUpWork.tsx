@@ -21,7 +21,7 @@ export function FollowUpWork({
   return (
     <section
       aria-label="Follow-up work"
-      className="grid gap-3 grid-cols-[repeat(2,minmax(240px,1fr))] mb-5"
+      className="grid gap-3 grid-cols-1 px-4 py-3"
     >
       <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
@@ -83,13 +83,13 @@ function FollowUpWorkList({ items, label, urgent, onCompleteFollowUp }: FollowUp
   return (
     <ol aria-label={label} className="grid gap-0 m-0 list-none p-0 divide-y divide-border">
       {items.map(({ application, followUp }) => (
-        <li key={followUp.id} className="py-3 first:pt-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <strong className="text-xs font-bold text-foreground">
+        <li key={followUp.id} className="py-3 first:pt-0 min-w-0 overflow-hidden">
+          <div className="mb-1">
+            <strong className="block text-xs font-bold text-foreground truncate">
               {application.company}
             </strong>
             <time
-              className={`text-[0.55rem] font-bold uppercase tracking-widest whitespace-nowrap ${
+              className={`text-[0.55rem] font-bold uppercase tracking-widest ${
                 urgent ? "text-accent" : "text-muted-foreground"
               }`}
               dateTime={followUp.dueAt}
@@ -101,7 +101,7 @@ function FollowUpWorkList({ items, label, urgent, onCompleteFollowUp }: FollowUp
             {followUp.note}
           </span>
           <Button
-            className="w-full h-7 text-[0.65rem] rounded-none bg-transparent hover:bg-muted"
+            className="w-full min-w-0 h-7 text-[0.65rem] rounded-none bg-transparent hover:bg-muted overflow-hidden [white-space:normal]"
             variant="outline"
             onClick={() =>
               void onCompleteFollowUp({
@@ -111,7 +111,7 @@ function FollowUpWorkList({ items, label, urgent, onCompleteFollowUp }: FollowUp
             }
             type="button"
           >
-            Complete follow-up for {application.company}
+            <span className="truncate">Complete follow-up for {application.company}</span>
           </Button>
         </li>
       ))}
