@@ -1,10 +1,4 @@
-# Capability: Go Backend Persistence
-
-## Purpose
-
-Infrastructure layer for the Go backend. Defines the PostgreSQL schema, migrations, repository adapter implementations, and seed data. All persistence concerns are hidden behind port interfaces defined in the application layer.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: PostgreSQL runtime database
 The backend SHALL use PostgreSQL as its runtime database and SHALL open the database through a PostgreSQL `DATABASE_URL` connection string.

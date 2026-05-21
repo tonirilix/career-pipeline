@@ -1,13 +1,14 @@
 BINARY_NAME=api
-DB_PATH=./data/tracker.db
+DATABASE_URL?=postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable
+TEST_DATABASE_URL?=$(DATABASE_URL)
 
-.PHONY: build run generate test migrate seed
+.PHONY: build run generate test test-db migrate seed db-up db-down db-reset
 
 build:
 	go build -o bin/$(BINARY_NAME) ./cmd/api
 
 run: build
-	APP_ENV=development ./bin/$(BINARY_NAME)
+	DATABASE_URL="$(DATABASE_URL)" APP_ENV=development ./bin/$(BINARY_NAME)
 
 generate:
 	go generate ./...
@@ -15,8 +16,21 @@ generate:
 test:
 	go test ./...
 
+test-db:
+	TEST_DATABASE_URL="$(TEST_DATABASE_URL)" go test ./internal/infrastructure/persistence
+
 migrate:
-	go run ./cmd/api -migrate-only
+	DATABASE_URL="$(DATABASE_URL)" go run ./cmd/api -migrate-only
 
 seed:
-	go run ./cmd/api -seed-only
+	DATABASE_URL="$(DATABASE_URL)" go run ./cmd/api -seed-only
+
+db-up:
+	docker compose up -d postgres
+
+db-down:
+	docker compose down
+
+db-reset:
+	docker compose down -v
+	docker compose up -d postgres

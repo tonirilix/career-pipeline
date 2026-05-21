@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS job_applications (
     compensation    TEXT NOT NULL DEFAULT '',
     employment_type TEXT NOT NULL DEFAULT 'Full-time',
     stage           TEXT NOT NULL DEFAULT 'Saved',
-    created_at      DATETIME NOT NULL
+    created_at      TIMESTAMPTZ NOT NULL
 );

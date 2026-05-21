@@ -6,18 +6,26 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/infrastructure/persistence"
-	_ "modernc.org/sqlite"
 )
 
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
-	db, err := sql.Open("sqlite", ":memory:")
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL is required for PostgreSQL persistence tests")
+	}
+
+	db, err := sql.Open("pgx", databaseURL)
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}
 	t.Cleanup(func() { db.Close() })
+	if err := db.Ping(); err != nil {
+		t.Fatalf("connect test db: %v", err)
+	}
 
 	schema, err := os.ReadFile("testdata/schema.sql")
 	if err != nil {
@@ -26,12 +34,22 @@ func openTestDB(t *testing.T) *sql.DB {
 	if _, err := db.Exec(string(schema)); err != nil {
 		t.Fatalf("apply schema: %v", err)
 	}
+	truncateTestDB(t, db)
+	t.Cleanup(func() { truncateTestDB(t, db) })
 	return db
 }
 
-func TestSQLiteJobApplicationRepository_SaveAndFind(t *testing.T) {
+func truncateTestDB(t *testing.T, db *sql.DB) {
+	t.Helper()
+	_, err := db.Exec(`TRUNCATE timeline_events, application_notes, follow_up_reminders, interviews, job_applications RESTART IDENTITY CASCADE`)
+	if err != nil {
+		t.Fatalf("truncate test db: %v", err)
+	}
+}
+
+func TestPostgreSQLJobApplicationRepository_SaveAndFind(t *testing.T) {
 	db := openTestDB(t)
-	repo := persistence.NewSQLiteJobApplicationRepository(db)
+	repo := persistence.NewPostgreSQLJobApplicationRepository(db)
 
 	app := &domain.JobApplication{
 		ID:             "app-1",
@@ -62,9 +80,9 @@ func TestSQLiteJobApplicationRepository_SaveAndFind(t *testing.T) {
 	}
 }
 
-func TestSQLiteJobApplicationRepository_UpdateStage(t *testing.T) {
+func TestPostgreSQLJobApplicationRepository_UpdateStage(t *testing.T) {
 	db := openTestDB(t)
-	repo := persistence.NewSQLiteJobApplicationRepository(db)
+	repo := persistence.NewPostgreSQLJobApplicationRepository(db)
 	_ = repo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 
 	if err := repo.UpdateStage("app-1", domain.StageApplied); err != nil {
@@ -76,10 +94,10 @@ func TestSQLiteJobApplicationRepository_UpdateStage(t *testing.T) {
 	}
 }
 
-func TestSQLiteTimelineRepository_SaveAndList(t *testing.T) {
+func TestPostgreSQLTimelineRepository_SaveAndList(t *testing.T) {
 	db := openTestDB(t)
-	appRepo := persistence.NewSQLiteJobApplicationRepository(db)
-	repo := persistence.NewSQLiteTimelineRepository(db)
+	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	repo := persistence.NewPostgreSQLTimelineRepository(db)
 
 	_ = appRepo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 	event := &domain.TimelineEvent{ID: "ev-1", Description: "Saved", OccurredAt: time.Now()}
@@ -95,10 +113,10 @@ func TestSQLiteTimelineRepository_SaveAndList(t *testing.T) {
 	}
 }
 
-func TestSQLiteNoteRepository_SaveAndList(t *testing.T) {
+func TestPostgreSQLNoteRepository_SaveAndList(t *testing.T) {
 	db := openTestDB(t)
-	appRepo := persistence.NewSQLiteJobApplicationRepository(db)
-	repo := persistence.NewSQLiteNoteRepository(db)
+	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	repo := persistence.NewPostgreSQLNoteRepository(db)
 
 	_ = appRepo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 	note := &domain.ApplicationNote{ID: "n-1", Body: "Test note", CreatedAt: time.Now()}
@@ -114,10 +132,10 @@ func TestSQLiteNoteRepository_SaveAndList(t *testing.T) {
 	}
 }
 
-func TestSQLiteFollowUpRepository(t *testing.T) {
+func TestPostgreSQLFollowUpRepository(t *testing.T) {
 	db := openTestDB(t)
-	appRepo := persistence.NewSQLiteJobApplicationRepository(db)
-	repo := persistence.NewSQLiteFollowUpRepository(db)
+	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	repo := persistence.NewPostgreSQLFollowUpRepository(db)
 
 	_ = appRepo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 	future := time.Now().Add(24 * time.Hour)

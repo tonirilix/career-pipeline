@@ -2,56 +2,66 @@ package persistence
 
 import (
 	"database/sql"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
 )
 
-type SQLiteJobApplicationRepository struct {
+type PostgreSQLJobApplicationRepository struct {
 	db *sql.DB
 }
 
-func NewSQLiteJobApplicationRepository(db *sql.DB) *SQLiteJobApplicationRepository {
-	return &SQLiteJobApplicationRepository{db: db}
+func NewPostgreSQLJobApplicationRepository(db *sql.DB) *PostgreSQLJobApplicationRepository {
+	return &PostgreSQLJobApplicationRepository{db: db}
 }
 
-func (r *SQLiteJobApplicationRepository) Save(app *domain.JobApplication) error {
+var _ ports.JobApplicationRepository = (*PostgreSQLJobApplicationRepository)(nil)
+
+func (r *PostgreSQLJobApplicationRepository) Save(app *domain.JobApplication) error {
 	_, err := r.db.Exec(
 		`INSERT INTO job_applications (id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		app.ID, app.Company, app.RoleTitle, app.PostingURL, string(app.Source),
 		app.Location, app.Compensation, string(app.EmploymentType), string(app.Stage),
-		app.CreatedAt.UTC().Format(time.RFC3339),
+		app.CreatedAt.UTC(),
 	)
 	return err
 }
 
-func (r *SQLiteJobApplicationRepository) FindByID(id string) (*domain.JobApplication, error) {
+func (r *PostgreSQLJobApplicationRepository) FindByID(id string) (*domain.JobApplication, error) {
 	row := r.db.QueryRow(
 		`SELECT id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at
-		 FROM job_applications WHERE id = ?`, id,
+		 FROM job_applications WHERE id = $1`, id,
 	)
 	return scanApplication(row)
 }
 
-func (r *SQLiteJobApplicationRepository) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
+func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
 	query := `SELECT id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at FROM job_applications WHERE 1=1`
 	args := []interface{}{}
+	nextArg := func() string {
+		args = append(args, nil)
+		return "$" + strconv.Itoa(len(args))
+	}
 
 	if filter.Stage != nil {
-		query += " AND stage = ?"
-		args = append(args, string(*filter.Stage))
+		placeholder := nextArg()
+		args[len(args)-1] = string(*filter.Stage)
+		query += " AND stage = " + placeholder
 	}
 	if filter.Source != nil {
-		query += " AND source = ?"
-		args = append(args, string(*filter.Source))
+		placeholder := nextArg()
+		args[len(args)-1] = string(*filter.Source)
+		query += " AND source = " + placeholder
 	}
 	if filter.SearchTerm != "" {
-		query += " AND (LOWER(company) LIKE ? OR LOWER(role_title) LIKE ?)"
-		term := "%" + strings.ToLower(filter.SearchTerm) + "%"
-		args = append(args, term, term)
+		companyPlaceholder := nextArg()
+		args[len(args)-1] = "%" + strings.ToLower(filter.SearchTerm) + "%"
+		rolePlaceholder := nextArg()
+		args[len(args)-1] = "%" + strings.ToLower(filter.SearchTerm) + "%"
+		query += " AND (LOWER(company) LIKE " + companyPlaceholder + " OR LOWER(role_title) LIKE " + rolePlaceholder + ")"
 	}
 
 	switch filter.SortBy {
@@ -80,18 +90,17 @@ func (r *SQLiteJobApplicationRepository) List(filter ports.ListApplicationsFilte
 	return apps, rows.Err()
 }
 
-func (r *SQLiteJobApplicationRepository) UpdateStage(id string, stage domain.ApplicationStage) error {
-	_, err := r.db.Exec(`UPDATE job_applications SET stage = ? WHERE id = ?`, string(stage), id)
+func (r *PostgreSQLJobApplicationRepository) UpdateStage(id string, stage domain.ApplicationStage) error {
+	_, err := r.db.Exec(`UPDATE job_applications SET stage = $1 WHERE id = $2`, string(stage), id)
 	return err
 }
 
 func scanApplication(row *sql.Row) (*domain.JobApplication, error) {
 	var app domain.JobApplication
-	var createdAtStr string
 	err := row.Scan(
 		&app.ID, &app.Company, &app.RoleTitle, &app.PostingURL,
 		&app.Source, &app.Location, &app.Compensation, &app.EmploymentType,
-		&app.Stage, &createdAtStr,
+		&app.Stage, &app.CreatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrApplicationNotFound
@@ -99,21 +108,18 @@ func scanApplication(row *sql.Row) (*domain.JobApplication, error) {
 	if err != nil {
 		return nil, err
 	}
-	app.CreatedAt, _ = parseStoredTime(createdAtStr)
 	return &app, nil
 }
 
 func scanApplicationRow(rows *sql.Rows) (*domain.JobApplication, error) {
 	var app domain.JobApplication
-	var createdAtStr string
 	err := rows.Scan(
 		&app.ID, &app.Company, &app.RoleTitle, &app.PostingURL,
 		&app.Source, &app.Location, &app.Compensation, &app.EmploymentType,
-		&app.Stage, &createdAtStr,
+		&app.Stage, &app.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
-	app.CreatedAt, _ = parseStoredTime(createdAtStr)
 	return &app, nil
 }
