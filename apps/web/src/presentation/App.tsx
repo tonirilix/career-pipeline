@@ -56,6 +56,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   const stableGateway = useMemo(() => gateway, [gateway]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
@@ -86,6 +87,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoadingApplications(true);
 
     void listApplications(stableGateway)
       .then((loadedApplications) => {
@@ -98,6 +100,9 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             message: "Refresh the page or try again in a moment."
           });
         }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingApplications(false);
       });
 
     return () => { isMounted = false; };
@@ -262,7 +267,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)}>
         <div className="border-b border-border px-4 py-4 shrink-0">
-          <p className="text-[0.6rem] text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
             Pipeline workspace
           </p>
           <h1 className="text-xl font-bold text-foreground leading-tight m-0 mb-3">
@@ -277,14 +282,6 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             Add opportunity
           </Button>
         </div>
-
-        <section aria-label="Active work summary" className="px-4 py-3 border-b border-border shrink-0">
-          <span className={`inline-flex items-center text-xs uppercase tracking-widest ${
-            activeApplicationCount > 0 ? "text-accent" : "text-muted-foreground"
-          }`}>
-            {activeApplicationCount} active {activeApplicationCount === 1 ? "application" : "applications"}
-          </span>
-        </section>
 
         <StatsBar
           activeCount={activeApplicationCount}
@@ -323,20 +320,31 @@ export function App({ gateway, usePipelineControls }: AppProps) {
           </button>
           <span className="text-sm font-bold text-foreground">Job Application Tracker</span>
         </div>
-        <div className="flex-1 overflow-auto px-6 py-6">
-          {commandError ? (
-            <ErrorNotice
-              className="mb-5"
-              message={commandError.message}
-              title={commandError.title}
-            />
-          ) : null}
+        <div className="flex-1 overflow-auto px-4 py-5 md:px-6 md:py-6">
+          <div className="mx-auto w-full max-w-[1180px]">
+            {commandError ? (
+              <ErrorNotice
+                className="mb-5"
+                message={commandError.message}
+                title={commandError.title}
+              />
+            ) : null}
 
-        <PipelineBoard
-          applications={visibleApplications}
-          onStageChange={handleStageChange}
-          onViewDetails={handleViewDetails}
-        />
+            {isLoadingApplications ? (
+              <div
+                role="status"
+                className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+              >
+                Loading applications...
+              </div>
+            ) : (
+              <PipelineBoard
+                applications={visibleApplications}
+                onStageChange={handleStageChange}
+                onViewDetails={handleViewDetails}
+              />
+            )}
+          </div>
         </div>
       </main>
 

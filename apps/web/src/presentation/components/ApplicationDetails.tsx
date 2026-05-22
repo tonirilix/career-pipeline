@@ -120,13 +120,13 @@ export function ApplicationDetails({
       {/* Header */}
       <div className="border-b border-border px-5 py-4 flex items-start justify-between">
         <div>
-          <p className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
             Application details
           </p>
           <h2 className="text-lg font-bold text-foreground m-0">{application.company}</h2>
           <p className="text-xs text-muted-foreground mt-0.5 mb-0">{application.roleTitle}</p>
         </div>
-        <span className="border border-border text-muted-foreground text-[0.6rem] font-bold uppercase tracking-widest px-2 py-1 whitespace-nowrap mt-1">
+        <span className="border border-border text-muted-foreground text-xs font-bold uppercase tracking-widest px-2 py-1 whitespace-nowrap mt-1">
           {application.stage}
         </span>
       </div>
@@ -140,12 +140,12 @@ export function ApplicationDetails({
           { label: "Employment type", value: application.employmentType },
         ].map(({ label, value }, i) => (
           <div key={label} className={`px-4 py-3 ${i % 2 === 0 ? "border-r border-border" : ""} ${i < 2 ? "border-b border-border" : ""}`}>
-            <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</dt>
+            <dt className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</dt>
             <dd className="text-xs text-foreground m-0">{value}</dd>
           </div>
         ))}
         <div className="col-span-2 border-t border-border px-4 py-3">
-          <dt className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest mb-1">Posting URL</dt>
+          <dt className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Posting URL</dt>
           <dd className="text-xs text-foreground m-0 break-all">
             <a className="text-foreground hover:text-accent underline underline-offset-2" href={application.postingUrl}>{application.postingUrl}</a>
           </dd>
@@ -156,12 +156,12 @@ export function ApplicationDetails({
       <div className="divide-y divide-border">
         {/* Notes */}
         <section aria-label="Notes" className="p-5">
-          <h3 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest mb-3">Notes</h3>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Notes</h3>
           {notes.length > 0 ? (
             <ol aria-label="Application notes" className="list-none p-0 m-0 grid gap-2 mb-4">
               {notes.map((note) => (
                 <li key={note.id} className="border border-border px-3 py-2">
-                  <time className="block text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wide mb-1" dateTime={note.createdAt}>
+                  <time className="block text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1" dateTime={note.createdAt}>
                     {formatDate(note.createdAt)}
                   </time>
                   <span className="text-sm text-foreground">{note.body}</span>
@@ -183,7 +183,7 @@ export function ApplicationDetails({
             </ErrorNotice>
           ) : null}
           <form className="grid gap-2" onSubmit={handleNoteSubmit}>
-            <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+            <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
               Application note
               <Textarea
                 className="min-h-[60px]"
@@ -198,19 +198,19 @@ export function ApplicationDetails({
 
         {/* Follow-ups */}
         <section aria-label="Follow-ups" className="p-5">
-          <h3 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest mb-3">Follow-ups</h3>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Follow-ups</h3>
           {followUps.length > 0 ? (
             <ol aria-label="Application follow-ups" className="list-none p-0 m-0 grid gap-2 mb-4">
               {followUps.map((followUp) => (
                 <li key={followUp.id} className="bg-background border border-border px-3 py-2 flex items-start justify-between gap-2">
                   <div>
-                    <time className="block text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wide mb-0.5" dateTime={followUp.dueAt}>
+                    <time className="block text-xs font-bold text-muted-foreground uppercase tracking-wide mb-0.5" dateTime={followUp.dueAt}>
                       {formatDate(followUp.dueAt)}
                     </time>
                     <span className="text-sm text-foreground">{followUp.note}</span>
                   </div>
                   {followUp.completedAt ? (
-                    <span className="text-[0.6rem] font-bold text-accent border border-accent/30 px-1.5 py-0.5 whitespace-nowrap uppercase tracking-wider">done</span>
+                    <span className="text-xs font-bold text-accent border border-accent/30 px-1.5 py-0.5 whitespace-nowrap uppercase tracking-wider">done</span>
                   ) : null}
                 </li>
               ))}
@@ -235,7 +235,7 @@ export function ApplicationDetails({
               className="grid grid-cols-[minmax(0,1fr)_minmax(96px,0.55fr)] gap-3"
               role="group"
             >
-              <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+              <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                 Date
                 <Input
                   onChange={(e) =>
@@ -245,7 +245,7 @@ export function ApplicationDetails({
                   value={followUpForm.dueDate}
                 />
               </label>
-              <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+              <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                 Time
                 <Input
                   onChange={(e) =>
@@ -256,7 +256,7 @@ export function ApplicationDetails({
                 />
               </label>
             </div>
-            <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+            <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
               Follow-up note
               <Textarea
                 className="min-h-[60px]"
@@ -270,16 +270,16 @@ export function ApplicationDetails({
 
         {/* Interviews */}
         <section aria-label="Interviews" className="p-5">
-          <h3 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest mb-3">Interviews</h3>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Interviews</h3>
           {interviews.length > 0 ? (
             <ol aria-label="Scheduled interviews" className="list-none p-0 m-0 grid gap-2 mb-4">
               {interviews.map((interview) => (
                 <li key={interview.id} className="border border-border px-3 py-2">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <strong className="text-sm font-semibold">{interview.type}</strong>
-                    <span className="text-[0.6rem] font-bold text-muted-foreground border border-border px-1.5 py-0.5 uppercase tracking-wider">{interview.outcome}</span>
+                    <span className="text-xs font-bold text-muted-foreground border border-border px-1.5 py-0.5 uppercase tracking-wider">{interview.outcome}</span>
                   </div>
-                  <time className="block text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wide" dateTime={interview.scheduledAt}>
+                  <time className="block text-xs font-bold text-muted-foreground uppercase tracking-wide" dateTime={interview.scheduledAt}>
                     {formatDate(interview.scheduledAt)}
                   </time>
                   {interview.notes ? <p className="text-xs text-muted-foreground mt-1">{interview.notes}</p> : null}
@@ -302,7 +302,7 @@ export function ApplicationDetails({
           ) : null}
           <form className="grid gap-3" onSubmit={handleInterviewSubmit}>
             <div className="grid gap-3">
-              <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+              <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                 Interview type
                 <Select
                   onChange={(e) =>
@@ -320,7 +320,7 @@ export function ApplicationDetails({
                 className="grid min-w-0 grid-cols-2 gap-3"
                 role="group"
               >
-                <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+                <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                   Date
                   <Input
                     onChange={(e) =>
@@ -330,7 +330,7 @@ export function ApplicationDetails({
                     value={interviewForm.scheduledDate}
                   />
                 </label>
-                <label className="grid min-w-0 gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+                <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                   Time
                   <Input
                     onChange={(e) =>
@@ -342,7 +342,7 @@ export function ApplicationDetails({
                 </label>
               </div>
             </div>
-            <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+            <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
               Interview notes
               <Textarea
                 className="min-h-[60px]"
@@ -353,7 +353,7 @@ export function ApplicationDetails({
               />
             </label>
             <div className="grid grid-cols-2 gap-3 items-end">
-              <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+              <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
                 Outcome
                 <Select
                   onChange={(e) =>
@@ -376,13 +376,13 @@ export function ApplicationDetails({
 
         {/* Timeline */}
         <section aria-label="Timeline" className="p-5">
-          <h3 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest mb-3">Timeline</h3>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Timeline</h3>
           {timeline.length > 0 ? (
             <ol aria-label="Timeline events" className="list-none p-0 m-0 relative border-l-2 border-border ml-2">
               {timeline.map((event) => (
                 <li key={event.id} className="relative pl-5 pb-4 last:pb-0">
                   <span className="absolute left-[-5px] top-1.5 w-2 h-2 bg-border" />
-                  <time className="block text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wide" dateTime={event.occurredAt}>
+                  <time className="block text-xs font-bold text-muted-foreground uppercase tracking-wide" dateTime={event.occurredAt}>
                     {formatDate(event.occurredAt)}
                   </time>
                   <span className="text-sm text-foreground">{event.description}</span>

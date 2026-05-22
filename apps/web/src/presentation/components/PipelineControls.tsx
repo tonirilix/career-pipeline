@@ -34,7 +34,7 @@ export function PipelineControls({
       className="px-4 py-3 border-b border-border"
     >
       <div className="grid items-end gap-3 grid-cols-1">
-        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+        <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Filter by stage
           <Select
             onChange={(e) =>
@@ -50,7 +50,7 @@ export function PipelineControls({
             ))}
           </Select>
         </label>
-        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+        <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Filter by source
           <Select
             onChange={(e) => setSourceFilter(e.target.value as JobSource | "All")}
@@ -64,7 +64,7 @@ export function PipelineControls({
             ))}
           </Select>
         </label>
-        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+        <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Search applications
           <Input
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -73,7 +73,7 @@ export function PipelineControls({
             placeholder="Company or role…"
           />
         </label>
-        <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+        <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Sort applications
           <Select
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}

@@ -40,9 +40,3 @@
   }
 
 }
-
-/* Dark-mode reset: override hardcoded bg-white in ui primitives */
-input, select, textarea {
-  background-color: var(--color-card) !important;
-  color: var(--color-foreground) !important;
-}

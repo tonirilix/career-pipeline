@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { type ApplicationStage } from "../../domain/applicationStage";
 import type { JobApplication } from "../../domain/jobOpportunity";
@@ -26,16 +26,21 @@ type PipelineBoardProps = {
 
 export function PipelineBoard({ applications, onStageChange, onViewDetails }: PipelineBoardProps) {
   const [closedCollapsed, setClosedCollapsed] = useState(true);
-  const hasClosedApps = applications.some((a) => CLOSED_STAGES.includes(a.stage));
+  const closedAppCount = applications.filter((a) => CLOSED_STAGES.includes(a.stage)).length;
+  const previousClosedAppCount = useRef(closedAppCount);
 
-  // Force-expand when apps exist in closed stages; otherwise respect toggle
-  const isClosedCollapsed = hasClosedApps ? false : closedCollapsed;
+  useEffect(() => {
+    if (closedAppCount > previousClosedAppCount.current) {
+      setClosedCollapsed(false);
+    }
+    previousClosedAppCount.current = closedAppCount;
+  }, [closedAppCount]);
 
   return (
     <section aria-label="Application pipeline" className="pb-1">
       {PHASES.map(({ label, stages }) => {
         const isClosed = label === "Closed";
-        const collapsed = isClosed && isClosedCollapsed;
+        const collapsed = isClosed && closedCollapsed;
 
         return (
           <section key={label} aria-label={`${label} phase`} className="mb-3 last:mb-0">
@@ -45,13 +50,13 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                   type="button"
                   onClick={() => setClosedCollapsed((c) => !c)}
                   aria-expanded={!collapsed}
-                  className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
                 >
                   <span aria-hidden="true">{collapsed ? "▶" : "▼"}</span>
                   {label}
                 </button>
               ) : (
-                <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest py-1">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest py-1">
                   {label}
                 </span>
               )}
@@ -64,15 +69,15 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                 {stages.map((stage) => {
                   const stageApplications = applications.filter((a) => a.stage === stage);
                   return (
-                    <article key={stage}>
+                    <section key={stage} aria-label={`${stage} applications`}>
                       <Card className="min-h-[104px] rounded-none shadow-none border border-border bg-background/40">
                         <CardHeader className="flex-row items-center justify-between space-y-0 py-1.5 px-2.5 border-b border-border">
-                          <CardTitle className="text-[0.6rem] font-bold uppercase tracking-widest text-muted-foreground">
+                          <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                             {stage}
                           </CardTitle>
                           <span
                             aria-label={`${stage} applications`}
-                            className={`text-[0.65rem] font-bold tabular-nums ${
+                            className={`text-xs font-bold tabular-nums ${
                               stageApplications.length > 0 ? "text-accent" : "text-muted-foreground"
                             }`}
                           >
@@ -92,13 +97,13 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                               ))}
                             </div>
                           ) : (
-                            <p className="text-[0.6rem] text-muted-foreground py-3 text-center uppercase tracking-widest">
+                            <p className="text-xs text-muted-foreground py-3 text-center uppercase tracking-widest">
                               No applications
                             </p>
                           )}
                         </CardContent>
                       </Card>
-                    </article>
+                    </section>
                   );
                 })}
               </div>

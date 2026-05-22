@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ApplicationStage } from "../../domain/applicationStage";
@@ -58,27 +59,54 @@ describe("PipelineBoard compact layout", () => {
     expect(card).not.toBeNull();
     expect(screen.getByRole("button", { name: "View Linear details" })).toHaveTextContent("Details");
     expect(screen.getByRole("button", { name: "Mark Linear as applied" })).toHaveTextContent("Apply");
-    expect(screen.getByRole("button", { name: "Update Linear stage" })).toHaveTextContent("Set");
-    expect(screen.getByLabelText("Move Linear to stage")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Jump Linear to selected stage" })).toHaveTextContent("Jump");
+    expect(screen.getByLabelText("Jump Linear to stage")).toBeInTheDocument();
     expect(screen.getByText("Frontend Engineer")).toBeInTheDocument();
     expect(screen.getByText("Remote")).toBeInTheDocument();
+  });
+
+  it("opens details from the card surface while keeping card actions separate", async () => {
+    const user = userEvent.setup();
+    const onStageChange = vi.fn(async () => {});
+    const onViewDetails = vi.fn();
+
+    render(
+      <PipelineBoard
+        applications={[
+          createApplication({
+            id: "linear",
+            company: "Linear",
+            roleTitle: "Frontend Engineer"
+          })
+        ]}
+        onStageChange={onStageChange}
+        onViewDetails={onViewDetails}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open Linear details" }));
+    expect(onViewDetails).toHaveBeenCalledWith("linear");
+
+    await user.click(screen.getByRole("button", { name: "Mark Linear as applied" }));
+    expect(onStageChange).toHaveBeenCalledOnce();
+    expect(onViewDetails).toHaveBeenCalledOnce();
   });
 
   it("keeps empty stage columns compact but discoverable", () => {
     renderBoard([]);
 
     const board = screen.getByRole("region", { name: "Application pipeline" });
-    const savedColumn = within(board)
-      .getByText("Saved", { selector: "div" })
-      .closest("article");
+    const savedColumn = within(board).getByRole("region", {
+      name: "Saved applications"
+    });
 
     expect(savedColumn).not.toBeNull();
-    expect(within(savedColumn as HTMLElement).getByText("Saved")).toBeInTheDocument();
+    expect(within(savedColumn).getByText("Saved")).toBeInTheDocument();
     expect(
-      within(savedColumn as HTMLElement).getByLabelText("Saved applications")
+      within(savedColumn).getByLabelText("Saved applications")
     ).toHaveTextContent("0");
     expect(
-      within(savedColumn as HTMLElement).getByText("No applications")
+      within(savedColumn).getByText("No applications")
     ).toBeInTheDocument();
   });
 });

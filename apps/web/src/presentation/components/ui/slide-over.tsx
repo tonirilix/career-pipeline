@@ -21,6 +21,16 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
     return () => { previousFocus?.focus(); };
   }, [isOpen]);
 
+  // Prevent background scrolling while the modal panel is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   // Escape key + focus trap
   useEffect(() => {
     if (!isOpen) return;
@@ -64,7 +74,7 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-          <span className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {title}
           </span>
           <button

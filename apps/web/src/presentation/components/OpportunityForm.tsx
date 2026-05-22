@@ -35,17 +35,17 @@ export function OpportunityForm({
   return (
     <section
       aria-label="New saved opportunity"
-      className="mb-5 border border-border overflow-hidden"
+      className="mb-5 overflow-hidden"
     >
       <div className="border-b border-border px-5 py-3">
-        <h2 className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-widest m-0">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest m-0">
           New opportunity
         </h2>
       </div>
 
       <form noValidate onSubmit={onSubmit} className="p-5">
         <div className="grid gap-4 grid-cols-2">
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Company
             <Input
               aria-describedby={errorsByField.has("company") ? "company-error" : undefined}
@@ -62,7 +62,7 @@ export function OpportunityForm({
               </span>
             ) : null}
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Role title
             <Input
               aria-describedby={errorsByField.has("roleTitle") ? "role-title-error" : undefined}
@@ -79,7 +79,7 @@ export function OpportunityForm({
               </span>
             ) : null}
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Posting URL
             <Input
               aria-describedby={errorsByField.has("postingUrl") ? "posting-url-error" : undefined}
@@ -97,7 +97,7 @@ export function OpportunityForm({
               </span>
             ) : null}
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Source
             <Select
               name="source"
@@ -114,7 +114,7 @@ export function OpportunityForm({
               ))}
             </Select>
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Location
             <Input
               name="location"
@@ -123,7 +123,7 @@ export function OpportunityForm({
               value={form.location}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Compensation
             <Input
               name="compensation"
@@ -132,7 +132,7 @@ export function OpportunityForm({
               value={form.compensation}
             />
           </label>
-          <label className="grid gap-1 text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Employment type
             <Select
               name="employmentType"
