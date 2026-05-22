@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -74,18 +74,27 @@ function createGateway(
 
 function getStageColumn(stage: string) {
   const board = screen.getByRole("region", { name: "Application pipeline" });
-  return within(board).getByText(stage, { selector: "div" }).closest("article") as HTMLElement;
+  return within(board).getByRole("region", { name: `${stage} applications` });
 }
 
 function getApplicationCompaniesInStage(stage: string) {
   const board = screen.getByRole("region", { name: "Application pipeline" });
-  const column = within(board).getByText(stage, { selector: "div" }).closest("article");
+  const column = within(board).getByRole("region", { name: `${stage} applications` });
 
   expect(column).not.toBeNull();
 
   return within(column as HTMLElement)
     .getAllByRole("heading", { level: 3 })
     .map((heading) => heading.textContent);
+}
+
+function getStatValue(label: string) {
+  const labelNode = screen.getByText(label, { selector: "dt" });
+  const statItem = labelNode.closest("div");
+
+  expect(statItem).not.toBeNull();
+
+  return within(statItem as HTMLElement).getByText(/^\d+$/);
 }
 
 function renderApp(gateway = createJobApplicationGraphqlGateway()) {
@@ -98,7 +107,7 @@ function renderApp(gateway = createJobApplicationGraphqlGateway()) {
 }
 
 describe("Job application tracker shell", () => {
-  it("renders a pipeline workspace with the expected application stages", () => {
+  it("renders a pipeline workspace with the expected application stages", async () => {
     renderApp();
 
     expect(
@@ -108,7 +117,9 @@ describe("Job application tracker shell", () => {
       screen.getByRole("button", { name: "Add opportunity" })
     ).toBeInTheDocument();
 
-    const board = screen.getByRole("region", {
+    expect(screen.getByRole("status")).toHaveTextContent("Loading applications...");
+
+    const board = await screen.findByRole("region", {
       name: "Application pipeline"
     });
 
@@ -128,12 +139,12 @@ describe("Job application tracker shell", () => {
     });
   });
 
-  it("collapses the Closed phase when empty and expands it when populated", async () => {
+  it("collapses the Closed phase when empty, expands it when populated, and still lets the user collapse it", async () => {
     const user = userEvent.setup();
 
     renderApp();
 
-    const board = screen.getByRole("region", { name: "Application pipeline" });
+    const board = await screen.findByRole("region", { name: "Application pipeline" });
     const closedPhase = within(board).getByRole("region", { name: "Closed phase" });
 
     // Collapsed by default — toggle button visible, stage columns hidden
@@ -156,10 +167,13 @@ describe("Job application tracker shell", () => {
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
 
     await user.click(await screen.findByRole("button", { name: "Mark Linear as applied" }));
-    await user.selectOptions(await screen.findByLabelText("Move Linear to stage"), "Rejected");
-    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+    await user.selectOptions(await screen.findByLabelText("Jump Linear to stage"), "Rejected");
+    await user.click(screen.getByRole("button", { name: "Jump Linear to selected stage" }));
 
     expect(await within(closedPhase).findByText("Rejected", { selector: "div" })).toBeInTheDocument();
+
+    await user.click(within(closedPhase).getByRole("button", { name: /Closed/i }));
+    expect(within(closedPhase).queryByText("Rejected", { selector: "div" })).not.toBeInTheDocument();
   });
 
   it("lets a user create a saved job opportunity and see it in the Saved column", async () => {
@@ -311,10 +325,10 @@ describe("Job application tracker shell", () => {
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
 
     await user.selectOptions(
-      await screen.findByLabelText("Move Linear to stage"),
+      await screen.findByLabelText("Jump Linear to stage"),
       "Offer"
     );
-    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+    await user.click(screen.getByRole("button", { name: "Jump Linear to selected stage" }));
 
     expect(
       await screen.findByRole("alert")
@@ -349,8 +363,8 @@ describe("Job application tracker shell", () => {
       await within(screeningColumn).findByText("Linear")
     ).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Move Linear to stage"), "Rejected");
-    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+    await user.selectOptions(screen.getByLabelText("Jump Linear to stage"), "Rejected");
+    await user.click(screen.getByRole("button", { name: "Jump Linear to selected stage" }));
 
     const rejectedColumn = getStageColumn("Rejected");
 
@@ -383,14 +397,14 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
 
-    expect(await screen.findByText("1 active application")).toBeInTheDocument();
+    await waitFor(() => expect(getStatValue("Active")).toHaveTextContent("1"));
 
     await user.click(screen.getByRole("button", { name: "Mark Linear as applied" }));
     await user.selectOptions(
-      await screen.findByLabelText("Move Linear to stage"),
+      await screen.findByLabelText("Jump Linear to stage"),
       "Rejected"
     );
-    await user.click(screen.getByRole("button", { name: "Update Linear stage" }));
+    await user.click(screen.getByRole("button", { name: "Jump Linear to selected stage" }));
 
     const rejectedColumn = getStageColumn("Rejected");
 
@@ -401,11 +415,11 @@ describe("Job application tracker shell", () => {
     expect(
       within(rejectedColumn).getByText("Closed")
     ).toBeInTheDocument();
-    expect(screen.getByText("0 active applications")).toBeInTheDocument();
+    expect(getStatValue("Active")).toHaveTextContent("0");
 
     await user.click(screen.getByRole("button", { name: "Reopen Linear" }));
 
-    expect(await screen.findByText("1 active application")).toBeInTheDocument();
+    await waitFor(() => expect(getStatValue("Active")).toHaveTextContent("1"));
   });
 
   it("lets a user inspect application details and timeline without leaving the board", async () => {
@@ -641,7 +655,7 @@ describe("Job application tracker shell", () => {
     );
 
     expect(
-      within(followUpWork).getByText("No upcoming follow-ups")
+      within(followUpWork).getByText("No follow-ups need attention.")
     ).toBeInTheDocument();
   });
 

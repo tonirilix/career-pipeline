@@ -17,7 +17,7 @@ export function StatsBar({ activeCount, overdueCount, upcomingCount }: StatsBarP
 function StatItem({ label, value, highlight }: { label: string; value: number; highlight: boolean }) {
   return (
     <div className="flex items-center justify-between px-4 py-2">
-      <dt className="text-[0.6rem] uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
       <dd className={`text-xs font-bold tabular-nums m-0 ${highlight ? "text-accent" : "text-muted-foreground"}`}>
         {value}
       </dd>

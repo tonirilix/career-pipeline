@@ -59,4 +59,25 @@ describe("SlideOver", () => {
     await user.click(screen.getByTestId("slide-over-backdrop"));
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it("locks body scroll while open and restores it on close", () => {
+    document.body.style.overflow = "auto";
+    const { rerender, unmount } = render(
+      <SlideOver isOpen={true} onClose={vi.fn()} title="Test panel">
+        <p>Content</p>
+      </SlideOver>
+    );
+
+    expect(document.body.style.overflow).toBe("hidden");
+
+    rerender(
+      <SlideOver isOpen={false} onClose={vi.fn()} title="Test panel">
+        <p>Content</p>
+      </SlideOver>
+    );
+
+    expect(document.body.style.overflow).toBe("auto");
+    unmount();
+    document.body.style.overflow = "";
+  });
 });
