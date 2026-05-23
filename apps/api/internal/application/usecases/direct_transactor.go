@@ -1,6 +1,6 @@
 package usecases
 
-import "github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
+import "github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 
 type DirectTransactor struct {
 	repos ports.Repositories

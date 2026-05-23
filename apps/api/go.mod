@@ -1,4 +1,4 @@
-module github.com/tonirilix/react-hexagonal-architecture/apps/api
+module github.com/tonirilix/career-pipeline/apps/api
 
 go 1.26.1
 

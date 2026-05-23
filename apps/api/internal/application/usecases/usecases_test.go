@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/usecases"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 var fixedTime = time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)

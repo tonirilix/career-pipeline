@@ -7,8 +7,8 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/infrastructure/persistence"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/infrastructure/persistence"
 )
 
 func openTestDB(t *testing.T) *sql.DB {

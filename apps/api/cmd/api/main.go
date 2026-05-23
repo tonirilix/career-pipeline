@@ -19,10 +19,10 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph/resolvers"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/usecases"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/infrastructure/persistence"
+	"github.com/tonirilix/career-pipeline/apps/api/graph"
+	"github.com/tonirilix/career-pipeline/apps/api/graph/resolvers"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/infrastructure/persistence"
 )
 
 //go:embed migrations/*.sql

@@ -7,13 +7,11 @@ package resolvers
 
 import (
 	"context"
-	"errors"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph/model"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/usecases"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/graph"
+	"github.com/tonirilix/career-pipeline/apps/api/graph/model"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
 )
 
 // CreateSavedOpportunity is the resolver for the createSavedOpportunity field.
@@ -138,20 +136,3 @@ func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-func mapDomainError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrApplicationNotFound):
-		return errors.New("application could not be found")
-	case errors.Is(err, domain.ErrInvalidStageTransition):
-		return errors.New("invalid stage transition")
-	case errors.Is(err, domain.ErrCannotSchedule):
-		return errors.New("interviews can only be scheduled after an opportunity has been applied to")
-	case errors.Is(err, domain.ErrNoteBodyEmpty):
-		return errors.New("note body must not be empty")
-	case errors.Is(err, domain.ErrDueDateInPast):
-		return errors.New("follow-up due date must be after the latest interaction")
-	default:
-		return err
-	}
-}

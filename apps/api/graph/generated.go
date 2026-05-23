@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph/model"
+	"github.com/tonirilix/career-pipeline/apps/api/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -691,7 +691,7 @@ func (ec *executionContext) field_Mutation_addApplicationNote_args(ctx context.C
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.AddApplicationNoteInput, error) {
-			return ec.unmarshalNAddApplicationNoteInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐAddApplicationNoteInput(ctx, v)
+			return ec.unmarshalNAddApplicationNoteInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAddApplicationNoteInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -705,7 +705,7 @@ func (ec *executionContext) field_Mutation_advanceApplicationStage_args(ctx cont
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.AdvanceApplicationStageInput, error) {
-			return ec.unmarshalNAdvanceApplicationStageInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐAdvanceApplicationStageInput(ctx, v)
+			return ec.unmarshalNAdvanceApplicationStageInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAdvanceApplicationStageInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -719,7 +719,7 @@ func (ec *executionContext) field_Mutation_completeFollowUpReminder_args(ctx con
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.CompleteFollowUpReminderInput, error) {
-			return ec.unmarshalNCompleteFollowUpReminderInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐCompleteFollowUpReminderInput(ctx, v)
+			return ec.unmarshalNCompleteFollowUpReminderInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCompleteFollowUpReminderInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -733,7 +733,7 @@ func (ec *executionContext) field_Mutation_createFollowUpReminder_args(ctx conte
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.CreateFollowUpReminderInput, error) {
-			return ec.unmarshalNCreateFollowUpReminderInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐCreateFollowUpReminderInput(ctx, v)
+			return ec.unmarshalNCreateFollowUpReminderInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateFollowUpReminderInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -747,7 +747,7 @@ func (ec *executionContext) field_Mutation_createSavedOpportunity_args(ctx conte
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.CreateSavedOpportunityInput, error) {
-			return ec.unmarshalNCreateSavedOpportunityInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐCreateSavedOpportunityInput(ctx, v)
+			return ec.unmarshalNCreateSavedOpportunityInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateSavedOpportunityInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -761,7 +761,7 @@ func (ec *executionContext) field_Mutation_scheduleInterview_args(ctx context.Co
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.ScheduleInterviewInput, error) {
-			return ec.unmarshalNScheduleInterviewInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐScheduleInterviewInput(ctx, v)
+			return ec.unmarshalNScheduleInterviewInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐScheduleInterviewInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -1367,7 +1367,7 @@ func (ec *executionContext) _JobApplication_timeline(ctx context.Context, field 
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.TimelineEvent) graphql.Marshaler {
-			return ec.marshalNTimelineEvent2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEventᚄ(ctx, selections, v)
+			return ec.marshalNTimelineEvent2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEventᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1399,7 +1399,7 @@ func (ec *executionContext) _JobApplication_interviews(ctx context.Context, fiel
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.Interview) graphql.Marshaler {
-			return ec.marshalNInterview2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐInterviewᚄ(ctx, selections, v)
+			return ec.marshalNInterview2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐInterviewᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1431,7 +1431,7 @@ func (ec *executionContext) _JobApplication_followUps(ctx context.Context, field
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.FollowUpReminder) graphql.Marshaler {
-			return ec.marshalNFollowUpReminder2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminderᚄ(ctx, selections, v)
+			return ec.marshalNFollowUpReminder2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminderᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1463,7 +1463,7 @@ func (ec *executionContext) _JobApplication_notes(ctx context.Context, field gra
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.ApplicationNote) graphql.Marshaler {
-			return ec.marshalNApplicationNote2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNoteᚄ(ctx, selections, v)
+			return ec.marshalNApplicationNote2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNoteᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1496,7 +1496,7 @@ func (ec *executionContext) _Mutation_createSavedOpportunity(ctx context.Context
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1540,7 +1540,7 @@ func (ec *executionContext) _Mutation_advanceApplicationStage(ctx context.Contex
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1584,7 +1584,7 @@ func (ec *executionContext) _Mutation_scheduleInterview(ctx context.Context, fie
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1628,7 +1628,7 @@ func (ec *executionContext) _Mutation_createFollowUpReminder(ctx context.Context
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1672,7 +1672,7 @@ func (ec *executionContext) _Mutation_completeFollowUpReminder(ctx context.Conte
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1716,7 +1716,7 @@ func (ec *executionContext) _Mutation_addApplicationNote(ctx context.Context, fi
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1759,7 +1759,7 @@ func (ec *executionContext) _Query_applications(ctx context.Context, field graph
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.JobApplication) graphql.Marshaler {
-			return ec.marshalNJobApplication2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplicationᚄ(ctx, selections, v)
+			return ec.marshalNJobApplication2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplicationᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -4078,21 +4078,21 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAddApplicationNoteInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐAddApplicationNoteInput(ctx context.Context, v any) (model.AddApplicationNoteInput, error) {
+func (ec *executionContext) unmarshalNAddApplicationNoteInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAddApplicationNoteInput(ctx context.Context, v any) (model.AddApplicationNoteInput, error) {
 	res, err := ec.unmarshalInputAddApplicationNoteInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAdvanceApplicationStageInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐAdvanceApplicationStageInput(ctx context.Context, v any) (model.AdvanceApplicationStageInput, error) {
+func (ec *executionContext) unmarshalNAdvanceApplicationStageInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAdvanceApplicationStageInput(ctx context.Context, v any) (model.AdvanceApplicationStageInput, error) {
 	res, err := ec.unmarshalInputAdvanceApplicationStageInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNApplicationNote2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNoteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ApplicationNote) graphql.Marshaler {
+func (ec *executionContext) marshalNApplicationNote2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNoteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ApplicationNote) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNApplicationNote2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNote(ctx, sel, v[i])
+		return ec.marshalNApplicationNote2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNote(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -4104,7 +4104,7 @@ func (ec *executionContext) marshalNApplicationNote2ᚕᚖgithubᚗcomᚋtoniril
 	return ret
 }
 
-func (ec *executionContext) marshalNApplicationNote2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNote(ctx context.Context, sel ast.SelectionSet, v *model.ApplicationNote) graphql.Marshaler {
+func (ec *executionContext) marshalNApplicationNote2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐApplicationNote(ctx context.Context, sel ast.SelectionSet, v *model.ApplicationNote) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4130,26 +4130,26 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCompleteFollowUpReminderInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐCompleteFollowUpReminderInput(ctx context.Context, v any) (model.CompleteFollowUpReminderInput, error) {
+func (ec *executionContext) unmarshalNCompleteFollowUpReminderInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCompleteFollowUpReminderInput(ctx context.Context, v any) (model.CompleteFollowUpReminderInput, error) {
 	res, err := ec.unmarshalInputCompleteFollowUpReminderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateFollowUpReminderInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐCreateFollowUpReminderInput(ctx context.Context, v any) (model.CreateFollowUpReminderInput, error) {
+func (ec *executionContext) unmarshalNCreateFollowUpReminderInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateFollowUpReminderInput(ctx context.Context, v any) (model.CreateFollowUpReminderInput, error) {
 	res, err := ec.unmarshalInputCreateFollowUpReminderInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateSavedOpportunityInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐCreateSavedOpportunityInput(ctx context.Context, v any) (model.CreateSavedOpportunityInput, error) {
+func (ec *executionContext) unmarshalNCreateSavedOpportunityInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateSavedOpportunityInput(ctx context.Context, v any) (model.CreateSavedOpportunityInput, error) {
 	res, err := ec.unmarshalInputCreateSavedOpportunityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNFollowUpReminder2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FollowUpReminder) graphql.Marshaler {
+func (ec *executionContext) marshalNFollowUpReminder2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FollowUpReminder) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNFollowUpReminder2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminder(ctx, sel, v[i])
+		return ec.marshalNFollowUpReminder2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminder(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -4161,7 +4161,7 @@ func (ec *executionContext) marshalNFollowUpReminder2ᚕᚖgithubᚗcomᚋtoniri
 	return ret
 }
 
-func (ec *executionContext) marshalNFollowUpReminder2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminder(ctx context.Context, sel ast.SelectionSet, v *model.FollowUpReminder) graphql.Marshaler {
+func (ec *executionContext) marshalNFollowUpReminder2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐFollowUpReminder(ctx context.Context, sel ast.SelectionSet, v *model.FollowUpReminder) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4187,11 +4187,11 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNInterview2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐInterviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Interview) graphql.Marshaler {
+func (ec *executionContext) marshalNInterview2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐInterviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Interview) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNInterview2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐInterview(ctx, sel, v[i])
+		return ec.marshalNInterview2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐInterview(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -4203,7 +4203,7 @@ func (ec *executionContext) marshalNInterview2ᚕᚖgithubᚗcomᚋtonirilixᚋr
 	return ret
 }
 
-func (ec *executionContext) marshalNInterview2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐInterview(ctx context.Context, sel ast.SelectionSet, v *model.Interview) graphql.Marshaler {
+func (ec *executionContext) marshalNInterview2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐInterview(ctx context.Context, sel ast.SelectionSet, v *model.Interview) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4213,15 +4213,15 @@ func (ec *executionContext) marshalNInterview2ᚖgithubᚗcomᚋtonirilixᚋreac
 	return ec._Interview(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNJobApplication2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx context.Context, sel ast.SelectionSet, v model.JobApplication) graphql.Marshaler {
+func (ec *executionContext) marshalNJobApplication2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx context.Context, sel ast.SelectionSet, v model.JobApplication) graphql.Marshaler {
 	return ec._JobApplication(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNJobApplication2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JobApplication) graphql.Marshaler {
+func (ec *executionContext) marshalNJobApplication2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JobApplication) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, sel, v[i])
+		return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -4233,7 +4233,7 @@ func (ec *executionContext) marshalNJobApplication2ᚕᚖgithubᚗcomᚋtonirili
 	return ret
 }
 
-func (ec *executionContext) marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx context.Context, sel ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
+func (ec *executionContext) marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx context.Context, sel ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -4243,7 +4243,7 @@ func (ec *executionContext) marshalNJobApplication2ᚖgithubᚗcomᚋtonirilix�
 	return ec._JobApplication(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNScheduleInterviewInput2githubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐScheduleInterviewInput(ctx context.Context, v any) (model.ScheduleInterviewInput, error) {
+func (ec *executionContext) unmarshalNScheduleInterviewInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐScheduleInterviewInput(ctx context.Context, v any) (model.ScheduleInterviewInput, error) {
 	res, err := ec.unmarshalInputScheduleInterviewInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4264,11 +4264,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTimelineEvent2ᚕᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TimelineEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNTimelineEvent2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TimelineEvent) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNTimelineEvent2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEvent(ctx, sel, v[i])
+		return ec.marshalNTimelineEvent2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEvent(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {
@@ -4280,7 +4280,7 @@ func (ec *executionContext) marshalNTimelineEvent2ᚕᚖgithubᚗcomᚋtonirilix
 	return ret
 }
 
-func (ec *executionContext) marshalNTimelineEvent2ᚖgithubᚗcomᚋtonirilixᚋreactᚑhexagonalᚑarchitectureᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEvent(ctx context.Context, sel ast.SelectionSet, v *model.TimelineEvent) graphql.Marshaler {
+func (ec *executionContext) marshalNTimelineEvent2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐTimelineEvent(ctx context.Context, sel ast.SelectionSet, v *model.TimelineEvent) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")

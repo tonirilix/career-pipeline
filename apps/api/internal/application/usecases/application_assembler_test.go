@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/usecases"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 func TestFullApplicationAssembler_LoadsChildCollectionsInRepositoryOrder(t *testing.T) {
