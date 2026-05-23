@@ -72,6 +72,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         />
 
         <FollowUpWork
+          completingFollowUpReminderIds={workspace.completingFollowUpReminderIds}
           onCompleteFollowUp={workspace.completeFollowUp}
           overdueItems={workspace.overdueFollowUpItems}
           upcomingItems={workspace.upcomingFollowUpItems}
@@ -119,6 +120,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             ) : (
               <PipelineBoard
                 applications={workspace.visibleApplications}
+                changingStageApplicationIds={workspace.changingStageApplicationIds}
                 onStageChange={workspace.changeStage}
                 onViewDetails={workspace.viewDetails}
               />
@@ -136,6 +138,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
           commandError={workspace.formCommandError}
           fieldErrors={workspace.fieldErrors}
           form={workspace.form}
+          submitStatus={workspace.submitOpportunityStatus}
           onChange={workspace.setForm}
           onCancel={() => { setIsFormOpen(false); workspace.clearOpportunityFormErrors(); }}
           onSubmit={handleSubmit}
@@ -151,6 +154,9 @@ export function App({ gateway, usePipelineControls }: AppProps) {
           <ApplicationDetails
             application={workspace.selectedApplication}
             commandError={workspace.detailsCommandError}
+            addNoteStatus={workspace.addNoteStatus}
+            createFollowUpStatus={workspace.createFollowUpStatus}
+            scheduleInterviewStatus={workspace.scheduleInterviewStatus}
             onAddNote={workspace.addNote}
             onCreateFollowUp={workspace.createFollowUp}
             onScheduleInterview={workspace.scheduleInterview}

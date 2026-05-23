@@ -12,6 +12,7 @@ import { Select } from "./ui/select";
 
 type ApplicationCardProps = {
   application: JobApplication;
+  isChangingStage: boolean;
   onStageChange: (
     application: JobApplication,
     toStage: ApplicationStage
@@ -21,6 +22,7 @@ type ApplicationCardProps = {
 
 export function ApplicationCard({
   application,
+  isChangingStage,
   onStageChange,
   onViewDetails
 }: ApplicationCardProps) {
@@ -96,6 +98,7 @@ export function ApplicationCard({
           <Button
             aria-label={stageActionLabel(application, primaryNextStage)}
             className="h-11 md:h-8 px-3 text-xs rounded-none"
+            disabled={isChangingStage}
             onClick={() => void onStageChange(application, primaryNextStage)}
             type="button"
           >
@@ -131,6 +134,7 @@ export function ApplicationCard({
           aria-label={`Jump ${application.company} to selected stage`}
           className="self-end h-11 md:h-8 px-2 text-xs rounded-none bg-transparent hover:bg-muted"
           variant="outline"
+          disabled={isChangingStage}
           onClick={() => void onStageChange(application, selectedStage)}
           type="button"
         >

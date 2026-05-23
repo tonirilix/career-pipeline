@@ -6,6 +6,7 @@ import {
   type FieldError,
   jobSources
 } from "../../domain/jobOpportunity";
+import type { CommandStatus } from "../pipelineWorkspace";
 import { Button } from "./ui/button";
 import { ErrorNotice } from "./ui/error-notice";
 import { Input } from "./ui/input";
@@ -15,6 +16,7 @@ type OpportunityFormProps = {
   form: CreateSavedJobOpportunityCommand;
   fieldErrors: FieldError[];
   commandError: string | null;
+  submitStatus: CommandStatus;
   onChange: (updated: CreateSavedJobOpportunityCommand) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
@@ -24,6 +26,7 @@ export function OpportunityForm({
   form,
   fieldErrors,
   commandError,
+  submitStatus,
   onChange,
   onSubmit,
   onCancel
@@ -180,7 +183,7 @@ export function OpportunityForm({
           <Button type="button" variant="outline" className="rounded-none bg-transparent hover:bg-muted" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="rounded-none">Save opportunity</Button>
+          <Button type="submit" className="rounded-none" disabled={submitStatus === "pending"}>Save opportunity</Button>
         </div>
       </form>
     </section>
