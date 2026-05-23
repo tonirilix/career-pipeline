@@ -1,7 +1,7 @@
 package resolvers
 
 import (
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/usecases"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
 )
 
 type Resolver struct {

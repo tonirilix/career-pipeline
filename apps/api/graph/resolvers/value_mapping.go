@@ -3,7 +3,7 @@ package resolvers
 import (
 	"fmt"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 func mapApplicationStageInput(value string) (domain.ApplicationStage, error) {

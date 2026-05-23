@@ -7,7 +7,7 @@ Entrypoint and developer workflow for the Go backend. Covers the Go module setup
 ## Requirements
 
 ### Requirement: Go module setup
-The system SHALL initialize a Go module at `apps/api/go.mod` with module path `github.com/tonirilix/react-hexagonal-architecture/apps/api` and Go version 1.22 or later. All dependencies SHALL be recorded in `go.sum`.
+The system SHALL initialize a Go module at `apps/api/go.mod` with module path `github.com/tonirilix/career-pipeline/apps/api` and Go version 1.22 or later. All dependencies SHALL be recorded in `go.sum`.
 
 #### Scenario: Module builds without external toolchain
 - **WHEN** `go build ./...` is run from `apps/api/`

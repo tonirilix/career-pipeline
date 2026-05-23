@@ -3,8 +3,8 @@ package usecases
 import (
 	"strings"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/application/ports"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 type AddNoteCommand struct {

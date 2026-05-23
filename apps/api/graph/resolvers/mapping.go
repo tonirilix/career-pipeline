@@ -3,8 +3,8 @@ package resolvers
 import (
 	"time"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/graph/model"
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/graph/model"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 func mapApplication(app *domain.JobApplication) *model.JobApplication {

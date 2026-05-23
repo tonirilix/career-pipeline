@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 var timeFormats = []string{

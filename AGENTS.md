@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and PRDs are tracked in GitHub Issues for `tonirilix/react-hexagonal-architecture`. See `docs/agents/issue-tracker.md`.
+Issues and PRDs are tracked in GitHub Issues for `tonirilix/career-pipeline`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
