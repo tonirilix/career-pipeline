@@ -87,18 +87,20 @@ func main() {
 	followUpRepo := persistence.NewPostgreSQLFollowUpRepository(db)
 	noteRepo := persistence.NewPostgreSQLNoteRepository(db)
 	timelineRepo := persistence.NewPostgreSQLTimelineRepository(db)
+	assembler := usecases.NewFullApplicationAssembler(followUpRepo, timelineRepo, interviewRepo, noteRepo)
+	transactor := persistence.NewPostgreSQLTransactor(db)
 
 	clock := &wallClock{}
 	ids := &uuidGenerator{}
 
 	// Wire up use cases
 	createAppUC := usecases.NewCreateApplication(appRepo, timelineRepo, clock, ids)
-	advanceStageUC := usecases.NewAdvanceStage(appRepo, followUpRepo, timelineRepo, interviewRepo, noteRepo, clock, ids)
-	scheduleInterviewUC := usecases.NewScheduleInterview(appRepo, interviewRepo, followUpRepo, timelineRepo, noteRepo, clock, ids)
-	addFollowUpUC := usecases.NewAddFollowUp(appRepo, followUpRepo, timelineRepo, interviewRepo, noteRepo, clock, ids)
-	completeFollowUpUC := usecases.NewCompleteFollowUp(appRepo, followUpRepo, timelineRepo, interviewRepo, noteRepo, clock, ids)
-	addNoteUC := usecases.NewAddNote(appRepo, followUpRepo, timelineRepo, interviewRepo, noteRepo, clock, ids)
-	listApplicationsUC := usecases.NewListApplications(appRepo, followUpRepo, timelineRepo, interviewRepo, noteRepo)
+	advanceStageUC := usecases.NewAdvanceStage(transactor, clock, ids)
+	scheduleInterviewUC := usecases.NewScheduleInterview(transactor, clock, ids)
+	addFollowUpUC := usecases.NewAddFollowUp(transactor, clock, ids)
+	completeFollowUpUC := usecases.NewCompleteFollowUp(transactor, clock, ids)
+	addNoteUC := usecases.NewAddNote(transactor, clock, ids)
+	listApplicationsUC := usecases.NewListApplications(appRepo, assembler)
 
 	// Wire up resolvers
 	resolver := &resolvers.Resolver{

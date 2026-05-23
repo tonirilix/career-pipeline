@@ -5,42 +5,54 @@ import (
 	"github.com/tonirilix/react-hexagonal-architecture/apps/api/internal/domain"
 )
 
-// loadFullApplication populates Timeline, Interviews, FollowUps, and Notes on app.
-// Pass nil for any repo to skip loading that collection.
-func loadFullApplication(
-	app *domain.JobApplication,
-	_ ports.JobApplicationRepository,
+type FullApplicationAssembler struct {
+	followUps  ports.FollowUpRepository
+	timeline   ports.TimelineRepository
+	interviews ports.InterviewRepository
+	notes      ports.NoteRepository
+}
+
+func NewFullApplicationAssembler(
 	followUps ports.FollowUpRepository,
 	timeline ports.TimelineRepository,
 	interviews ports.InterviewRepository,
 	notes ports.NoteRepository,
-) (*domain.JobApplication, error) {
-	if timeline != nil {
-		events, err := timeline.ListByApplication(app.ID)
+) *FullApplicationAssembler {
+	return &FullApplicationAssembler{
+		followUps:  followUps,
+		timeline:   timeline,
+		interviews: interviews,
+		notes:      notes,
+	}
+}
+
+func (a *FullApplicationAssembler) Load(app *domain.JobApplication) (*domain.JobApplication, error) {
+	if a.timeline != nil {
+		events, err := a.timeline.ListByApplication(app.ID)
 		if err != nil {
 			return nil, err
 		}
 		app.Timeline = derefTimelineEvents(events)
 	}
 
-	if interviews != nil {
-		ivs, err := interviews.ListByApplication(app.ID)
+	if a.interviews != nil {
+		ivs, err := a.interviews.ListByApplication(app.ID)
 		if err != nil {
 			return nil, err
 		}
 		app.Interviews = derefInterviews(ivs)
 	}
 
-	if followUps != nil {
-		fus, err := followUps.ListByApplication(app.ID)
+	if a.followUps != nil {
+		fus, err := a.followUps.ListByApplication(app.ID)
 		if err != nil {
 			return nil, err
 		}
 		app.FollowUps = derefFollowUps(fus)
 	}
 
-	if notes != nil {
-		ns, err := notes.ListByApplication(app.ID)
+	if a.notes != nil {
+		ns, err := a.notes.ListByApplication(app.ID)
 		if err != nil {
 			return nil, err
 		}

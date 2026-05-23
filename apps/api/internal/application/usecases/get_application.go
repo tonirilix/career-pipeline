@@ -6,26 +6,17 @@ import (
 )
 
 type GetApplication struct {
-	apps       ports.JobApplicationRepository
-	followUps  ports.FollowUpRepository
-	timeline   ports.TimelineRepository
-	interviews ports.InterviewRepository
-	notes      ports.NoteRepository
+	apps      ports.JobApplicationRepository
+	assembler *FullApplicationAssembler
 }
 
 func NewGetApplication(
 	apps ports.JobApplicationRepository,
-	followUps ports.FollowUpRepository,
-	timeline ports.TimelineRepository,
-	interviews ports.InterviewRepository,
-	notes ports.NoteRepository,
+	assembler *FullApplicationAssembler,
 ) *GetApplication {
 	return &GetApplication{
-		apps:       apps,
-		followUps:  followUps,
-		timeline:   timeline,
-		interviews: interviews,
-		notes:      notes,
+		apps:      apps,
+		assembler: assembler,
 	}
 }
 
@@ -34,5 +25,5 @@ func (uc *GetApplication) Execute(id string) (*domain.JobApplication, error) {
 	if err != nil {
 		return nil, err
 	}
-	return loadFullApplication(app, uc.apps, uc.followUps, uc.timeline, uc.interviews, uc.notes)
+	return uc.assembler.Load(app)
 }

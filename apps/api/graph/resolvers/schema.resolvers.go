@@ -18,14 +18,22 @@ import (
 
 // CreateSavedOpportunity is the resolver for the createSavedOpportunity field.
 func (r *mutationResolver) CreateSavedOpportunity(ctx context.Context, input model.CreateSavedOpportunityInput) (*model.JobApplication, error) {
+	source, err := mapJobSourceInput(input.Source)
+	if err != nil {
+		return nil, err
+	}
+	employmentType, err := mapEmploymentTypeInput(input.EmploymentType)
+	if err != nil {
+		return nil, err
+	}
 	app, err := r.CreateApplicationUC.Execute(usecases.CreateApplicationCommand{
 		Company:        input.Company,
 		RoleTitle:      input.RoleTitle,
 		PostingURL:     input.PostingURL,
-		Source:         domain.JobSource(input.Source),
+		Source:         source,
 		Location:       input.Location,
 		Compensation:   input.Compensation,
-		EmploymentType: domain.EmploymentType(input.EmploymentType),
+		EmploymentType: employmentType,
 	})
 	if err != nil {
 		return nil, mapDomainError(err)
@@ -35,9 +43,13 @@ func (r *mutationResolver) CreateSavedOpportunity(ctx context.Context, input mod
 
 // AdvanceApplicationStage is the resolver for the advanceApplicationStage field.
 func (r *mutationResolver) AdvanceApplicationStage(ctx context.Context, input model.AdvanceApplicationStageInput) (*model.JobApplication, error) {
+	toStage, err := mapApplicationStageInput(input.ToStage)
+	if err != nil {
+		return nil, err
+	}
 	app, err := r.AdvanceStageUC.Execute(usecases.AdvanceStageCommand{
 		ApplicationID: input.ApplicationID,
-		ToStage:       domain.ApplicationStage(input.ToStage),
+		ToStage:       toStage,
 	})
 	if err != nil {
 		return nil, mapDomainError(err)
@@ -47,12 +59,20 @@ func (r *mutationResolver) AdvanceApplicationStage(ctx context.Context, input mo
 
 // ScheduleInterview is the resolver for the scheduleInterview field.
 func (r *mutationResolver) ScheduleInterview(ctx context.Context, input model.ScheduleInterviewInput) (*model.JobApplication, error) {
+	interviewType, err := mapInterviewTypeInput(input.Type)
+	if err != nil {
+		return nil, err
+	}
+	outcome, err := mapInterviewOutcomeInput(input.Outcome)
+	if err != nil {
+		return nil, err
+	}
 	app, err := r.ScheduleInterviewUC.Execute(usecases.ScheduleInterviewCommand{
 		ApplicationID: input.ApplicationID,
-		Type:          domain.InterviewType(input.Type),
+		Type:          interviewType,
 		ScheduledAt:   input.ScheduledAt,
 		Notes:         input.Notes,
-		Outcome:       domain.InterviewOutcome(input.Outcome),
+		Outcome:       outcome,
 	})
 	if err != nil {
 		return nil, mapDomainError(err)

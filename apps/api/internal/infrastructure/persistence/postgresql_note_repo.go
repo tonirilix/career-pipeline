@@ -8,10 +8,14 @@ import (
 )
 
 type PostgreSQLNoteRepository struct {
-	db *sql.DB
+	db sqlExecutor
 }
 
 func NewPostgreSQLNoteRepository(db *sql.DB) *PostgreSQLNoteRepository {
+	return &PostgreSQLNoteRepository{db: db}
+}
+
+func newPostgreSQLNoteRepositoryWithExecutor(db sqlExecutor) *PostgreSQLNoteRepository {
 	return &PostgreSQLNoteRepository{db: db}
 }
 
@@ -19,7 +23,7 @@ var _ ports.NoteRepository = (*PostgreSQLNoteRepository)(nil)
 
 func (r *PostgreSQLNoteRepository) Save(applicationID string, note *domain.ApplicationNote) error {
 	_, err := r.db.Exec(
-		`INSERT INTO application_notes (id, application_id, body, created_at) VALUES ($1, $2, $3, $4)`,
+		insertApplicationNoteSQL,
 		note.ID, applicationID, note.Body, note.CreatedAt.UTC(),
 	)
 	return err
@@ -27,7 +31,7 @@ func (r *PostgreSQLNoteRepository) Save(applicationID string, note *domain.Appli
 
 func (r *PostgreSQLNoteRepository) ListByApplication(applicationID string) ([]*domain.ApplicationNote, error) {
 	rows, err := r.db.Query(
-		`SELECT id, body, created_at FROM application_notes WHERE application_id = $1 ORDER BY created_at ASC`,
+		selectApplicationNotesByApplicationSQL,
 		applicationID,
 	)
 	if err != nil {

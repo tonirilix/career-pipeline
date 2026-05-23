@@ -18,10 +18,10 @@ type CreateApplicationCommand struct {
 }
 
 type CreateApplication struct {
-	apps      ports.JobApplicationRepository
-	timeline  ports.TimelineRepository
-	clock     ports.Clock
-	ids       ports.IDGenerator
+	apps     ports.JobApplicationRepository
+	timeline ports.TimelineRepository
+	clock    ports.Clock
+	ids      ports.IDGenerator
 }
 
 func NewCreateApplication(

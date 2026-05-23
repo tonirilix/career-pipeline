@@ -56,20 +56,51 @@ func (r *fakeAppRepo) UpdateStage(id string, stage domain.ApplicationStage) erro
 	return nil
 }
 
+func (r *fakeAppRepo) clone() *fakeAppRepo {
+	clone := newFakeAppRepo()
+	for id, app := range r.apps {
+		copied := *app
+		clone.apps[id] = &copied
+	}
+	return clone
+}
+
+func (r *fakeAppRepo) restore(snapshot *fakeAppRepo) {
+	r.apps = snapshot.apps
+}
+
 // fakeTimelineRepo is an in-memory TimelineRepository.
 type fakeTimelineRepo struct {
-	events map[string][]*domain.TimelineEvent
+	events  map[string][]*domain.TimelineEvent
+	saveErr error
 }
 
 func newFakeTimelineRepo() *fakeTimelineRepo {
 	return &fakeTimelineRepo{events: map[string][]*domain.TimelineEvent{}}
 }
 func (r *fakeTimelineRepo) Save(applicationID string, event *domain.TimelineEvent) error {
+	if r.saveErr != nil {
+		return r.saveErr
+	}
 	r.events[applicationID] = append(r.events[applicationID], event)
 	return nil
 }
 func (r *fakeTimelineRepo) ListByApplication(applicationID string) ([]*domain.TimelineEvent, error) {
 	return r.events[applicationID], nil
+}
+
+func (r *fakeTimelineRepo) clone() *fakeTimelineRepo {
+	clone := newFakeTimelineRepo()
+	clone.saveErr = r.saveErr
+	for id, events := range r.events {
+		clone.events[id] = cloneTimelineEvents(events)
+	}
+	return clone
+}
+
+func (r *fakeTimelineRepo) restore(snapshot *fakeTimelineRepo) {
+	r.events = snapshot.events
+	r.saveErr = snapshot.saveErr
 }
 
 // fakeInterviewRepo is an in-memory InterviewRepository.
@@ -112,10 +143,28 @@ func (r *fakeInterviewRepo) ListByApplication(applicationID string) ([]*domain.I
 	return out, nil
 }
 
+func (r *fakeInterviewRepo) clone() *fakeInterviewRepo {
+	clone := newFakeInterviewRepo()
+	for id, interview := range r.interviews {
+		copied := *interview
+		clone.interviews[id] = &copied
+	}
+	for appID, ids := range r.byApp {
+		clone.byApp[appID] = append([]string(nil), ids...)
+	}
+	return clone
+}
+
+func (r *fakeInterviewRepo) restore(snapshot *fakeInterviewRepo) {
+	r.interviews = snapshot.interviews
+	r.byApp = snapshot.byApp
+}
+
 // fakeFollowUpRepo is an in-memory FollowUpRepository.
 type fakeFollowUpRepo struct {
-	followUps map[string]*domain.FollowUpReminder
-	byApp     map[string][]string
+	followUps     map[string]*domain.FollowUpReminder
+	byApp         map[string][]string
+	deactivateErr error
 }
 
 func newFakeFollowUpRepo() *fakeFollowUpRepo {
@@ -170,6 +219,9 @@ func (r *fakeFollowUpRepo) ListOverdue(now time.Time) ([]*domain.FollowUpReminde
 	return out, nil
 }
 func (r *fakeFollowUpRepo) DeactivateByApplication(applicationID string, completedAt time.Time) error {
+	if r.deactivateErr != nil {
+		return r.deactivateErr
+	}
 	for _, id := range r.byApp[applicationID] {
 		fu := r.followUps[id]
 		if fu.CompletedAt == nil {
@@ -177,6 +229,29 @@ func (r *fakeFollowUpRepo) DeactivateByApplication(applicationID string, complet
 		}
 	}
 	return nil
+}
+
+func (r *fakeFollowUpRepo) clone() *fakeFollowUpRepo {
+	clone := newFakeFollowUpRepo()
+	clone.deactivateErr = r.deactivateErr
+	for id, followUp := range r.followUps {
+		copied := *followUp
+		if followUp.CompletedAt != nil {
+			completedAt := *followUp.CompletedAt
+			copied.CompletedAt = &completedAt
+		}
+		clone.followUps[id] = &copied
+	}
+	for appID, ids := range r.byApp {
+		clone.byApp[appID] = append([]string(nil), ids...)
+	}
+	return clone
+}
+
+func (r *fakeFollowUpRepo) restore(snapshot *fakeFollowUpRepo) {
+	r.followUps = snapshot.followUps
+	r.byApp = snapshot.byApp
+	r.deactivateErr = snapshot.deactivateErr
 }
 
 // fakeNoteRepo is an in-memory NoteRepository.
@@ -202,6 +277,80 @@ func (r *fakeNoteRepo) ListByApplication(applicationID string) ([]*domain.Applic
 		out = append(out, r.notes[id])
 	}
 	return out, nil
+}
+
+func (r *fakeNoteRepo) clone() *fakeNoteRepo {
+	clone := newFakeNoteRepo()
+	for id, note := range r.notes {
+		copied := *note
+		clone.notes[id] = &copied
+	}
+	for appID, ids := range r.byApp {
+		clone.byApp[appID] = append([]string(nil), ids...)
+	}
+	return clone
+}
+
+func (r *fakeNoteRepo) restore(snapshot *fakeNoteRepo) {
+	r.notes = snapshot.notes
+	r.byApp = snapshot.byApp
+}
+
+type fakeTransactor struct {
+	apps       *fakeAppRepo
+	followUps  *fakeFollowUpRepo
+	timeline   *fakeTimelineRepo
+	interviews *fakeInterviewRepo
+	notes      *fakeNoteRepo
+}
+
+func newFakeTransactor(
+	apps *fakeAppRepo,
+	followUps *fakeFollowUpRepo,
+	timeline *fakeTimelineRepo,
+	interviews *fakeInterviewRepo,
+	notes *fakeNoteRepo,
+) *fakeTransactor {
+	return &fakeTransactor{
+		apps:       apps,
+		followUps:  followUps,
+		timeline:   timeline,
+		interviews: interviews,
+		notes:      notes,
+	}
+}
+
+func (t *fakeTransactor) WithTransaction(fn func(repos ports.Repositories) error) error {
+	appsSnapshot := t.apps.clone()
+	followUpsSnapshot := t.followUps.clone()
+	timelineSnapshot := t.timeline.clone()
+	interviewsSnapshot := t.interviews.clone()
+	notesSnapshot := t.notes.clone()
+
+	err := fn(ports.Repositories{
+		Applications: t.apps,
+		Interviews:   t.interviews,
+		FollowUps:    t.followUps,
+		Notes:        t.notes,
+		Timeline:     t.timeline,
+	})
+	if err != nil {
+		t.apps.restore(appsSnapshot)
+		t.followUps.restore(followUpsSnapshot)
+		t.timeline.restore(timelineSnapshot)
+		t.interviews.restore(interviewsSnapshot)
+		t.notes.restore(notesSnapshot)
+	}
+	return err
+}
+
+func cloneTimelineEvents(events []*domain.TimelineEvent) []*domain.TimelineEvent {
+	out := make([]*domain.TimelineEvent, len(events))
+	for i, event := range events {
+		copied := *event
+		out[i] = &copied
+	}
+	return out
 }
 
 // errNotFound is used to distinguish not-found from other errors.

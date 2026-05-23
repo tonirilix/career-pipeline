@@ -12,73 +12,61 @@ type CreateFollowUpCommand struct {
 }
 
 type AddFollowUp struct {
-	apps      ports.JobApplicationRepository
-	followUps ports.FollowUpRepository
-	timeline  ports.TimelineRepository
-	interviews ports.InterviewRepository
-	notes     ports.NoteRepository
-	clock     ports.Clock
-	ids       ports.IDGenerator
+	tx    ports.Transactor
+	clock ports.Clock
+	ids   ports.IDGenerator
 }
 
-func NewAddFollowUp(
-	apps ports.JobApplicationRepository,
-	followUps ports.FollowUpRepository,
-	timeline ports.TimelineRepository,
-	interviews ports.InterviewRepository,
-	notes ports.NoteRepository,
-	clock ports.Clock,
-	ids ports.IDGenerator,
-) *AddFollowUp {
-	return &AddFollowUp{
-		apps:       apps,
-		followUps:  followUps,
-		timeline:   timeline,
-		interviews: interviews,
-		notes:      notes,
-		clock:      clock,
-		ids:        ids,
-	}
+func NewAddFollowUp(tx ports.Transactor, clock ports.Clock, ids ports.IDGenerator) *AddFollowUp {
+	return &AddFollowUp{tx: tx, clock: clock, ids: ids}
 }
 
 func (uc *AddFollowUp) Execute(cmd CreateFollowUpCommand) (*domain.JobApplication, error) {
-	app, err := uc.apps.FindByID(cmd.ApplicationID)
-	if err != nil {
-		return nil, err
-	}
-
 	dueAt, err := parseTime(cmd.DueAt)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate: dueAt must be after the latest timeline interaction
-	events, err := uc.timeline.ListByApplication(app.ID)
-	if err != nil {
-		return nil, err
-	}
-	if latest := latestEventTime(events); latest != nil && !dueAt.After(*latest) {
-		return nil, domain.ErrDueDateInPast
-	}
+	var result *domain.JobApplication
+	err = uc.tx.WithTransaction(func(repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+		if err != nil {
+			return err
+		}
 
-	followUp := &domain.FollowUpReminder{
-		ID:            uc.ids.New(),
-		ApplicationID: app.ID,
-		DueAt:         dueAt,
-		Note:          cmd.Note,
-	}
-	if err := uc.followUps.Save(followUp); err != nil {
-		return nil, err
-	}
+		events, err := repos.Timeline.ListByApplication(app.ID)
+		if err != nil {
+			return err
+		}
+		if latest := latestEventTime(events); latest != nil && !dueAt.After(*latest) {
+			return domain.ErrDueDateInPast
+		}
 
-	event := &domain.TimelineEvent{
-		ID:          uc.ids.New(),
-		OccurredAt:  uc.clock.Now(),
-		Description: "Created follow-up reminder",
-	}
-	if err := uc.timeline.Save(app.ID, event); err != nil {
-		return nil, err
-	}
+		followUp := &domain.FollowUpReminder{
+			ID:            uc.ids.New(),
+			ApplicationID: app.ID,
+			DueAt:         dueAt,
+			Note:          cmd.Note,
+		}
+		if err := repos.FollowUps.Save(followUp); err != nil {
+			return err
+		}
 
-	return loadFullApplication(app, uc.apps, uc.followUps, uc.timeline, uc.interviews, uc.notes)
+		event := &domain.TimelineEvent{
+			ID:          uc.ids.New(),
+			OccurredAt:  uc.clock.Now(),
+			Description: "Created follow-up reminder",
+		}
+		if err := repos.Timeline.Save(app.ID, event); err != nil {
+			return err
+		}
+
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		if err != nil {
+			return err
+		}
+		result = loaded
+		return nil
+	})
+	return result, err
 }

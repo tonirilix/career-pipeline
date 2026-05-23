@@ -67,6 +67,22 @@ describe("frontend architecture boundaries", () => {
     expect(violations).toEqual([]);
   });
 
+  it("keeps mutable mock backend state out of MSW handlers", () => {
+    const violations = sourceFilesIn("infrastructure/msw").flatMap((filePath) => {
+      const source = readFileSync(filePath, "utf8");
+
+      return [
+        /\blet\s+applications\b/,
+        /\blet\s+next[A-Z]\w*Id\b/,
+        /new Date\(\)\.toISOString\(\)/
+      ]
+        .filter((pattern) => pattern.test(source))
+        .map((pattern) => `${relativeToSource(filePath)} matches ${pattern}`);
+    });
+
+    expect(violations).toEqual([]);
+  });
+
   it("keeps Zustand focused on presentation control state", () => {
     const violations = sourceFilesIn("infrastructure/zustand").flatMap((filePath) =>
       importsFrom(filePath)

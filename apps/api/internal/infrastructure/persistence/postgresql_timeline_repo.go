@@ -8,10 +8,14 @@ import (
 )
 
 type PostgreSQLTimelineRepository struct {
-	db *sql.DB
+	db sqlExecutor
 }
 
 func NewPostgreSQLTimelineRepository(db *sql.DB) *PostgreSQLTimelineRepository {
+	return &PostgreSQLTimelineRepository{db: db}
+}
+
+func newPostgreSQLTimelineRepositoryWithExecutor(db sqlExecutor) *PostgreSQLTimelineRepository {
 	return &PostgreSQLTimelineRepository{db: db}
 }
 
@@ -19,7 +23,7 @@ var _ ports.TimelineRepository = (*PostgreSQLTimelineRepository)(nil)
 
 func (r *PostgreSQLTimelineRepository) Save(applicationID string, event *domain.TimelineEvent) error {
 	_, err := r.db.Exec(
-		`INSERT INTO timeline_events (id, application_id, description, occurred_at) VALUES ($1, $2, $3, $4)`,
+		insertTimelineEventSQL,
 		event.ID, applicationID, event.Description,
 		event.OccurredAt.UTC(),
 	)
@@ -28,7 +32,7 @@ func (r *PostgreSQLTimelineRepository) Save(applicationID string, event *domain.
 
 func (r *PostgreSQLTimelineRepository) ListByApplication(applicationID string) ([]*domain.TimelineEvent, error) {
 	rows, err := r.db.Query(
-		`SELECT id, description, occurred_at FROM timeline_events WHERE application_id = $1 ORDER BY occurred_at ASC`,
+		selectTimelineEventsByApplicationSQL,
 		applicationID,
 	)
 	if err != nil {

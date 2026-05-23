@@ -11,54 +11,43 @@ type CompleteFollowUpCommand struct {
 }
 
 type CompleteFollowUp struct {
-	apps       ports.JobApplicationRepository
-	followUps  ports.FollowUpRepository
-	timeline   ports.TimelineRepository
-	interviews ports.InterviewRepository
-	notes      ports.NoteRepository
-	clock      ports.Clock
-	ids        ports.IDGenerator
+	tx    ports.Transactor
+	clock ports.Clock
+	ids   ports.IDGenerator
 }
 
-func NewCompleteFollowUp(
-	apps ports.JobApplicationRepository,
-	followUps ports.FollowUpRepository,
-	timeline ports.TimelineRepository,
-	interviews ports.InterviewRepository,
-	notes ports.NoteRepository,
-	clock ports.Clock,
-	ids ports.IDGenerator,
-) *CompleteFollowUp {
-	return &CompleteFollowUp{
-		apps:       apps,
-		followUps:  followUps,
-		timeline:   timeline,
-		interviews: interviews,
-		notes:      notes,
-		clock:      clock,
-		ids:        ids,
-	}
+func NewCompleteFollowUp(tx ports.Transactor, clock ports.Clock, ids ports.IDGenerator) *CompleteFollowUp {
+	return &CompleteFollowUp{tx: tx, clock: clock, ids: ids}
 }
 
 func (uc *CompleteFollowUp) Execute(cmd CompleteFollowUpCommand) (*domain.JobApplication, error) {
-	app, err := uc.apps.FindByID(cmd.ApplicationID)
-	if err != nil {
-		return nil, err
-	}
+	var result *domain.JobApplication
+	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+		if err != nil {
+			return err
+		}
 
-	now := uc.clock.Now()
-	if err := uc.followUps.UpdateCompleted(cmd.ReminderID, now); err != nil {
-		return nil, err
-	}
+		now := uc.clock.Now()
+		if err := repos.FollowUps.UpdateCompleted(cmd.ReminderID, now); err != nil {
+			return err
+		}
 
-	event := &domain.TimelineEvent{
-		ID:          uc.ids.New(),
-		OccurredAt:  now,
-		Description: "Completed follow-up reminder",
-	}
-	if err := uc.timeline.Save(app.ID, event); err != nil {
-		return nil, err
-	}
+		event := &domain.TimelineEvent{
+			ID:          uc.ids.New(),
+			OccurredAt:  now,
+			Description: "Completed follow-up reminder",
+		}
+		if err := repos.Timeline.Save(app.ID, event); err != nil {
+			return err
+		}
 
-	return loadFullApplication(app, uc.apps, uc.followUps, uc.timeline, uc.interviews, uc.notes)
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		if err != nil {
+			return err
+		}
+		result = loaded
+		return nil
+	})
+	return result, err
 }
