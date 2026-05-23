@@ -118,6 +118,7 @@ export function ApplicationCard({
           <Select
             aria-label={`Jump ${application.company} to stage`}
             className="h-11 md:h-8 text-xs rounded-none px-2"
+            name={`jump-stage-${application.id}`}
             onChange={(e) =>
               setSelectedStage(e.target.value as ApplicationStage)
             }

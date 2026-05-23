@@ -77,10 +77,10 @@ export function PipelineBoard({ applications, changingStageApplicationIds, onSta
                             {stage}
                           </CardTitle>
                           <span
-                            aria-label={`${stage} applications`}
                             className={`text-xs font-bold tabular-nums ${
                               stageApplications.length > 0 ? "text-accent" : "text-muted-foreground"
                             }`}
+                            title={`${stageApplications.length} ${stage} applications`}
                           >
                             {stageApplications.length}
                           </span>

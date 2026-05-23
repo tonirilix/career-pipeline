@@ -68,7 +68,7 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
         role={isOpen ? "dialog" : undefined}
         aria-modal={isOpen ? "true" : undefined}
         aria-label={isOpen ? title : undefined}
-        aria-hidden={!isOpen ? true : undefined}
+        inert={!isOpen ? true : undefined}
         className={`fixed z-50 bg-card flex flex-col transition-transform duration-200
           inset-0 md:inset-y-0 md:left-auto md:right-0 md:w-[480px] md:max-w-full md:border-l md:border-border
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
