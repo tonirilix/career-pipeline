@@ -1,6 +1,6 @@
-# react-hexagonal-architecture
+# Career Pipeline
 
-A toy for practicing hexagonal architecture across a React frontend and a Go backend.
+A full-stack job application tracker with a React frontend, Go GraphQL backend, and PostgreSQL persistence.
 
 ## Workspaces
 
@@ -12,6 +12,8 @@ A toy for practicing hexagonal architecture across a React frontend and a Go bac
 ## Architecture
 
 The system has two deployment units that share only the GraphQL schema as a contract.
+
+Career Pipeline intentionally uses hexagonal architecture to keep domain rules, application use cases, ports, and infrastructure adapters separate across the frontend and backend.
 
 ### Frontend (`apps/web`)
 
@@ -59,7 +61,7 @@ flowchart LR
 
 ### Backend (`apps/api`)
 
-Follows the same hexagonal architecture: domain → application (use cases + ports) → infrastructure (SQLite adapters) → GraphQL adapter (gqlgen resolvers).
+Follows the same hexagonal architecture: domain → application (use cases + ports) → infrastructure (PostgreSQL adapters) → GraphQL adapter (gqlgen resolvers).
 
 ```mermaid
 flowchart LR
@@ -80,16 +82,16 @@ flowchart LR
   end
 
   subgraph Infrastructure
-    SQLite[SQLite repository adapters]
-    DB[(tracker.db)]
+    Postgres[PostgreSQL repository adapters]
+    DB[(tracker database)]
   end
 
   GQL --> Resolver
   Resolver -->|command / query| UseCases
   UseCases --> DomainRules
   UseCases --> Ports
-  Ports -. implemented by .-> SQLite
-  SQLite --> DB
+  Ports -. implemented by .-> Postgres
+  Postgres --> DB
   Resolver -->|maps domain → DTO| GQL
 ```
 

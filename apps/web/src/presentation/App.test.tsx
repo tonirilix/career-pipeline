@@ -159,7 +159,7 @@ describe("Job application tracker shell", () => {
     renderApp();
 
     expect(
-      screen.getByRole("heading", { name: "Job Application Tracker" })
+      screen.getByRole("heading", { name: "Career Pipeline" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Add opportunity" })

@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The project is a learning implementation of hexagonal architecture for a job application tracker. The first deliverable is a React frontend that uses GraphQL operations intercepted by MSW instead of a real backend. A future backend is planned using GraphQL Yoga, Pothos, Effect, TypeORM, and a SQL database.
+Career Pipeline is a learning implementation of hexagonal architecture for a job application tracker. The first deliverable is a React frontend that uses GraphQL operations intercepted by MSW instead of a real backend. A future backend is planned using GraphQL Yoga, Pothos, Effect, TypeORM, and a SQL database.
 
 The repository currently has no application scaffold, so the layout decision can be made before implementation starts.
 

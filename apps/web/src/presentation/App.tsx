@@ -42,7 +42,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             Pipeline workspace
           </p>
           <h1 className="text-xl font-bold text-foreground leading-tight m-0 mb-3">
-            Job Application Tracker
+            Career Pipeline
           </h1>
           <Button
             type="button"
@@ -90,7 +90,7 @@ export function App({ gateway, usePipelineControls }: AppProps) {
           >
             ☰
           </button>
-          <span className="text-sm font-bold text-foreground">Job Application Tracker</span>
+          <span className="text-sm font-bold text-foreground">Career Pipeline</span>
         </div>
         <div className="flex-1 overflow-auto px-4 py-5 md:px-6 md:py-6">
           <div className="mx-auto w-full max-w-[1180px]">
