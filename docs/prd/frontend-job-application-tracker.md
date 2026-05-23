@@ -1,4 +1,4 @@
-# PRD: Frontend Job Application Tracker
+# PRD: Career Pipeline Frontend
 
 ## Problem Statement
 
@@ -6,7 +6,7 @@ Tracking job applications across job boards, recruiters, interviews, follow-ups,
 
 ## Solution
 
-Build a frontend-first job application tracker with a hexagonal architecture. The first implementation will run without a real backend. The React app will use a GraphQL gateway adapter, and MSW GraphQL handlers will intercept those operations to simulate a backend. Domain rules and use cases will remain independent from React, Zustand, GraphQL, MSW, and browser APIs.
+Build Career Pipeline as a frontend-first job application tracker with a hexagonal architecture. The first implementation will run without a real backend. The React app will use a GraphQL gateway adapter, and MSW GraphQL handlers will intercept those operations to simulate a backend. Domain rules and use cases will remain independent from React, Zustand, GraphQL, MSW, and browser APIs.
 
 The user will be able to save job opportunities, track applications by stage, manage follow-ups, record interviews, add notes, inspect a timeline, filter the pipeline, and use the app as a practical job search tool. The architecture will preserve clear boundaries so that the MSW mock backend can later be replaced with a real GraphQL backend without rewriting domain or presentation code.
 

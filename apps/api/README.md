@@ -1,6 +1,6 @@
-# apps/api - Go GraphQL Backend
+# apps/api - Career Pipeline Go GraphQL Backend
 
-A Go backend for the job application tracker. Exposes a GraphQL API consumed by `apps/web`.
+A Go backend for Career Pipeline. Exposes a GraphQL API consumed by `apps/web`.
 
 ## Stack
 

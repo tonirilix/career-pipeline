@@ -1,14 +1,14 @@
-# PRD: Backend Job Application Tracker
+# PRD: Career Pipeline Backend
 
-> **Status: Implemented** — The Go backend described in this document is live in `apps/api`. See [`apps/api/README.md`](../../apps/api/README.md) for how to run it and [`docs/adr/0002-use-go-for-backend.md`](../adr/0002-use-go-for-backend.md) for technology decisions. The only notable deviation from this PRD: sqlc was not used — repository adapters are written directly with `database/sql` (see ADR 0002).
+> **Status: Implemented** — The Go backend described in this document is live in `apps/api`. See [`apps/api/README.md`](../../apps/api/README.md) for how to run it and [`docs/adr/0002-use-go-for-backend.md`](../adr/0002-use-go-for-backend.md) for technology decisions. Notable deviations from this PRD: PostgreSQL was used instead of SQLite, and sqlc was not used — repository adapters are written directly with `database/sql` (see ADR 0002 and ADR 0003).
 
 ## Problem Statement
 
-The frontend-first job application tracker will initially use MSW to simulate GraphQL backend behavior. That is useful for learning and rapid iteration, but the application will eventually need a real backend to persist applications, centralize business rules, expose a stable GraphQL API, and prepare for future capabilities such as authentication, deployment, and multi-device use. The backend should preserve the same hexagonal architecture lessons rather than becoming a thin GraphQL-to-database CRUD layer.
+Career Pipeline will initially use MSW to simulate GraphQL backend behavior. That is useful for learning and rapid iteration, but the application will eventually need a real backend to persist applications, centralize business rules, expose a stable GraphQL API, and prepare for future capabilities such as authentication, deployment, and multi-device use. The backend should preserve the same hexagonal architecture lessons rather than becoming a thin GraphQL-to-database CRUD layer.
 
 ## Solution
 
-A Go backend using gqlgen and SQLite exposes a GraphQL API for the React frontend. It executes application use cases, enforces domain rules, and persists data through repository port interfaces. GraphQL resolvers and SQLite adapters are fully decoupled from the domain layer.
+A Go backend using gqlgen and PostgreSQL exposes a GraphQL API for the React frontend. It executes application use cases, enforces domain rules, and persists data through repository port interfaces. GraphQL resolvers and PostgreSQL adapters are fully decoupled from the domain layer.
 
 The frontend continues to depend on GraphQL operations through its gateway adapter. The backend owns the authoritative version of application state and business rule enforcement. MSW remains available for local development without the Go server (see root README for the two development modes).
 
