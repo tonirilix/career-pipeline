@@ -32,5 +32,5 @@
 ## 6. Verification
 
 - [x] 6.1 Run the full test suite and confirm no regressions
-- [ ] 6.2 Manually verify each command path in the running app — confirm the relevant control is disabled while the network request is in-flight
+- [x] 6.2 Manually verify each command path in the running app — confirm the relevant control is disabled while the network request is in-flight
 - [x] 6.3 Confirm no presentation code calls `useJobApplications` directly (only `usePipelineWorkspace` does)
