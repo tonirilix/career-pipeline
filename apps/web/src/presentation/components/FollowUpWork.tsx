@@ -10,12 +10,14 @@ type FollowUpWorkItem = {
 type FollowUpWorkProps = {
   overdueItems: FollowUpWorkItem[];
   upcomingItems: FollowUpWorkItem[];
+  completingFollowUpReminderIds: Set<string>;
   onCompleteFollowUp: (command: CompleteFollowUpReminderCommand) => Promise<void>;
 };
 
 export function FollowUpWork({
   overdueItems,
   upcomingItems,
+  completingFollowUpReminderIds,
   onCompleteFollowUp
 }: FollowUpWorkProps) {
   if (overdueItems.length === 0 && upcomingItems.length === 0) {
@@ -49,6 +51,7 @@ export function FollowUpWork({
         <FollowUpWorkList
           items={overdueItems}
           label="Overdue follow-ups"
+          completingFollowUpReminderIds={completingFollowUpReminderIds}
           onCompleteFollowUp={onCompleteFollowUp}
           urgent
         />
@@ -68,6 +71,7 @@ export function FollowUpWork({
         <FollowUpWorkList
           items={upcomingItems}
           label="Upcoming follow-ups"
+          completingFollowUpReminderIds={completingFollowUpReminderIds}
           onCompleteFollowUp={onCompleteFollowUp}
           urgent={false}
         />
@@ -81,10 +85,11 @@ type FollowUpWorkListProps = {
   items: FollowUpWorkItem[];
   label: string;
   urgent: boolean;
+  completingFollowUpReminderIds: Set<string>;
   onCompleteFollowUp: (command: CompleteFollowUpReminderCommand) => Promise<void>;
 };
 
-function FollowUpWorkList({ items, label, urgent, onCompleteFollowUp }: FollowUpWorkListProps) {
+function FollowUpWorkList({ items, label, urgent, completingFollowUpReminderIds, onCompleteFollowUp }: FollowUpWorkListProps) {
   return (
     <ol aria-label={label} className="grid gap-0 m-0 list-none p-0 divide-y divide-border">
       {items.map(({ application, followUp }) => (
@@ -108,6 +113,7 @@ function FollowUpWorkList({ items, label, urgent, onCompleteFollowUp }: FollowUp
           <Button
             className="w-full min-w-0 min-h-8 text-xs rounded-none bg-transparent hover:bg-muted overflow-hidden [white-space:normal]"
             variant="outline"
+            disabled={completingFollowUpReminderIds.has(followUp.id)}
             onClick={() =>
               void onCompleteFollowUp({
                 applicationId: application.id,

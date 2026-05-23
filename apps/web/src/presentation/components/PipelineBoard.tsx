@@ -20,11 +20,12 @@ const CLOSED_STAGES: ApplicationStage[] = ["Offer", "Rejected", "Withdrawn"];
 
 type PipelineBoardProps = {
   applications: JobApplication[];
+  changingStageApplicationIds: Set<string>;
   onStageChange: (application: JobApplication, toStage: ApplicationStage) => Promise<void>;
   onViewDetails: (applicationId: string) => void;
 };
 
-export function PipelineBoard({ applications, onStageChange, onViewDetails }: PipelineBoardProps) {
+export function PipelineBoard({ applications, changingStageApplicationIds, onStageChange, onViewDetails }: PipelineBoardProps) {
   const [closedCollapsed, setClosedCollapsed] = useState(true);
   const closedAppCount = applications.filter((a) => CLOSED_STAGES.includes(a.stage)).length;
   const previousClosedAppCount = useRef(closedAppCount);
@@ -90,6 +91,7 @@ export function PipelineBoard({ applications, onStageChange, onViewDetails }: Pi
                               {stageApplications.map((application) => (
                                 <ApplicationCard
                                   application={application}
+                                  isChangingStage={changingStageApplicationIds.has(application.id)}
                                   key={application.id}
                                   onStageChange={onStageChange}
                                   onViewDetails={onViewDetails}

@@ -1,19 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useMemo, useState } from "react";
 
-import {
-  type AddNoteToApplicationResult,
-  addNoteToApplication,
-  advanceApplicationStage,
-  completeApplicationFollowUpReminder,
-  type CompleteApplicationFollowUpReminderResult,
-  createApplicationFollowUpReminder,
-  type CreateApplicationFollowUpReminderResult,
-  createSavedOpportunity,
-  listApplications,
-  type ScheduleApplicationInterviewResult,
-  scheduleApplicationInterview
-} from "../application/jobApplications";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import {
   applicationStages,
@@ -37,11 +23,8 @@ import type {
   UsePipelineControls
 } from "./ports/pipelineControls";
 import type { DetailsCommandError } from "./components/ApplicationDetails";
-import {
-  addCachedJobApplication,
-  jobApplicationQueryKeys,
-  replaceCachedJobApplication
-} from "../infrastructure/query/jobApplicationQueries";
+import { useJobApplications } from "./useJobApplications";
+export type { CommandStatus } from "./useJobApplications";
 
 type BoardCommandError = {
   title: string;
@@ -67,8 +50,8 @@ export function usePipelineWorkspace(
   gateway: JobApplicationGateway,
   usePipelineControls: UsePipelineControls
 ) {
-  const stableGateway = useMemo(() => gateway, [gateway]);
-  const queryClient = useQueryClient();
+  const jobApps = useJobApplications(gateway);
+
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [commandError, setCommandError] = useState<BoardCommandError | null>(null);
@@ -79,76 +62,7 @@ export function usePipelineWorkspace(
 
   const controls = usePipelineControls();
 
-  const applicationsQuery = useQuery({
-    queryKey: jobApplicationQueryKeys.list(),
-    queryFn: () => listApplications(stableGateway)
-  });
-  const applications = applicationsQuery.data ?? [];
-
-  const createOpportunityMutation = useMutation({
-    mutationFn: (command: CreateSavedJobOpportunityCommand) =>
-      createSavedOpportunity(stableGateway, command),
-    onSuccess: (result) => {
-      if (result.ok) {
-        addCachedJobApplication(queryClient, result.opportunity);
-      }
-    }
-  });
-
-  const advanceStageMutation = useMutation({
-    mutationFn: ({
-      application,
-      toStage
-    }: {
-      application: JobApplication;
-      toStage: ApplicationStage;
-    }) =>
-      advanceApplicationStage(stableGateway, {
-        applicationId: application.id,
-        toStage
-      }),
-    onSuccess: (result) => {
-      if (result.ok) {
-        replaceCachedJobApplication(queryClient, result.application);
-      }
-    }
-  });
-
-  const scheduleInterviewMutation = useMutation({
-    mutationFn: (command: ScheduleInterviewCommand) =>
-      scheduleApplicationInterview(stableGateway, command),
-    onSuccess: replaceApplicationFromResult
-  });
-
-  const createFollowUpMutation = useMutation({
-    mutationFn: (command: CreateFollowUpReminderCommand) =>
-      createApplicationFollowUpReminder(stableGateway, command),
-    onSuccess: replaceApplicationFromResult
-  });
-
-  const completeFollowUpMutation = useMutation({
-    mutationFn: (command: CompleteFollowUpReminderCommand) =>
-      completeApplicationFollowUpReminder(stableGateway, command),
-    onSuccess: replaceApplicationFromResult
-  });
-
-  const addNoteMutation = useMutation({
-    mutationFn: (command: AddApplicationNoteCommand) =>
-      addNoteToApplication(stableGateway, command),
-    onSuccess: replaceApplicationFromResult
-  });
-
-  function replaceApplicationFromResult(
-    result:
-      | ScheduleApplicationInterviewResult
-      | CreateApplicationFollowUpReminderResult
-      | CompleteApplicationFollowUpReminderResult
-      | AddNoteToApplicationResult
-  ) {
-    if (result.ok) {
-      replaceCachedJobApplication(queryClient, result.application);
-    }
-  }
+  const { applications } = jobApps;
 
   const activeApplicationCount = applications.filter(isActiveApplication).length;
   const stageCounts = useMemo(
@@ -200,7 +114,7 @@ export function usePipelineWorkspace(
     setFormCommandError(null);
 
     try {
-      const result = await createOpportunityMutation.mutateAsync(form);
+      const result = await jobApps.submitOpportunityCommand(form);
 
       if (!result.ok) {
         setFieldErrors(result.errors);
@@ -222,13 +136,12 @@ export function usePipelineWorkspace(
 
   async function changeStage(application: JobApplication, toStage: ApplicationStage) {
     setCommandError(null);
-    const result = await advanceStageMutation.mutateAsync({ application, toStage });
+    const result = await jobApps.changeStageCommand(application, toStage);
     if (!result.ok) {
       setCommandError({
         title: "Stage update failed",
         message: result.failure.message
       });
-      return;
     }
   }
 
@@ -244,7 +157,7 @@ export function usePipelineWorkspace(
 
   async function scheduleInterview(command: ScheduleInterviewCommand) {
     setDetailsCommandError(null);
-    const result = await scheduleInterviewMutation.mutateAsync(command);
+    const result = await jobApps.scheduleInterviewCommand(command);
     if (!result.ok) {
       setDetailsCommandError({
         workflow: "interview",
@@ -257,7 +170,7 @@ export function usePipelineWorkspace(
 
   async function createFollowUp(command: CreateFollowUpReminderCommand) {
     setDetailsCommandError(null);
-    const result = await createFollowUpMutation.mutateAsync(command);
+    const result = await jobApps.createFollowUpCommand(command);
     if (!result.ok) {
       setDetailsCommandError({
         workflow: "followUp",
@@ -270,19 +183,18 @@ export function usePipelineWorkspace(
 
   async function completeFollowUp(command: CompleteFollowUpReminderCommand) {
     setCommandError(null);
-    const result = await completeFollowUpMutation.mutateAsync(command);
+    const result = await jobApps.completeFollowUpCommand(command);
     if (!result.ok) {
       setCommandError({
         title: "Follow-up was not completed",
         message: result.failure.message
       });
-      return;
     }
   }
 
   async function addNote(command: AddApplicationNoteCommand) {
     setDetailsCommandError(null);
-    const result = await addNoteMutation.mutateAsync(command);
+    const result = await jobApps.addNoteCommand(command);
     if (!result.ok) {
       setDetailsCommandError({
         workflow: "note",
@@ -297,24 +209,30 @@ export function usePipelineWorkspace(
     ...controls,
     activeApplicationCount,
     addNote,
+    addNoteStatus: jobApps.addNoteStatus,
     changeStage,
+    changingStageApplicationIds: jobApps.changingStageApplicationIds,
     clearOpportunityFormErrors,
     closeDetails,
-    commandError: commandError ?? loadCommandError(applicationsQuery.isError),
+    commandError: commandError ?? loadCommandError(jobApps.isLoadError),
     completeFollowUp,
+    completingFollowUpReminderIds: jobApps.completingFollowUpReminderIds,
     createFollowUp,
+    createFollowUpStatus: jobApps.createFollowUpStatus,
     detailsCommandError,
     fieldErrors,
     form,
     formCommandError,
-    isLoadingApplications: applicationsQuery.isPending,
+    isLoadingApplications: jobApps.isLoadingApplications,
     overdueFollowUpItems,
     scheduleInterview,
+    scheduleInterviewStatus: jobApps.scheduleInterviewStatus,
     selectedApplication,
     selectedApplicationId,
     setForm,
     stageCounts,
     submitOpportunity,
+    submitOpportunityStatus: jobApps.submitOpportunityStatus,
     upcomingFollowUpItems,
     viewDetails,
     visibleApplications

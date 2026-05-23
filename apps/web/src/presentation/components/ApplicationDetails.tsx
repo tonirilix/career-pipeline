@@ -6,6 +6,7 @@ import type {
   CreateFollowUpReminderCommand
 } from "../../domain/followUpReminder";
 import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
+import type { CommandStatus } from "../pipelineWorkspace";
 import {
   type ApplicationNote,
   type FollowUpReminder,
@@ -43,6 +44,9 @@ type InterviewFormState = {
 type ApplicationDetailsProps = {
   application: JobApplication;
   commandError: DetailsCommandError | null;
+  addNoteStatus: CommandStatus;
+  createFollowUpStatus: CommandStatus;
+  scheduleInterviewStatus: CommandStatus;
   onAddNote: (command: AddApplicationNoteCommand) => Promise<boolean>;
   onCreateFollowUp: (command: CreateFollowUpReminderCommand) => Promise<boolean>;
   onScheduleInterview: (command: ScheduleInterviewCommand) => Promise<boolean>;
@@ -51,6 +55,9 @@ type ApplicationDetailsProps = {
 export function ApplicationDetails({
   application,
   commandError,
+  addNoteStatus,
+  createFollowUpStatus,
+  scheduleInterviewStatus,
   onAddNote,
   onCreateFollowUp,
   onScheduleInterview
@@ -192,7 +199,7 @@ export function ApplicationDetails({
                 value={noteBody}
               />
             </label>
-            <Button type="submit" className="h-9 text-xs">Add note</Button>
+            <Button type="submit" className="h-9 text-xs" disabled={addNoteStatus === "pending"}>Add note</Button>
           </form>
         </section>
 
@@ -264,7 +271,7 @@ export function ApplicationDetails({
                 value={followUpForm.note}
               />
             </label>
-            <Button type="submit" className="h-9 text-xs">Create follow-up</Button>
+            <Button type="submit" className="h-9 text-xs" disabled={createFollowUpStatus === "pending"}>Create follow-up</Button>
           </form>
         </section>
 
@@ -369,7 +376,7 @@ export function ApplicationDetails({
                   ))}
                 </Select>
               </label>
-              <Button type="submit" className="h-9 text-xs">Schedule interview</Button>
+              <Button type="submit" className="h-9 text-xs" disabled={scheduleInterviewStatus === "pending"}>Schedule interview</Button>
             </div>
           </form>
         </section>

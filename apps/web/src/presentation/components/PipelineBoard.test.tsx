@@ -37,6 +37,7 @@ function renderBoard(applications: JobApplication[]) {
   return render(
     <PipelineBoard
       applications={applications}
+      changingStageApplicationIds={new Set()}
       onStageChange={vi.fn(async (_application: JobApplication, _stage: ApplicationStage) => {})}
       onViewDetails={vi.fn()}
     />
@@ -79,6 +80,7 @@ describe("PipelineBoard compact layout", () => {
             roleTitle: "Frontend Engineer"
           })
         ]}
+        changingStageApplicationIds={new Set()}
         onStageChange={onStageChange}
         onViewDetails={onViewDetails}
       />
