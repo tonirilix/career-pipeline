@@ -10,7 +10,7 @@ import {
   scheduleApplicationInterview
 } from "../application/jobApplications";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
-import { type ApplicationStage } from "../domain/applicationStage";
+import { applicationStages, type ApplicationStage } from "../domain/applicationStage";
 import { isActiveApplication } from "../domain/closedWork";
 import type { AddApplicationNoteCommand } from "../domain/applicationNote";
 import type {
@@ -36,6 +36,7 @@ import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
 import { PipelineControls } from "./components/PipelineControls";
+import { FunnelChart } from "./components/FunnelChart";
 import { StatsBar } from "./components/StatsBar";
 import { Button } from "./components/ui/button";
 import { ErrorNotice } from "./components/ui/error-notice";
@@ -138,6 +139,11 @@ export function App({ gateway, usePipelineControls }: AppProps) {
   }
 
   const activeApplicationCount = applications.filter(isActiveApplication).length;
+
+  const stageCounts = useMemo(
+    () => applicationStages.map((stage) => ({ stage, count: applications.filter((a) => a.stage === stage).length })),
+    [applications]
+  );
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const visibleApplications = sortApplications(
     applications.filter(
@@ -329,6 +335,14 @@ export function App({ gateway, usePipelineControls }: AppProps) {
                 title={commandError.title}
               />
             ) : null}
+
+            <FunnelChart
+              stageCounts={stageCounts}
+              activeStage={stageFilter}
+              onStageClick={setStageFilter}
+            />
+
+            <div className="mt-6" />
 
             {isLoadingApplications ? (
               <div

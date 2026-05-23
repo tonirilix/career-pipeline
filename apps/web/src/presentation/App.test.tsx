@@ -107,6 +107,48 @@ function renderApp(gateway = createJobApplicationGraphqlGateway()) {
 }
 
 describe("Job application tracker shell", () => {
+  it("shows an application funnel chart above the pipeline board in the main content area", async () => {
+    renderApp();
+
+    await screen.findByRole("region", { name: "Application pipeline" });
+
+    const main = screen.getByRole("main");
+    expect(
+      within(main).getByRole("region", { name: "Application funnel" })
+    ).toBeInTheDocument();
+  });
+
+  it("clicking a funnel stage button filters the pipeline board to that stage", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await screen.findByRole("region", { name: "Application pipeline" });
+
+    // Click "Applied" stage button in the funnel header
+    const funnel = screen.getByRole("region", { name: "Application funnel" });
+    await user.click(within(funnel).getByRole("button", { name: /^Applied/ }));
+
+    // The pipeline controls dropdown should reflect the filter
+    expect(screen.getByLabelText("Filter by stage")).toHaveValue("Applied");
+  });
+
+  it("clicking the active funnel stage button again clears the filter", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await screen.findByRole("region", { name: "Application pipeline" });
+
+    const funnel = screen.getByRole("region", { name: "Application funnel" });
+    // First click: filter to Applied
+    await user.click(within(funnel).getByRole("button", { name: /^Applied/ }));
+    // Second click: use aria-pressed to target the header button, not the clear badge
+    await user.click(within(funnel).getByRole("button", { pressed: true, name: /^Applied/ }));
+
+    expect(screen.getByLabelText("Filter by stage")).toHaveValue("All");
+  });
+
   it("renders a pipeline workspace with the expected application stages", async () => {
     renderApp();
 
