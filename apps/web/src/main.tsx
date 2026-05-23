@@ -1,8 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 
 import { createJobApplicationGraphqlGateway } from "./infrastructure/graphql/jobApplicationGraphqlGateway";
+import { createWebQueryClient } from "./infrastructure/query/queryClient";
 import { useZustandPipelineControlsStore } from "./infrastructure/zustand/pipelineControlsStore";
 import { App } from "./presentation/App";
 
@@ -24,13 +26,16 @@ async function enableMockBackend() {
 
 void enableMockBackend().then(() => {
   const gateway = createJobApplicationGraphqlGateway();
+  const queryClient = createWebQueryClient();
 
   createRoot(rootElement).render(
     <StrictMode>
-      <App
-        gateway={gateway}
-        usePipelineControls={useZustandPipelineControlsStore}
-      />
+      <QueryClientProvider client={queryClient}>
+        <App
+          gateway={gateway}
+          usePipelineControls={useZustandPipelineControlsStore}
+        />
+      </QueryClientProvider>
     </StrictMode>
   );
 });

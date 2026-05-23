@@ -93,6 +93,23 @@ describe("frontend architecture boundaries", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("does not introduce Effect or AtomRpc for frontend async operations", () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(process.cwd(), "package.json"), "utf8")
+    ) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const installedPackages = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies
+    };
+
+    expect(Object.keys(installedPackages)).not.toEqual(
+      expect.arrayContaining(["effect", "@effect/atom", "@effect/atom-react"])
+    );
+  });
 });
 
 function sourceFilesIn(directory: string) {

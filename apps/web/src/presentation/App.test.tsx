@@ -1,10 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import type { JobApplication } from "../domain/jobOpportunity";
 import { createJobApplicationGraphqlGateway } from "../infrastructure/graphql/jobApplicationGraphqlGateway";
+import { createWebQueryClient } from "../infrastructure/query/queryClient";
 import { useZustandPipelineControlsStore } from "../infrastructure/zustand/pipelineControlsStore";
 import { App } from "./App";
 
@@ -98,11 +100,15 @@ function getStatValue(label: string) {
 }
 
 function renderApp(gateway = createJobApplicationGraphqlGateway()) {
+  const queryClient = createWebQueryClient();
+
   return render(
-    <App
-      gateway={gateway}
-      usePipelineControls={useZustandPipelineControlsStore}
-    />
+    <QueryClientProvider client={queryClient}>
+      <App
+        gateway={gateway}
+        usePipelineControls={useZustandPipelineControlsStore}
+      />
+    </QueryClientProvider>
   );
 }
 
@@ -318,6 +324,13 @@ describe("Job application tracker shell", () => {
     const dialog = screen.getByRole("dialog", { name: "Add opportunity" });
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
       "Could not save the opportunity. Try again."
+    );
+    expect(within(dialog).getByLabelText("Company")).toHaveValue("Linear");
+    expect(within(dialog).getByLabelText("Role title")).toHaveValue(
+      "Frontend Engineer"
+    );
+    expect(within(dialog).getByLabelText("Posting URL")).toHaveValue(
+      "https://linear.app/careers/frontend-engineer"
     );
   });
 
@@ -910,6 +923,7 @@ describe("Job application tracker shell", () => {
       "https://linear.app/careers/frontend-engineer"
     );
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    expect(await within(getStageColumn("Saved")).findByText("Linear")).toBeInTheDocument();
     await user.click(
       await screen.findByRole("button", { name: "Add opportunity" })
     );
@@ -978,6 +992,7 @@ describe("Job application tracker shell", () => {
       "https://linear.app/careers/frontend-engineer"
     );
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    expect(await within(getStageColumn("Saved")).findByText("Linear")).toBeInTheDocument();
     await user.click(
       await screen.findByRole("button", { name: "Add opportunity" })
     );
@@ -988,6 +1003,7 @@ describe("Job application tracker shell", () => {
       "https://vercel.com/careers/ui-engineer"
     );
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    expect(await within(getStageColumn("Saved")).findByText("Vercel")).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Search applications"), "frontend");
 
@@ -1041,10 +1057,12 @@ describe("Job application tracker shell", () => {
       "lastActivity"
     );
 
-    expect(getApplicationCompaniesInStage("Saved")).toEqual([
-      "Vercel",
-      "Linear"
-    ]);
+    await waitFor(() =>
+      expect(getApplicationCompaniesInStage("Saved")).toEqual([
+        "Vercel",
+        "Linear"
+      ])
+    );
   });
 
   it("lets a user sort the pipeline by follow-up date", async () => {

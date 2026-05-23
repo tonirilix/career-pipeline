@@ -1,10 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import type { FormEvent, ReactNode } from "react";
+import { createElement, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import type { ApplicationStage } from "../domain/applicationStage";
 import type { JobApplication, JobSource } from "../domain/jobOpportunity";
+import { createWebQueryClient } from "../infrastructure/query/queryClient";
 import type { PipelineSortOption } from "./ports/pipelineControls";
 import { usePipelineWorkspace } from "./pipelineWorkspace";
 
@@ -74,6 +77,18 @@ function useTestPipelineControls() {
 
 const useTestState = useState;
 
+function createQueryWrapper() {
+  const queryClient = createWebQueryClient();
+
+  return function QueryWrapper({ children }: { children: ReactNode }) {
+    return createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      children
+    );
+  };
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -123,7 +138,8 @@ describe("usePipelineWorkspace", () => {
 
     const gateway = createGateway({ listApplications: async () => [linear, acme] });
     const { result } = renderHook(() =>
-      usePipelineWorkspace(gateway, useTestPipelineControls)
+      usePipelineWorkspace(gateway, useTestPipelineControls),
+      { wrapper: createQueryWrapper() }
     );
 
     await waitFor(() => expect(result.current.isLoadingApplications).toBe(false));
@@ -153,7 +169,8 @@ describe("usePipelineWorkspace", () => {
       advanceApplicationStage: async () => applied
     });
     const { result } = renderHook(() =>
-      usePipelineWorkspace(gateway, useTestPipelineControls)
+      usePipelineWorkspace(gateway, useTestPipelineControls),
+      { wrapper: createQueryWrapper() }
     );
 
     await waitFor(() => expect(result.current.isLoadingApplications).toBe(false));
@@ -162,6 +179,44 @@ describe("usePipelineWorkspace", () => {
     });
 
     expect(result.current.visibleApplications[0].stage).toBe("Applied");
+  });
+
+  it("adds created opportunities to the managed applications cache", async () => {
+    const saved = createApplication({
+      id: "job-1",
+      company: "Linear",
+      roleTitle: "Frontend Engineer"
+    });
+    const gateway = createGateway({
+      listApplications: async () => [],
+      createSavedOpportunity: async () => ({ ...saved, stage: "Saved" as const })
+    });
+    const { result } = renderHook(() =>
+      usePipelineWorkspace(gateway, useTestPipelineControls),
+      { wrapper: createQueryWrapper() }
+    );
+
+    await waitFor(() => expect(result.current.isLoadingApplications).toBe(false));
+    act(() => {
+      result.current.setForm({
+        company: "Linear",
+        roleTitle: "Frontend Engineer",
+        postingUrl: "https://linear.app/careers/frontend-engineer",
+        source: "LinkedIn",
+        location: "",
+        compensation: "",
+        employmentType: "Full-time"
+      });
+    });
+    await act(async () => {
+      await result.current.submitOpportunity({
+        preventDefault: vi.fn()
+      } as unknown as FormEvent<HTMLFormElement>);
+    });
+
+    expect(result.current.visibleApplications.map((application) => application.company)).toEqual([
+      "Linear"
+    ]);
   });
 
   it("stores command errors when a workflow fails", async () => {
@@ -173,7 +228,8 @@ describe("usePipelineWorkspace", () => {
       }
     });
     const { result } = renderHook(() =>
-      usePipelineWorkspace(gateway, useTestPipelineControls)
+      usePipelineWorkspace(gateway, useTestPipelineControls),
+      { wrapper: createQueryWrapper() }
     );
 
     await waitFor(() => expect(result.current.isLoadingApplications).toBe(false));
@@ -184,6 +240,26 @@ describe("usePipelineWorkspace", () => {
     expect(result.current.commandError).toEqual({
       title: "Stage update failed",
       message: "Cannot move an application from Saved to Offer."
+    });
+    expect(result.current.visibleApplications[0].stage).toBe("Saved");
+  });
+
+  it("stores load errors from the managed applications query", async () => {
+    const gateway = createGateway({
+      listApplications: async () => {
+        throw new Error("Network unavailable");
+      }
+    });
+    const { result } = renderHook(() =>
+      usePipelineWorkspace(gateway, useTestPipelineControls),
+      { wrapper: createQueryWrapper() }
+    );
+
+    await waitFor(() => expect(result.current.isLoadingApplications).toBe(false));
+
+    expect(result.current.commandError).toEqual({
+      title: "Applications could not load",
+      message: "Refresh the page or try again in a moment."
     });
   });
 });

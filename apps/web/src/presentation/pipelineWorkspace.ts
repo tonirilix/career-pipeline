@@ -1,12 +1,17 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type FormEvent, useMemo, useState } from "react";
 
 import {
+  type AddNoteToApplicationResult,
   addNoteToApplication,
   advanceApplicationStage,
   completeApplicationFollowUpReminder,
+  type CompleteApplicationFollowUpReminderResult,
   createApplicationFollowUpReminder,
+  type CreateApplicationFollowUpReminderResult,
   createSavedOpportunity,
   listApplications,
+  type ScheduleApplicationInterviewResult,
   scheduleApplicationInterview
 } from "../application/jobApplications";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
@@ -32,6 +37,11 @@ import type {
   UsePipelineControls
 } from "./ports/pipelineControls";
 import type { DetailsCommandError } from "./components/ApplicationDetails";
+import {
+  addCachedJobApplication,
+  jobApplicationQueryKeys,
+  replaceCachedJobApplication
+} from "../infrastructure/query/jobApplicationQueries";
 
 type BoardCommandError = {
   title: string;
@@ -58,8 +68,7 @@ export function usePipelineWorkspace(
   usePipelineControls: UsePipelineControls
 ) {
   const stableGateway = useMemo(() => gateway, [gateway]);
-  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
-  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const queryClient = useQueryClient();
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [commandError, setCommandError] = useState<BoardCommandError | null>(null);
@@ -70,30 +79,76 @@ export function usePipelineWorkspace(
 
   const controls = usePipelineControls();
 
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoadingApplications(true);
+  const applicationsQuery = useQuery({
+    queryKey: jobApplicationQueryKeys.list(),
+    queryFn: () => listApplications(stableGateway)
+  });
+  const applications = applicationsQuery.data ?? [];
 
-    void listApplications(stableGateway)
-      .then((loadedApplications) => {
-        if (isMounted) setApplications(loadedApplications);
-      })
-      .catch(() => {
-        if (isMounted) {
-          setCommandError({
-            title: "Applications could not load",
-            message: "Refresh the page or try again in a moment."
-          });
-        }
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingApplications(false);
-      });
+  const createOpportunityMutation = useMutation({
+    mutationFn: (command: CreateSavedJobOpportunityCommand) =>
+      createSavedOpportunity(stableGateway, command),
+    onSuccess: (result) => {
+      if (result.ok) {
+        addCachedJobApplication(queryClient, result.opportunity);
+      }
+    }
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, [stableGateway]);
+  const advanceStageMutation = useMutation({
+    mutationFn: ({
+      application,
+      toStage
+    }: {
+      application: JobApplication;
+      toStage: ApplicationStage;
+    }) =>
+      advanceApplicationStage(stableGateway, {
+        applicationId: application.id,
+        toStage
+      }),
+    onSuccess: (result) => {
+      if (result.ok) {
+        replaceCachedJobApplication(queryClient, result.application);
+      }
+    }
+  });
+
+  const scheduleInterviewMutation = useMutation({
+    mutationFn: (command: ScheduleInterviewCommand) =>
+      scheduleApplicationInterview(stableGateway, command),
+    onSuccess: replaceApplicationFromResult
+  });
+
+  const createFollowUpMutation = useMutation({
+    mutationFn: (command: CreateFollowUpReminderCommand) =>
+      createApplicationFollowUpReminder(stableGateway, command),
+    onSuccess: replaceApplicationFromResult
+  });
+
+  const completeFollowUpMutation = useMutation({
+    mutationFn: (command: CompleteFollowUpReminderCommand) =>
+      completeApplicationFollowUpReminder(stableGateway, command),
+    onSuccess: replaceApplicationFromResult
+  });
+
+  const addNoteMutation = useMutation({
+    mutationFn: (command: AddApplicationNoteCommand) =>
+      addNoteToApplication(stableGateway, command),
+    onSuccess: replaceApplicationFromResult
+  });
+
+  function replaceApplicationFromResult(
+    result:
+      | ScheduleApplicationInterviewResult
+      | CreateApplicationFollowUpReminderResult
+      | CompleteApplicationFollowUpReminderResult
+      | AddNoteToApplicationResult
+  ) {
+    if (result.ok) {
+      replaceCachedJobApplication(queryClient, result.application);
+    }
+  }
 
   const activeApplicationCount = applications.filter(isActiveApplication).length;
   const stageCounts = useMemo(
@@ -145,14 +200,13 @@ export function usePipelineWorkspace(
     setFormCommandError(null);
 
     try {
-      const result = await createSavedOpportunity(stableGateway, form);
+      const result = await createOpportunityMutation.mutateAsync(form);
 
       if (!result.ok) {
         setFieldErrors(result.errors);
         return false;
       }
 
-      setApplications((current) => [...current, result.opportunity]);
       setForm(emptyForm);
       return true;
     } catch {
@@ -168,10 +222,7 @@ export function usePipelineWorkspace(
 
   async function changeStage(application: JobApplication, toStage: ApplicationStage) {
     setCommandError(null);
-    const result = await advanceApplicationStage(stableGateway, {
-      applicationId: application.id,
-      toStage
-    });
+    const result = await advanceStageMutation.mutateAsync({ application, toStage });
     if (!result.ok) {
       setCommandError({
         title: "Stage update failed",
@@ -179,7 +230,6 @@ export function usePipelineWorkspace(
       });
       return;
     }
-    replaceApplication(result.application);
   }
 
   function viewDetails(applicationId: string) {
@@ -194,7 +244,7 @@ export function usePipelineWorkspace(
 
   async function scheduleInterview(command: ScheduleInterviewCommand) {
     setDetailsCommandError(null);
-    const result = await scheduleApplicationInterview(stableGateway, command);
+    const result = await scheduleInterviewMutation.mutateAsync(command);
     if (!result.ok) {
       setDetailsCommandError({
         workflow: "interview",
@@ -202,13 +252,12 @@ export function usePipelineWorkspace(
       });
       return false;
     }
-    replaceApplication(result.application);
     return true;
   }
 
   async function createFollowUp(command: CreateFollowUpReminderCommand) {
     setDetailsCommandError(null);
-    const result = await createApplicationFollowUpReminder(stableGateway, command);
+    const result = await createFollowUpMutation.mutateAsync(command);
     if (!result.ok) {
       setDetailsCommandError({
         workflow: "followUp",
@@ -216,13 +265,12 @@ export function usePipelineWorkspace(
       });
       return false;
     }
-    replaceApplication(result.application);
     return true;
   }
 
   async function completeFollowUp(command: CompleteFollowUpReminderCommand) {
     setCommandError(null);
-    const result = await completeApplicationFollowUpReminder(stableGateway, command);
+    const result = await completeFollowUpMutation.mutateAsync(command);
     if (!result.ok) {
       setCommandError({
         title: "Follow-up was not completed",
@@ -230,12 +278,11 @@ export function usePipelineWorkspace(
       });
       return;
     }
-    replaceApplication(result.application);
   }
 
   async function addNote(command: AddApplicationNoteCommand) {
     setDetailsCommandError(null);
-    const result = await addNoteToApplication(stableGateway, command);
+    const result = await addNoteMutation.mutateAsync(command);
     if (!result.ok) {
       setDetailsCommandError({
         workflow: "note",
@@ -243,16 +290,7 @@ export function usePipelineWorkspace(
       });
       return false;
     }
-    replaceApplication(result.application);
     return true;
-  }
-
-  function replaceApplication(application: JobApplication) {
-    setApplications((current) =>
-      current.map((candidate) =>
-        candidate.id === application.id ? application : candidate
-      )
-    );
   }
 
   return {
@@ -262,14 +300,14 @@ export function usePipelineWorkspace(
     changeStage,
     clearOpportunityFormErrors,
     closeDetails,
-    commandError,
+    commandError: commandError ?? loadCommandError(applicationsQuery.isError),
     completeFollowUp,
     createFollowUp,
     detailsCommandError,
     fieldErrors,
     form,
     formCommandError,
-    isLoadingApplications,
+    isLoadingApplications: applicationsQuery.isPending,
     overdueFollowUpItems,
     scheduleInterview,
     selectedApplication,
@@ -280,6 +318,15 @@ export function usePipelineWorkspace(
     upcomingFollowUpItems,
     viewDetails,
     visibleApplications
+  };
+}
+
+function loadCommandError(isLoadError: boolean): BoardCommandError | null {
+  if (!isLoadError) return null;
+
+  return {
+    title: "Applications could not load",
+    message: "Refresh the page or try again in a moment."
   };
 }
 
