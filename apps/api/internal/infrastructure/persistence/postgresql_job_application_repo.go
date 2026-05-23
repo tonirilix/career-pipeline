@@ -10,10 +10,14 @@ import (
 )
 
 type PostgreSQLJobApplicationRepository struct {
-	db *sql.DB
+	db sqlExecutor
 }
 
 func NewPostgreSQLJobApplicationRepository(db *sql.DB) *PostgreSQLJobApplicationRepository {
+	return &PostgreSQLJobApplicationRepository{db: db}
+}
+
+func newPostgreSQLJobApplicationRepositoryWithExecutor(db sqlExecutor) *PostgreSQLJobApplicationRepository {
 	return &PostgreSQLJobApplicationRepository{db: db}
 }
 
@@ -21,8 +25,7 @@ var _ ports.JobApplicationRepository = (*PostgreSQLJobApplicationRepository)(nil
 
 func (r *PostgreSQLJobApplicationRepository) Save(app *domain.JobApplication) error {
 	_, err := r.db.Exec(
-		`INSERT INTO job_applications (id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		insertJobApplicationSQL,
 		app.ID, app.Company, app.RoleTitle, app.PostingURL, string(app.Source),
 		app.Location, app.Compensation, string(app.EmploymentType), string(app.Stage),
 		app.CreatedAt.UTC(),
@@ -32,14 +35,13 @@ func (r *PostgreSQLJobApplicationRepository) Save(app *domain.JobApplication) er
 
 func (r *PostgreSQLJobApplicationRepository) FindByID(id string) (*domain.JobApplication, error) {
 	row := r.db.QueryRow(
-		`SELECT id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at
-		 FROM job_applications WHERE id = $1`, id,
+		selectJobApplicationByIDSQL, id,
 	)
 	return scanApplication(row)
 }
 
 func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
-	query := `SELECT id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at FROM job_applications WHERE 1=1`
+	query := selectJobApplicationsBaseSQL
 	args := []interface{}{}
 	nextArg := func() string {
 		args = append(args, nil)
@@ -91,7 +93,7 @@ func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsF
 }
 
 func (r *PostgreSQLJobApplicationRepository) UpdateStage(id string, stage domain.ApplicationStage) error {
-	_, err := r.db.Exec(`UPDATE job_applications SET stage = $1 WHERE id = $2`, string(stage), id)
+	_, err := r.db.Exec(updateJobApplicationStageSQL, string(stage), id)
 	return err
 }
 

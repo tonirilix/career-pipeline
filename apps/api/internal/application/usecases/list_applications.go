@@ -6,26 +6,17 @@ import (
 )
 
 type ListApplications struct {
-	apps       ports.JobApplicationRepository
-	followUps  ports.FollowUpRepository
-	timeline   ports.TimelineRepository
-	interviews ports.InterviewRepository
-	notes      ports.NoteRepository
+	apps      ports.JobApplicationRepository
+	assembler *FullApplicationAssembler
 }
 
 func NewListApplications(
 	apps ports.JobApplicationRepository,
-	followUps ports.FollowUpRepository,
-	timeline ports.TimelineRepository,
-	interviews ports.InterviewRepository,
-	notes ports.NoteRepository,
+	assembler *FullApplicationAssembler,
 ) *ListApplications {
 	return &ListApplications{
-		apps:       apps,
-		followUps:  followUps,
-		timeline:   timeline,
-		interviews: interviews,
-		notes:      notes,
+		apps:      apps,
+		assembler: assembler,
 	}
 }
 
@@ -37,7 +28,7 @@ func (uc *ListApplications) Execute(filter ports.ListApplicationsFilter) ([]*dom
 
 	result := make([]*domain.JobApplication, 0, len(list))
 	for _, app := range list {
-		full, err := loadFullApplication(app, uc.apps, uc.followUps, uc.timeline, uc.interviews, uc.notes)
+		full, err := uc.assembler.Load(app)
 		if err != nil {
 			return nil, err
 		}

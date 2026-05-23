@@ -158,3 +158,97 @@ func TestPostgreSQLFollowUpRepository(t *testing.T) {
 		t.Error("expected CompletedAt to be set")
 	}
 }
+
+func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
+	db := openTestDB(t)
+	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	interviewRepo := persistence.NewPostgreSQLInterviewRepository(db)
+	followUpRepo := persistence.NewPostgreSQLFollowUpRepository(db)
+	noteRepo := persistence.NewPostgreSQLNoteRepository(db)
+	timelineRepo := persistence.NewPostgreSQLTimelineRepository(db)
+	now := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
+
+	app := &domain.JobApplication{
+		ID:             "app-1",
+		Company:        "Acme",
+		RoleTitle:      "Engineer",
+		PostingURL:     "https://example.com",
+		Source:         domain.SourceReferral,
+		Location:       "Remote",
+		Compensation:   "$100k",
+		EmploymentType: domain.EmploymentFullTime,
+		Stage:          domain.StageApplied,
+		CreatedAt:      now,
+	}
+	if err := appRepo.Save(app); err != nil {
+		t.Fatalf("save app: %v", err)
+	}
+	if err := interviewRepo.Save("app-1", &domain.Interview{
+		ID:          "interview-1",
+		Type:        domain.InterviewTechnical,
+		ScheduledAt: now.Add(24 * time.Hour),
+		Notes:       "Bring portfolio",
+		Outcome:     domain.OutcomeScheduled,
+	}); err != nil {
+		t.Fatalf("save interview: %v", err)
+	}
+	if err := followUpRepo.Save(&domain.FollowUpReminder{
+		ID:            "follow-up-1",
+		ApplicationID: "app-1",
+		DueAt:         now.Add(48 * time.Hour),
+		Note:          "Send thank-you",
+	}); err != nil {
+		t.Fatalf("save follow-up: %v", err)
+	}
+	if err := noteRepo.Save("app-1", &domain.ApplicationNote{
+		ID:        "note-1",
+		Body:      "Recruiter prefers email.",
+		CreatedAt: now.Add(time.Hour),
+	}); err != nil {
+		t.Fatalf("save note: %v", err)
+	}
+	if err := timelineRepo.Save("app-1", &domain.TimelineEvent{
+		ID:          "event-1",
+		Description: "Applied",
+		OccurredAt:  now,
+	}); err != nil {
+		t.Fatalf("save timeline: %v", err)
+	}
+
+	found, err := appRepo.FindByID("app-1")
+	if err != nil {
+		t.Fatalf("find app: %v", err)
+	}
+	interviews, err := interviewRepo.ListByApplication("app-1")
+	if err != nil {
+		t.Fatalf("list interviews: %v", err)
+	}
+	followUps, err := followUpRepo.ListByApplication("app-1")
+	if err != nil {
+		t.Fatalf("list follow-ups: %v", err)
+	}
+	notes, err := noteRepo.ListByApplication("app-1")
+	if err != nil {
+		t.Fatalf("list notes: %v", err)
+	}
+	events, err := timelineRepo.ListByApplication("app-1")
+	if err != nil {
+		t.Fatalf("list timeline: %v", err)
+	}
+
+	if found.Company != "Acme" || found.Source != domain.SourceReferral || found.Stage != domain.StageApplied {
+		t.Fatalf("application fields did not round-trip: %+v", found)
+	}
+	if len(interviews) != 1 || interviews[0].Type != domain.InterviewTechnical || interviews[0].Notes != "Bring portfolio" {
+		t.Fatalf("interview fields did not round-trip: %+v", interviews)
+	}
+	if len(followUps) != 1 || followUps[0].Note != "Send thank-you" || !followUps[0].DueAt.Equal(now.Add(48*time.Hour)) {
+		t.Fatalf("follow-up fields did not round-trip: %+v", followUps)
+	}
+	if len(notes) != 1 || notes[0].Body != "Recruiter prefers email." {
+		t.Fatalf("note fields did not round-trip: %+v", notes)
+	}
+	if len(events) != 1 || events[0].Description != "Applied" {
+		t.Fatalf("timeline fields did not round-trip: %+v", events)
+	}
+}

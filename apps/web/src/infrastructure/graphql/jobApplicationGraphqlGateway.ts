@@ -170,6 +170,16 @@ const addApplicationNoteMutation = `
   }
 `;
 
+export const jobApplicationGraphqlOperations = [
+  listApplicationsQuery,
+  createSavedOpportunityMutation,
+  advanceApplicationStageMutation,
+  scheduleInterviewMutation,
+  createFollowUpReminderMutation,
+  completeFollowUpReminderMutation,
+  addApplicationNoteMutation
+] as const;
+
 export function createJobApplicationGraphqlGateway(
   endpoint = graphqlEndpoint()
 ): JobApplicationGateway {

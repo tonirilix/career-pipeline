@@ -2,7 +2,7 @@
 
 ## Status
 
-Open — current implementation uses raw `database/sql` with PostgreSQL; query-generation strategy not yet finalized.
+Open — current implementation uses raw `database/sql` with PostgreSQL and centralized query definitions; query-generation strategy not yet finalized.
 
 ## Context
 
@@ -57,7 +57,7 @@ The Go community broadly favors explicit SQL over heavy ORMs:
 
 ## Decision
 
-PostgreSQL is the database engine for local development and future deployment alignment. Current code uses raw `database/sql` with pgx stdlib because sqlc was not installed at implementation time (see ADR 0002). The repository port interfaces in `internal/application/ports/` mean the persistence internals can be replaced without touching the domain or use-case layers.
+PostgreSQL is the database engine for local development and future deployment alignment. Current code uses raw `database/sql` with pgx stdlib because sqlc was not installed at implementation time (see ADR 0002). As an interim deepening step, SQL text is centralized in `internal/infrastructure/persistence/postgresql_queries.go` so repository callers do not know SQL text, placeholder numbering, row scan order, or any future generated query types. The repository port interfaces in `internal/application/ports/` mean the persistence internals can be replaced without touching the domain or use-case layers.
 
 ## Recommended Next Step
 
@@ -72,5 +72,6 @@ Migrate to **sqlc** as a future task:
 ## Consequences
 
 - Until query generation is resolved, the persistence layer is correct but verbose.
+- Centralized query definitions reduce scattering, but they do not provide sqlc's compile-time query checks.
 - Any developer adding a new query must write manual scan code.
 - Migrating to sqlc or sqlx is a change confined to `internal/infrastructure/persistence/` — no other layer is affected.

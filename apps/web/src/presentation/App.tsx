@@ -1,36 +1,9 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useState } from "react";
 
-import {
-  addNoteToApplication,
-  advanceApplicationStage,
-  completeApplicationFollowUpReminder,
-  createApplicationFollowUpReminder,
-  createSavedOpportunity,
-  listApplications,
-  scheduleApplicationInterview
-} from "../application/jobApplications";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
-import { applicationStages, type ApplicationStage } from "../domain/applicationStage";
-import { isActiveApplication } from "../domain/closedWork";
-import type { AddApplicationNoteCommand } from "../domain/applicationNote";
-import type {
-  CompleteFollowUpReminderCommand,
-  CreateFollowUpReminderCommand
-} from "../domain/followUpReminder";
+import type { UsePipelineControls } from "./ports/pipelineControls";
 import {
-  type CreateSavedJobOpportunityCommand,
-  type FieldError,
-  type FollowUpReminder,
-  type JobApplication
-} from "../domain/jobOpportunity";
-import type { ScheduleInterviewCommand } from "../domain/interviewScheduling";
-import type {
-  PipelineSortOption,
-  UsePipelineControls
-} from "./ports/pipelineControls";
-import {
-  ApplicationDetails,
-  type DetailsCommandError
+  ApplicationDetails
 } from "./components/ApplicationDetails";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
@@ -42,231 +15,23 @@ import { Button } from "./components/ui/button";
 import { ErrorNotice } from "./components/ui/error-notice";
 import { Sidebar } from "./components/ui/sidebar";
 import { SlideOver } from "./components/ui/slide-over";
+import { usePipelineWorkspace } from "./pipelineWorkspace";
 
 type AppProps = {
   gateway: JobApplicationGateway;
   usePipelineControls: UsePipelineControls;
 };
 
-type BoardCommandError = {
-  title: string;
-  message: string;
-};
-
 export function App({ gateway, usePipelineControls }: AppProps) {
-  const stableGateway = useMemo(() => gateway, [gateway]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
-  const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
-  const [commandError, setCommandError] = useState<BoardCommandError | null>(null);
-  const [formCommandError, setFormCommandError] = useState<string | null>(null);
-  const [detailsCommandError, setDetailsCommandError] =
-    useState<DetailsCommandError | null>(null);
-  const [form, setForm] = useState<CreateSavedJobOpportunityCommand>({
-    company: "",
-    roleTitle: "",
-    postingUrl: "",
-    source: "LinkedIn",
-    location: "",
-    compensation: "",
-    employmentType: "Full-time"
-  });
-
-  const {
-    stageFilter,
-    sourceFilter,
-    searchTerm,
-    sortBy,
-    setStageFilter,
-    setSourceFilter,
-    setSearchTerm,
-    setSortBy
-  } = usePipelineControls();
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoadingApplications(true);
-
-    void listApplications(stableGateway)
-      .then((loadedApplications) => {
-        if (isMounted) setApplications(loadedApplications);
-      })
-      .catch(() => {
-        if (isMounted) {
-          setCommandError({
-            title: "Applications could not load",
-            message: "Refresh the page or try again in a moment."
-          });
-        }
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingApplications(false);
-      });
-
-    return () => { isMounted = false; };
-  }, [stableGateway]);
+  const workspace = usePipelineWorkspace(gateway, usePipelineControls);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFieldErrors([]);
-    setFormCommandError(null);
-
-    try {
-      const result = await createSavedOpportunity(stableGateway, form);
-
-      if (!result.ok) {
-        setFieldErrors(result.errors);
-        return;
-      }
-
-      setApplications((current) => [...current, result.opportunity]);
+    const didSubmit = await workspace.submitOpportunity(event);
+    if (didSubmit) {
       setIsFormOpen(false);
-      setForm({
-        company: "",
-        roleTitle: "",
-        postingUrl: "",
-        source: "LinkedIn",
-        location: "",
-        compensation: "",
-        employmentType: "Full-time"
-      });
-    } catch {
-      setFormCommandError("Could not save the opportunity. Try again.");
     }
-  }
-
-  const activeApplicationCount = applications.filter(isActiveApplication).length;
-
-  const stageCounts = useMemo(
-    () => applicationStages.map((stage) => ({ stage, count: applications.filter((a) => a.stage === stage).length })),
-    [applications]
-  );
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-  const visibleApplications = sortApplications(
-    applications.filter(
-      (application) =>
-        (stageFilter === "All" || application.stage === stageFilter) &&
-        (sourceFilter === "All" || application.source === sourceFilter) &&
-        (!normalizedSearchTerm ||
-          application.company.toLowerCase().includes(normalizedSearchTerm) ||
-          application.roleTitle.toLowerCase().includes(normalizedSearchTerm))
-    ),
-    sortBy
-  );
-
-  const selectedApplication = applications.find(
-    (application) => application.id === selectedApplicationId
-  );
-
-  const activeFollowUpItems = applications
-    .filter(isActiveApplication)
-    .flatMap((application) =>
-      application.followUps
-        .filter((followUp) => !followUp.completedAt)
-        .map((followUp) => ({ application, followUp }))
-    )
-    .sort(compareFollowUpItems);
-
-  const now = Date.now();
-  const overdueFollowUpItems = activeFollowUpItems.filter(
-    ({ followUp }) => new Date(followUp.dueAt).getTime() < now
-  );
-  const upcomingFollowUpItems = activeFollowUpItems.filter(
-    ({ followUp }) => new Date(followUp.dueAt).getTime() >= now
-  );
-
-  async function handleStageChange(application: JobApplication, toStage: ApplicationStage) {
-    setCommandError(null);
-    const result = await advanceApplicationStage(stableGateway, {
-      applicationId: application.id,
-      toStage
-    });
-    if (!result.ok) {
-      setCommandError({
-        title: "Stage update failed",
-        message: result.failure.message
-      });
-      return;
-    }
-    setApplications((current) =>
-      current.map((c) => c.id === result.application.id ? result.application : c)
-    );
-  }
-
-  function handleViewDetails(applicationId: string) {
-    setDetailsCommandError(null);
-    setSelectedApplicationId(applicationId);
-  }
-
-  function handleCloseDetails() {
-    setSelectedApplicationId(null);
-    setDetailsCommandError(null);
-  }
-
-  async function handleScheduleInterview(command: ScheduleInterviewCommand) {
-    setDetailsCommandError(null);
-    const result = await scheduleApplicationInterview(stableGateway, command);
-    if (!result.ok) {
-      setDetailsCommandError({
-        workflow: "interview",
-        message: result.failure.message
-      });
-      return false;
-    }
-    setApplications((current) =>
-      current.map((c) => c.id === result.application.id ? result.application : c)
-    );
-    return true;
-  }
-
-  async function handleCreateFollowUp(command: CreateFollowUpReminderCommand) {
-    setDetailsCommandError(null);
-    const result = await createApplicationFollowUpReminder(stableGateway, command);
-    if (!result.ok) {
-      setDetailsCommandError({
-        workflow: "followUp",
-        message: result.failure.message
-      });
-      return false;
-    }
-    setApplications((current) =>
-      current.map((c) => c.id === result.application.id ? result.application : c)
-    );
-    return true;
-  }
-
-  async function handleCompleteFollowUp(command: CompleteFollowUpReminderCommand) {
-    setCommandError(null);
-    const result = await completeApplicationFollowUpReminder(stableGateway, command);
-    if (!result.ok) {
-      setCommandError({
-        title: "Follow-up was not completed",
-        message: result.failure.message
-      });
-      return;
-    }
-    setApplications((current) =>
-      current.map((c) => c.id === result.application.id ? result.application : c)
-    );
-  }
-
-  async function handleAddNote(command: AddApplicationNoteCommand) {
-    setDetailsCommandError(null);
-    const result = await addNoteToApplication(stableGateway, command);
-    if (!result.ok) {
-      setDetailsCommandError({
-        workflow: "note",
-        message: result.failure.message
-      });
-      return false;
-    }
-    setApplications((current) =>
-      current.map((c) => c.id === result.application.id ? result.application : c)
-    );
-    return true;
   }
 
   return (
@@ -290,26 +55,26 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         </div>
 
         <StatsBar
-          activeCount={activeApplicationCount}
-          overdueCount={overdueFollowUpItems.length}
-          upcomingCount={upcomingFollowUpItems.length}
+          activeCount={workspace.activeApplicationCount}
+          overdueCount={workspace.overdueFollowUpItems.length}
+          upcomingCount={workspace.upcomingFollowUpItems.length}
         />
 
         <PipelineControls
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          setSortBy={setSortBy}
-          setSourceFilter={setSourceFilter}
-          setStageFilter={setStageFilter}
-          sortBy={sortBy}
-          sourceFilter={sourceFilter}
-          stageFilter={stageFilter}
+          searchTerm={workspace.searchTerm}
+          setSearchTerm={workspace.setSearchTerm}
+          setSortBy={workspace.setSortBy}
+          setSourceFilter={workspace.setSourceFilter}
+          setStageFilter={workspace.setStageFilter}
+          sortBy={workspace.sortBy}
+          sourceFilter={workspace.sourceFilter}
+          stageFilter={workspace.stageFilter}
         />
 
         <FollowUpWork
-          onCompleteFollowUp={handleCompleteFollowUp}
-          overdueItems={overdueFollowUpItems}
-          upcomingItems={upcomingFollowUpItems}
+          onCompleteFollowUp={workspace.completeFollowUp}
+          overdueItems={workspace.overdueFollowUpItems}
+          upcomingItems={workspace.upcomingFollowUpItems}
         />
       </Sidebar>
 
@@ -328,23 +93,23 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         </div>
         <div className="flex-1 overflow-auto px-4 py-5 md:px-6 md:py-6">
           <div className="mx-auto w-full max-w-[1180px]">
-            {commandError ? (
+            {workspace.commandError ? (
               <ErrorNotice
                 className="mb-5"
-                message={commandError.message}
-                title={commandError.title}
+                message={workspace.commandError.message}
+                title={workspace.commandError.title}
               />
             ) : null}
 
             <FunnelChart
-              stageCounts={stageCounts}
-              activeStage={stageFilter}
-              onStageClick={setStageFilter}
+              stageCounts={workspace.stageCounts}
+              activeStage={workspace.stageFilter}
+              onStageClick={workspace.setStageFilter}
             />
 
             <div className="mt-6" />
 
-            {isLoadingApplications ? (
+            {workspace.isLoadingApplications ? (
               <div
                 role="status"
                 className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
@@ -353,9 +118,9 @@ export function App({ gateway, usePipelineControls }: AppProps) {
               </div>
             ) : (
               <PipelineBoard
-                applications={visibleApplications}
-                onStageChange={handleStageChange}
-                onViewDetails={handleViewDetails}
+                applications={workspace.visibleApplications}
+                onStageChange={workspace.changeStage}
+                onViewDetails={workspace.viewDetails}
               />
             )}
           </div>
@@ -364,80 +129,34 @@ export function App({ gateway, usePipelineControls }: AppProps) {
 
       <SlideOver
         isOpen={isFormOpen}
-        onClose={() => { setIsFormOpen(false); setFieldErrors([]); setFormCommandError(null); }}
+        onClose={() => { setIsFormOpen(false); workspace.clearOpportunityFormErrors(); }}
         title="Add opportunity"
       >
         <OpportunityForm
-          commandError={formCommandError}
-          fieldErrors={fieldErrors}
-          form={form}
-          onChange={setForm}
-          onCancel={() => { setIsFormOpen(false); setFieldErrors([]); setFormCommandError(null); }}
+          commandError={workspace.formCommandError}
+          fieldErrors={workspace.fieldErrors}
+          form={workspace.form}
+          onChange={workspace.setForm}
+          onCancel={() => { setIsFormOpen(false); workspace.clearOpportunityFormErrors(); }}
           onSubmit={handleSubmit}
         />
       </SlideOver>
 
       <SlideOver
-        isOpen={!!selectedApplicationId}
-        onClose={handleCloseDetails}
+        isOpen={!!workspace.selectedApplicationId}
+        onClose={workspace.closeDetails}
         title="Application details"
       >
-        {selectedApplication ? (
+        {workspace.selectedApplication ? (
           <ApplicationDetails
-            application={selectedApplication}
-            commandError={detailsCommandError}
-            onAddNote={handleAddNote}
-            onCreateFollowUp={handleCreateFollowUp}
-            onScheduleInterview={handleScheduleInterview}
+            application={workspace.selectedApplication}
+            commandError={workspace.detailsCommandError}
+            onAddNote={workspace.addNote}
+            onCreateFollowUp={workspace.createFollowUp}
+            onScheduleInterview={workspace.scheduleInterview}
           />
         ) : null}
       </SlideOver>
     </div>
   );
-}
-
-type FollowUpWorkItem = {
-  application: JobApplication;
-  followUp: FollowUpReminder;
-};
-
-function compareFollowUpItems(left: FollowUpWorkItem, right: FollowUpWorkItem) {
-  return new Date(left.followUp.dueAt).getTime() - new Date(right.followUp.dueAt).getTime();
-}
-
-function sortApplications(applications: JobApplication[], sortBy: PipelineSortOption) {
-  if (sortBy === "created") return applications;
-
-  return [...applications].sort((left, right) => {
-    if (sortBy === "lastActivity") {
-      return latestActivityTime(right) - latestActivityTime(left);
-    }
-    return earliestActiveFollowUpTime(left) - earliestActiveFollowUpTime(right);
-  });
-}
-
-function latestActivityTime(application: JobApplication) {
-  return Math.max(
-    ...application.timeline.map((event) => dateTimeOrZero(event.occurredAt)),
-    0
-  );
-}
-
-function earliestActiveFollowUpTime(application: JobApplication) {
-  const activeDueTimes = application.followUps
-    .filter((followUp) => !followUp.completedAt)
-    .map((followUp) => dateTimeOrInfinity(followUp.dueAt));
-
-  if (activeDueTimes.length === 0) return Number.POSITIVE_INFINITY;
-  return Math.min(...activeDueTimes);
-}
-
-function dateTimeOrZero(value: string) {
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : 0;
-}
-
-function dateTimeOrInfinity(value: string) {
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : Number.POSITIVE_INFINITY;
 }

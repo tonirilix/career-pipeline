@@ -5,11 +5,11 @@ import (
 )
 
 type Resolver struct {
-	CreateApplicationUC    *usecases.CreateApplication
-	AdvanceStageUC         *usecases.AdvanceStage
-	ScheduleInterviewUC    *usecases.ScheduleInterview
-	AddFollowUpUC          *usecases.AddFollowUp
-	CompleteFollowUpUC     *usecases.CompleteFollowUp
-	AddNoteUC              *usecases.AddNote
-	ListApplicationsUC     *usecases.ListApplications
+	CreateApplicationUC *usecases.CreateApplication
+	AdvanceStageUC      *usecases.AdvanceStage
+	ScheduleInterviewUC *usecases.ScheduleInterview
+	AddFollowUpUC       *usecases.AddFollowUp
+	CompleteFollowUpUC  *usecases.CompleteFollowUp
+	AddNoteUC           *usecases.AddNote
+	ListApplicationsUC  *usecases.ListApplications
 }

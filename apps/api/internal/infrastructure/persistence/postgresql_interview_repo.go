@@ -9,10 +9,14 @@ import (
 )
 
 type PostgreSQLInterviewRepository struct {
-	db *sql.DB
+	db sqlExecutor
 }
 
 func NewPostgreSQLInterviewRepository(db *sql.DB) *PostgreSQLInterviewRepository {
+	return &PostgreSQLInterviewRepository{db: db}
+}
+
+func newPostgreSQLInterviewRepositoryWithExecutor(db sqlExecutor) *PostgreSQLInterviewRepository {
 	return &PostgreSQLInterviewRepository{db: db}
 }
 
@@ -20,8 +24,7 @@ var _ ports.InterviewRepository = (*PostgreSQLInterviewRepository)(nil)
 
 func (r *PostgreSQLInterviewRepository) Save(applicationID string, iv *domain.Interview) error {
 	_, err := r.db.Exec(
-		`INSERT INTO interviews (id, application_id, type, scheduled_at, notes, outcome, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		insertInterviewSQL,
 		iv.ID, applicationID, string(iv.Type),
 		iv.ScheduledAt.UTC(),
 		iv.Notes, string(iv.Outcome),
@@ -32,19 +35,19 @@ func (r *PostgreSQLInterviewRepository) Save(applicationID string, iv *domain.In
 
 func (r *PostgreSQLInterviewRepository) FindByID(id string) (*domain.Interview, error) {
 	row := r.db.QueryRow(
-		`SELECT id, type, scheduled_at, notes, outcome FROM interviews WHERE id = $1`, id,
+		selectInterviewByIDSQL, id,
 	)
 	return scanInterview(row)
 }
 
 func (r *PostgreSQLInterviewRepository) UpdateOutcome(id string, outcome domain.InterviewOutcome) error {
-	_, err := r.db.Exec(`UPDATE interviews SET outcome = $1 WHERE id = $2`, string(outcome), id)
+	_, err := r.db.Exec(updateInterviewOutcomeSQL, string(outcome), id)
 	return err
 }
 
 func (r *PostgreSQLInterviewRepository) ListByApplication(applicationID string) ([]*domain.Interview, error) {
 	rows, err := r.db.Query(
-		`SELECT id, type, scheduled_at, notes, outcome FROM interviews WHERE application_id = $1 ORDER BY scheduled_at ASC`,
+		selectInterviewsByApplicationSQL,
 		applicationID,
 	)
 	if err != nil {

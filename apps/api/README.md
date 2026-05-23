@@ -9,7 +9,7 @@ A Go backend for the job application tracker. Exposes a GraphQL API consumed by 
 | GraphQL server | [gqlgen](https://gqlgen.com) (schema-first) |
 | Database | PostgreSQL via pgx stdlib |
 | Migrations | [golang-migrate](https://github.com/golang-migrate/migrate) (embedded, runs at startup) |
-| Persistence | Hand-written `database/sql` repository adapters |
+| Persistence | Hand-written `database/sql` repository adapters with centralized PostgreSQL query definitions |
 
 ## Architecture
 
@@ -31,6 +31,7 @@ internal/
   infrastructure/
     migrations/                 <- SQL migration files (up + down)
     persistence/                <- PostgreSQL repository adapters
+      postgresql_queries.go     <- centralized SQL text for interim raw-SQL strategy
 ```
 
 Dependency direction: `resolvers -> usecases -> domain <- persistence`.
@@ -136,6 +137,18 @@ make generate
 Implement any new resolver stubs in `graph/resolvers/schema.resolvers.go`.
 
 ## Database
+
+### Query strategy
+
+The current persistence implementation uses raw `database/sql` repository adapters with SQL text centralized in `internal/infrastructure/persistence/postgresql_queries.go`. Repository callers interact only with application-layer ports; they do not know SQL text, placeholder numbering, row scan order, or generated query types.
+
+ADR 0003 still recommends sqlc as the long-term query strategy. To migrate:
+
+1. Install sqlc with `brew install sqlc` or `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`.
+2. Move reviewed SQL from `postgresql_queries.go` into `.sql` query files under `internal/infrastructure/persistence/queries/`.
+3. Add `sqlc.yaml` and run `sqlc generate`.
+4. Replace repository adapter internals with generated query calls while keeping application port interfaces unchanged.
+5. Update ADR 0003 from Open to Accepted if sqlc becomes the committed strategy.
 
 ### How the database is created
 

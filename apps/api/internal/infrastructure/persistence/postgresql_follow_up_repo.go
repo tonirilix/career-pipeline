@@ -9,10 +9,14 @@ import (
 )
 
 type PostgreSQLFollowUpRepository struct {
-	db *sql.DB
+	db sqlExecutor
 }
 
 func NewPostgreSQLFollowUpRepository(db *sql.DB) *PostgreSQLFollowUpRepository {
+	return &PostgreSQLFollowUpRepository{db: db}
+}
+
+func newPostgreSQLFollowUpRepositoryWithExecutor(db sqlExecutor) *PostgreSQLFollowUpRepository {
 	return &PostgreSQLFollowUpRepository{db: db}
 }
 
@@ -20,8 +24,7 @@ var _ ports.FollowUpRepository = (*PostgreSQLFollowUpRepository)(nil)
 
 func (r *PostgreSQLFollowUpRepository) Save(fu *domain.FollowUpReminder) error {
 	_, err := r.db.Exec(
-		`INSERT INTO follow_up_reminders (id, application_id, due_at, note, completed_at, created_at)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
+		insertFollowUpSQL,
 		fu.ID, fu.ApplicationID,
 		fu.DueAt.UTC(),
 		fu.Note, nil,
@@ -32,14 +35,14 @@ func (r *PostgreSQLFollowUpRepository) Save(fu *domain.FollowUpReminder) error {
 
 func (r *PostgreSQLFollowUpRepository) FindByID(id string) (*domain.FollowUpReminder, error) {
 	row := r.db.QueryRow(
-		`SELECT id, application_id, due_at, note, completed_at FROM follow_up_reminders WHERE id = $1`, id,
+		selectFollowUpByIDSQL, id,
 	)
 	return scanFollowUp(row)
 }
 
 func (r *PostgreSQLFollowUpRepository) UpdateCompleted(id string, completedAt time.Time) error {
 	_, err := r.db.Exec(
-		`UPDATE follow_up_reminders SET completed_at = $1 WHERE id = $2`,
+		updateFollowUpCompletedSQL,
 		completedAt.UTC(), id,
 	)
 	return err
@@ -47,7 +50,7 @@ func (r *PostgreSQLFollowUpRepository) UpdateCompleted(id string, completedAt ti
 
 func (r *PostgreSQLFollowUpRepository) ListByApplication(applicationID string) ([]*domain.FollowUpReminder, error) {
 	rows, err := r.db.Query(
-		`SELECT id, application_id, due_at, note, completed_at FROM follow_up_reminders WHERE application_id = $1 ORDER BY due_at ASC`,
+		selectFollowUpsByApplicationSQL,
 		applicationID,
 	)
 	if err != nil {
@@ -59,7 +62,7 @@ func (r *PostgreSQLFollowUpRepository) ListByApplication(applicationID string) (
 
 func (r *PostgreSQLFollowUpRepository) ListUpcoming(now time.Time) ([]*domain.FollowUpReminder, error) {
 	rows, err := r.db.Query(
-		`SELECT id, application_id, due_at, note, completed_at FROM follow_up_reminders WHERE completed_at IS NULL AND due_at > $1 ORDER BY due_at ASC`,
+		selectUpcomingFollowUpsSQL,
 		now.UTC(),
 	)
 	if err != nil {
@@ -71,7 +74,7 @@ func (r *PostgreSQLFollowUpRepository) ListUpcoming(now time.Time) ([]*domain.Fo
 
 func (r *PostgreSQLFollowUpRepository) ListOverdue(now time.Time) ([]*domain.FollowUpReminder, error) {
 	rows, err := r.db.Query(
-		`SELECT id, application_id, due_at, note, completed_at FROM follow_up_reminders WHERE completed_at IS NULL AND due_at < $1 ORDER BY due_at ASC`,
+		selectOverdueFollowUpsSQL,
 		now.UTC(),
 	)
 	if err != nil {
@@ -83,7 +86,7 @@ func (r *PostgreSQLFollowUpRepository) ListOverdue(now time.Time) ([]*domain.Fol
 
 func (r *PostgreSQLFollowUpRepository) DeactivateByApplication(applicationID string, completedAt time.Time) error {
 	_, err := r.db.Exec(
-		`UPDATE follow_up_reminders SET completed_at = $1 WHERE application_id = $2 AND completed_at IS NULL`,
+		deactivateFollowUpsByApplicationSQL,
 		completedAt.UTC(), applicationID,
 	)
 	return err

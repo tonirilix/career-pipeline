@@ -10,6 +10,14 @@ type IDGenerator interface {
 	New() string
 }
 
+type Repositories struct {
+	Applications JobApplicationRepository
+	Interviews   InterviewRepository
+	FollowUps    FollowUpRepository
+	Notes        NoteRepository
+	Timeline     TimelineRepository
+}
+
 type Transactor interface {
-	WithTransaction(fn func(tx interface{}) error) error
+	WithTransaction(fn func(repos Repositories) error) error
 }

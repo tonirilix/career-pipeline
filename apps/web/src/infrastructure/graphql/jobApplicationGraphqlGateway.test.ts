@@ -121,4 +121,23 @@ describe("GraphQL job application gateway", () => {
       })
     );
   });
+
+  it("exposes backend domain failure messages through rejected gateway commands", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          errors: [{ message: "invalid stage transition" }]
+        })
+      )
+    );
+
+    const gateway = createJobApplicationGraphqlGateway("https://api.example.test/graphql");
+
+    await expect(
+      gateway.advanceApplicationStage({
+        applicationId: "job-1",
+        toStage: "Offer"
+      })
+    ).rejects.toThrow("invalid stage transition");
+  });
 });

@@ -1,41 +1,20 @@
 import { graphql, HttpResponse } from "msw";
 
+import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
 import type {
-  CreateSavedJobOpportunityCommand,
-  JobApplication,
-  SavedJobOpportunity
-} from "../../domain/jobOpportunity";
-import {
-  type AddApplicationNoteCommand,
-  addApplicationNote
-} from "../../domain/applicationNote";
-import {
-  type CompleteFollowUpReminderCommand,
-  type CreateFollowUpReminderCommand,
-  completeFollowUpReminder,
-  createFollowUpReminder
+  CompleteFollowUpReminderCommand,
+  CreateFollowUpReminderCommand
 } from "../../domain/followUpReminder";
-import {
-  type ScheduleInterviewCommand,
-  scheduleInterview
-} from "../../domain/interviewScheduling";
-import {
-  type StageTransitionCommand,
-  transitionApplicationStage
-} from "../../domain/stageTransition";
-
-let applications: JobApplication[] = [];
-let nextApplicationId = 1;
-let nextTimelineEventId = 1;
-let nextInterviewId = 1;
-let nextFollowUpReminderId = 1;
-let nextNoteId = 1;
+import type { CreateSavedJobOpportunityCommand } from "../../domain/jobOpportunity";
+import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
+import type { StageTransitionCommand } from "../../domain/stageTransition";
+import { jobApplicationMockBackend } from "../mockBackend/jobApplicationMockBackend";
 
 export const jobApplicationHandlers = [
   graphql.query("ListApplications", () => {
     return HttpResponse.json({
       data: {
-        applications
+        applications: jobApplicationMockBackend.listApplications()
       }
     });
   }),
@@ -44,25 +23,7 @@ export const jobApplicationHandlers = [
     const { input } = variables as {
       input: CreateSavedJobOpportunityCommand;
     };
-    const opportunity: SavedJobOpportunity = {
-      id: String(nextApplicationId),
-      ...input,
-      stage: "Saved",
-      timeline: [
-        {
-          id: String(nextTimelineEventId),
-          occurredAt: new Date().toISOString(),
-          description: "Saved opportunity"
-        }
-      ],
-      interviews: [],
-      followUps: [],
-      notes: []
-    };
-
-    nextApplicationId += 1;
-    nextTimelineEventId += 1;
-    applications = [...applications, opportunity];
+    const opportunity = jobApplicationMockBackend.createSavedOpportunity(input);
 
     return HttpResponse.json({
       data: {
@@ -75,200 +36,97 @@ export const jobApplicationHandlers = [
     const { input } = variables as {
       input: StageTransitionCommand;
     };
-    const application = applications.find(
-      (candidate) => candidate.id === input.applicationId
-    );
-
-    if (!application) {
+    try {
+      const application = jobApplicationMockBackend.advanceApplicationStage(input);
       return HttpResponse.json({
-        errors: [{ message: "Application could not be found." }]
+        data: {
+          advanceApplicationStage: application
+        }
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        errors: [{ message: errorMessage(error) }]
       });
     }
-
-    const result = transitionApplicationStage(application, input, {
-      id: String(nextTimelineEventId),
-      occurredAt: new Date().toISOString(),
-      description: `Moved from ${application.stage} to ${input.toStage}`
-    });
-
-    if (!result.ok) {
-      return HttpResponse.json({
-        errors: [{ message: result.failure.message }]
-      });
-    }
-
-    nextTimelineEventId += 1;
-    applications = applications.map((candidate) =>
-      candidate.id === result.application.id ? result.application : candidate
-    );
-
-    return HttpResponse.json({
-      data: {
-        advanceApplicationStage: result.application
-      }
-    });
   }),
 
   graphql.mutation("ScheduleInterview", ({ variables }) => {
     const { input } = variables as {
       input: ScheduleInterviewCommand;
     };
-    const application = applications.find(
-      (candidate) => candidate.id === input.applicationId
-    );
-
-    if (!application) {
+    try {
+      const application = jobApplicationMockBackend.scheduleInterview(input);
       return HttpResponse.json({
-        errors: [{ message: "Application could not be found." }]
+        data: {
+          scheduleInterview: application
+        }
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        errors: [{ message: errorMessage(error) }]
       });
     }
-
-    const result = scheduleInterview(application, input, {
-      interviewId: String(nextInterviewId),
-      timelineEventId: String(nextTimelineEventId),
-      occurredAt: new Date().toISOString()
-    });
-
-    if (!result.ok) {
-      return HttpResponse.json({
-        errors: [{ message: result.failure.message }]
-      });
-    }
-
-    nextInterviewId += 1;
-    nextTimelineEventId += 1;
-    applications = applications.map((candidate) =>
-      candidate.id === result.application.id ? result.application : candidate
-    );
-
-    return HttpResponse.json({
-      data: {
-        scheduleInterview: result.application
-      }
-    });
   }),
 
   graphql.mutation("CreateFollowUpReminder", ({ variables }) => {
     const { input } = variables as {
       input: CreateFollowUpReminderCommand;
     };
-    const application = applications.find(
-      (candidate) => candidate.id === input.applicationId
-    );
-
-    if (!application) {
+    try {
+      const application = jobApplicationMockBackend.createFollowUpReminder(input);
       return HttpResponse.json({
-        errors: [{ message: "Application could not be found." }]
+        data: {
+          createFollowUpReminder: application
+        }
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        errors: [{ message: errorMessage(error) }]
       });
     }
-
-    const result = createFollowUpReminder(application, input, {
-      reminderId: String(nextFollowUpReminderId),
-      timelineEventId: String(nextTimelineEventId),
-      occurredAt: new Date().toISOString()
-    });
-
-    if (!result.ok) {
-      return HttpResponse.json({
-        errors: [{ message: result.failure.message }]
-      });
-    }
-
-    nextFollowUpReminderId += 1;
-    nextTimelineEventId += 1;
-    applications = applications.map((candidate) =>
-      candidate.id === result.application.id ? result.application : candidate
-    );
-
-    return HttpResponse.json({
-      data: {
-        createFollowUpReminder: result.application
-      }
-    });
   }),
 
   graphql.mutation("CompleteFollowUpReminder", ({ variables }) => {
     const { input } = variables as {
       input: CompleteFollowUpReminderCommand;
     };
-    const application = applications.find(
-      (candidate) => candidate.id === input.applicationId
-    );
-
-    if (!application) {
+    try {
+      const application = jobApplicationMockBackend.completeFollowUpReminder(input);
       return HttpResponse.json({
-        errors: [{ message: "Application could not be found." }]
+        data: {
+          completeFollowUpReminder: application
+        }
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        errors: [{ message: errorMessage(error) }]
       });
     }
-
-    const result = completeFollowUpReminder(application, input, {
-      timelineEventId: String(nextTimelineEventId),
-      completedAt: new Date().toISOString()
-    });
-
-    if (!result.ok) {
-      return HttpResponse.json({
-        errors: [{ message: result.failure.message }]
-      });
-    }
-
-    nextTimelineEventId += 1;
-    applications = applications.map((candidate) =>
-      candidate.id === result.application.id ? result.application : candidate
-    );
-
-    return HttpResponse.json({
-      data: {
-        completeFollowUpReminder: result.application
-      }
-    });
   }),
 
   graphql.mutation("AddApplicationNote", ({ variables }) => {
     const { input } = variables as {
       input: AddApplicationNoteCommand;
     };
-    const application = applications.find(
-      (candidate) => candidate.id === input.applicationId
-    );
-
-    if (!application) {
+    try {
+      const application = jobApplicationMockBackend.addApplicationNote(input);
       return HttpResponse.json({
-        errors: [{ message: "Application could not be found." }]
+        data: {
+          addApplicationNote: application
+        }
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        errors: [{ message: errorMessage(error) }]
       });
     }
-
-    const result = addApplicationNote(application, input, {
-      noteId: String(nextNoteId),
-      timelineEventId: String(nextTimelineEventId),
-      occurredAt: new Date().toISOString()
-    });
-
-    if (!result.ok) {
-      return HttpResponse.json({
-        errors: [{ message: result.failure.message }]
-      });
-    }
-
-    nextNoteId += 1;
-    nextTimelineEventId += 1;
-    applications = applications.map((candidate) =>
-      candidate.id === result.application.id ? result.application : candidate
-    );
-
-    return HttpResponse.json({
-      data: {
-        addApplicationNote: result.application
-      }
-    });
   })
 ];
 
 export function resetJobApplicationMockData() {
-  applications = [];
-  nextApplicationId = 1;
-  nextTimelineEventId = 1;
-  nextInterviewId = 1;
-  nextFollowUpReminderId = 1;
-  nextNoteId = 1;
+  jobApplicationMockBackend.reset();
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Mock backend request failed.";
 }
