@@ -37,6 +37,7 @@ export function PipelineControls({
         <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Filter by stage
           <Select
+            name="stageFilter"
             onChange={(e) =>
               setStageFilter(e.target.value as typeof stageFilter)
             }
@@ -53,6 +54,7 @@ export function PipelineControls({
         <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Filter by source
           <Select
+            name="sourceFilter"
             onChange={(e) => setSourceFilter(e.target.value as JobSource | "All")}
             value={sourceFilter}
           >
@@ -67,6 +69,8 @@ export function PipelineControls({
         <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Search applications
           <Input
+            autoComplete="off"
+            name="applicationSearch"
             onChange={(e) => setSearchTerm(e.target.value)}
             type="search"
             value={searchTerm}
@@ -76,6 +80,7 @@ export function PipelineControls({
         <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
           Sort applications
           <Select
+            name="applicationSort"
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             value={sortBy}
           >

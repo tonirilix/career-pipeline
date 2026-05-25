@@ -53,6 +53,7 @@ export function OpportunityForm({
             <Input
               aria-describedby={errorsByField.has("company") ? "company-error" : undefined}
               aria-invalid={errorsByField.has("company") ? true : undefined}
+              autoComplete="organization"
               className={errorsByField.has("company") ? "border-destructive focus-visible:ring-destructive" : undefined}
               name="company"
               placeholder="e.g. Acme Corp"
@@ -70,6 +71,7 @@ export function OpportunityForm({
             <Input
               aria-describedby={errorsByField.has("roleTitle") ? "role-title-error" : undefined}
               aria-invalid={errorsByField.has("roleTitle") ? true : undefined}
+              autoComplete="organization-title"
               className={errorsByField.has("roleTitle") ? "border-destructive focus-visible:ring-destructive" : undefined}
               name="roleTitle"
               placeholder="e.g. Senior Engineer"
@@ -87,6 +89,7 @@ export function OpportunityForm({
             <Input
               aria-describedby={errorsByField.has("postingUrl") ? "posting-url-error" : undefined}
               aria-invalid={errorsByField.has("postingUrl") ? true : undefined}
+              autoComplete="url"
               className={errorsByField.has("postingUrl") ? "border-destructive focus-visible:ring-destructive" : undefined}
               name="postingUrl"
               onChange={(e) => onChange({ ...form, postingUrl: e.target.value })}
@@ -120,6 +123,7 @@ export function OpportunityForm({
           <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Location
             <Input
+              autoComplete="address-level2"
               name="location"
               placeholder="e.g. Remote, NYC"
               onChange={(e) => onChange({ ...form, location: e.target.value })}
@@ -129,6 +133,7 @@ export function OpportunityForm({
           <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
             Compensation
             <Input
+              autoComplete="off"
               name="compensation"
               placeholder="e.g. $120k–$150k"
               onChange={(e) => onChange({ ...form, compensation: e.target.value })}

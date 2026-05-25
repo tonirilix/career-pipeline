@@ -6,6 +6,7 @@
     "apps/*"
   ],
   "scripts": {
+    "a11y": "npm run a11y --workspace apps/web",
     "test": "npm run test --workspaces",
     "dev": "npm run dev --workspace apps/web"
   },

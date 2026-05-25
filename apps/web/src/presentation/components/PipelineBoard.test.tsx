@@ -105,7 +105,7 @@ describe("PipelineBoard compact layout", () => {
     expect(savedColumn).not.toBeNull();
     expect(within(savedColumn).getByText("Saved")).toBeInTheDocument();
     expect(
-      within(savedColumn).getByLabelText("Saved applications")
+      within(savedColumn).getByTitle("0 Saved applications")
     ).toHaveTextContent("0");
     expect(
       within(savedColumn).getByText("No applications")
