@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:api": "vite --mode production --host 0.0.0.0",
-    "a11y": "node scripts/a11y-check.mjs",
+    "a11y": "playwright test --config playwright.a11y.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsc -b && vite build"
