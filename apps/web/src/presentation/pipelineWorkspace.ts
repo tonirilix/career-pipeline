@@ -17,7 +17,10 @@ import {
   type FollowUpReminder,
   type JobApplication
 } from "../domain/jobOpportunity";
-import type { ScheduleInterviewCommand } from "../domain/interviewScheduling";
+import type {
+  RecordInterviewOutcomeCommand,
+  ScheduleInterviewCommand
+} from "../domain/interviewScheduling";
 import type {
   PipelineSortOption,
   UsePipelineControls
@@ -168,6 +171,19 @@ export function usePipelineWorkspace(
     return true;
   }
 
+  async function recordInterviewOutcome(command: RecordInterviewOutcomeCommand) {
+    setDetailsCommandError(null);
+    const result = await jobApps.recordInterviewOutcomeCommand(command);
+    if (!result.ok) {
+      setDetailsCommandError({
+        workflow: "interview",
+        message: result.failure.message
+      });
+      return false;
+    }
+    return true;
+  }
+
   async function createFollowUp(command: CreateFollowUpReminderCommand) {
     setDetailsCommandError(null);
     const result = await jobApps.createFollowUpCommand(command);
@@ -225,6 +241,8 @@ export function usePipelineWorkspace(
     formCommandError,
     isLoadingApplications: jobApps.isLoadingApplications,
     overdueFollowUpItems,
+    recordInterviewOutcome,
+    recordInterviewOutcomeStatus: jobApps.recordInterviewOutcomeStatus,
     scheduleInterview,
     scheduleInterviewStatus: jobApps.scheduleInterviewStatus,
     selectedApplication,

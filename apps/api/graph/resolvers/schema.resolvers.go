@@ -61,15 +61,27 @@ func (r *mutationResolver) ScheduleInterview(ctx context.Context, input model.Sc
 	if err != nil {
 		return nil, err
 	}
-	outcome, err := mapInterviewOutcomeInput(input.Outcome)
-	if err != nil {
-		return nil, err
-	}
 	app, err := r.ScheduleInterviewUC.Execute(usecases.ScheduleInterviewCommand{
 		ApplicationID: input.ApplicationID,
 		Type:          interviewType,
 		ScheduledAt:   input.ScheduledAt,
 		Notes:         input.Notes,
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapApplication(app), nil
+}
+
+// RecordInterviewOutcome is the resolver for the recordInterviewOutcome field.
+func (r *mutationResolver) RecordInterviewOutcome(ctx context.Context, input model.RecordInterviewOutcomeInput) (*model.JobApplication, error) {
+	outcome, err := mapInterviewOutcomeInput(input.Outcome)
+	if err != nil {
+		return nil, err
+	}
+	app, err := r.RecordOutcomeUC.Execute(usecases.RecordInterviewOutcomeCommand{
+		ApplicationID: input.ApplicationID,
+		InterviewID:   input.InterviewID,
 		Outcome:       outcome,
 	})
 	if err != nil {

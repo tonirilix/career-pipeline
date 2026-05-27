@@ -106,6 +106,11 @@ input ScheduleInterviewInput {
   type: String!
   scheduledAt: String!
   notes: String!
+}
+
+input RecordInterviewOutcomeInput {
+  applicationId: ID!
+  interviewId: ID!
   outcome: String!
 }
 
@@ -133,6 +138,7 @@ type Mutation {
   createSavedOpportunity(input: CreateSavedOpportunityInput!): JobApplication!
   advanceApplicationStage(input: AdvanceApplicationStageInput!): JobApplication!
   scheduleInterview(input: ScheduleInterviewInput!): JobApplication!
+  recordInterviewOutcome(input: RecordInterviewOutcomeInput!): JobApplication!
   createFollowUpReminder(input: CreateFollowUpReminderInput!): JobApplication!
   completeFollowUpReminder(input: CompleteFollowUpReminderInput!): JobApplication!
   addApplicationNote(input: AddApplicationNoteInput!): JobApplication!

@@ -6,7 +6,10 @@ import type {
   CreateFollowUpReminderCommand
 } from "../../domain/followUpReminder";
 import type { CreateSavedJobOpportunityCommand } from "../../domain/jobOpportunity";
-import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
+import type {
+  RecordInterviewOutcomeCommand,
+  ScheduleInterviewCommand
+} from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 import { jobApplicationMockBackend } from "../mockBackend/jobApplicationMockBackend";
 
@@ -59,6 +62,24 @@ export const jobApplicationHandlers = [
       return HttpResponse.json({
         data: {
           scheduleInterview: application
+        }
+      });
+    } catch (error) {
+      return HttpResponse.json({
+        errors: [{ message: errorMessage(error) }]
+      });
+    }
+  }),
+
+  graphql.mutation("RecordInterviewOutcome", ({ variables }) => {
+    const { input } = variables as {
+      input: RecordInterviewOutcomeCommand;
+    };
+    try {
+      const application = jobApplicationMockBackend.recordInterviewOutcome(input);
+      return HttpResponse.json({
+        data: {
+          recordInterviewOutcome: application
         }
       });
     } catch (error) {

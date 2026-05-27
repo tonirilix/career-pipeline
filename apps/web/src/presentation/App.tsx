@@ -157,8 +157,10 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             addNoteStatus={workspace.addNoteStatus}
             createFollowUpStatus={workspace.createFollowUpStatus}
             scheduleInterviewStatus={workspace.scheduleInterviewStatus}
+            recordInterviewOutcomeStatus={workspace.recordInterviewOutcomeStatus}
             onAddNote={workspace.addNote}
             onCreateFollowUp={workspace.createFollowUp}
+            onRecordInterviewOutcome={workspace.recordInterviewOutcome}
             onScheduleInterview={workspace.scheduleInterview}
           />
         ) : null}

@@ -81,6 +81,7 @@ type ComplexityRoot struct {
 		CompleteFollowUpReminder func(childComplexity int, input model.CompleteFollowUpReminderInput) int
 		CreateFollowUpReminder   func(childComplexity int, input model.CreateFollowUpReminderInput) int
 		CreateSavedOpportunity   func(childComplexity int, input model.CreateSavedOpportunityInput) int
+		RecordInterviewOutcome   func(childComplexity int, input model.RecordInterviewOutcomeInput) int
 		ScheduleInterview        func(childComplexity int, input model.ScheduleInterviewInput) int
 	}
 
@@ -99,6 +100,7 @@ type MutationResolver interface {
 	CreateSavedOpportunity(ctx context.Context, input model.CreateSavedOpportunityInput) (*model.JobApplication, error)
 	AdvanceApplicationStage(ctx context.Context, input model.AdvanceApplicationStageInput) (*model.JobApplication, error)
 	ScheduleInterview(ctx context.Context, input model.ScheduleInterviewInput) (*model.JobApplication, error)
+	RecordInterviewOutcome(ctx context.Context, input model.RecordInterviewOutcomeInput) (*model.JobApplication, error)
 	CreateFollowUpReminder(ctx context.Context, input model.CreateFollowUpReminderInput) (*model.JobApplication, error)
 	CompleteFollowUpReminder(ctx context.Context, input model.CompleteFollowUpReminderInput) (*model.JobApplication, error)
 	AddApplicationNote(ctx context.Context, input model.AddApplicationNoteInput) (*model.JobApplication, error)
@@ -336,6 +338,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateSavedOpportunity(childComplexity, args["input"].(model.CreateSavedOpportunityInput)), true
+	case "Mutation.recordInterviewOutcome":
+		if e.ComplexityRoot.Mutation.RecordInterviewOutcome == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_recordInterviewOutcome_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RecordInterviewOutcome(childComplexity, args["input"].(model.RecordInterviewOutcomeInput)), true
 	case "Mutation.scheduleInterview":
 		if e.ComplexityRoot.Mutation.ScheduleInterview == nil {
 			break
@@ -387,6 +400,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCompleteFollowUpReminderInput,
 		ec.unmarshalInputCreateFollowUpReminderInput,
 		ec.unmarshalInputCreateSavedOpportunityInput,
+		ec.unmarshalInputRecordInterviewOutcomeInput,
 		ec.unmarshalInputScheduleInterviewInput,
 	)
 	first := true
@@ -748,6 +762,20 @@ func (ec *executionContext) field_Mutation_createSavedOpportunity_args(ctx conte
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.CreateSavedOpportunityInput, error) {
 			return ec.unmarshalNCreateSavedOpportunityInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateSavedOpportunityInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_recordInterviewOutcome_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.RecordInterviewOutcomeInput, error) {
+			return ec.unmarshalNRecordInterviewOutcomeInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRecordInterviewOutcomeInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -1608,6 +1636,50 @@ func (ec *executionContext) fieldContext_Mutation_scheduleInterview(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_scheduleInterview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_recordInterviewOutcome(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_recordInterviewOutcome(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RecordInterviewOutcome(ctx, fc.Args["input"].(model.RecordInterviewOutcomeInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_recordInterviewOutcome(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JobApplication(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_recordInterviewOutcome_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3209,6 +3281,50 @@ func (ec *executionContext) unmarshalInputCreateSavedOpportunityInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRecordInterviewOutcomeInput(ctx context.Context, obj any) (model.RecordInterviewOutcomeInput, error) {
+	var it model.RecordInterviewOutcomeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"applicationId", "interviewId", "outcome"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "applicationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applicationId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ApplicationID = data
+		case "interviewId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("interviewId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InterviewID = data
+		case "outcome":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("outcome"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Outcome = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputScheduleInterviewInput(ctx context.Context, obj any) (model.ScheduleInterviewInput, error) {
 	var it model.ScheduleInterviewInput
 	if obj == nil {
@@ -3220,7 +3336,7 @@ func (ec *executionContext) unmarshalInputScheduleInterviewInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"applicationId", "type", "scheduledAt", "notes", "outcome"}
+	fieldsInOrder := [...]string{"applicationId", "type", "scheduledAt", "notes"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3255,13 +3371,6 @@ func (ec *executionContext) unmarshalInputScheduleInterviewInput(ctx context.Con
 				return it, err
 			}
 			it.Notes = data
-		case "outcome":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("outcome"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Outcome = data
 		}
 	}
 	return it, nil
@@ -3574,6 +3683,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "scheduleInterview":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_scheduleInterview(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recordInterviewOutcome":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_recordInterviewOutcome(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4241,6 +4357,11 @@ func (ec *executionContext) marshalNJobApplication2ᚖgithubᚗcomᚋtonirilix�
 		return graphql.Null
 	}
 	return ec._JobApplication(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRecordInterviewOutcomeInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRecordInterviewOutcomeInput(ctx context.Context, v any) (model.RecordInterviewOutcomeInput, error) {
+	res, err := ec.unmarshalInputRecordInterviewOutcomeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNScheduleInterviewInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐScheduleInterviewInput(ctx context.Context, v any) (model.ScheduleInterviewInput, error) {

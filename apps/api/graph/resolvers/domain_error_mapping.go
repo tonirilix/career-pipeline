@@ -13,7 +13,11 @@ func mapDomainError(err error) error {
 	case errors.Is(err, domain.ErrInvalidStageTransition):
 		return errors.New("invalid stage transition")
 	case errors.Is(err, domain.ErrCannotSchedule):
-		return errors.New("interviews can only be scheduled after an opportunity has been applied to")
+		return errors.New("interviews can only be scheduled for active applications before the offer stage")
+	case errors.Is(err, domain.ErrCannotCreateWork):
+		return errors.New("active work can only be created for active applications")
+	case errors.Is(err, domain.ErrInvalidOutcome):
+		return errors.New("interview outcome must be a final result")
 	case errors.Is(err, domain.ErrNoteBodyEmpty):
 		return errors.New("note body must not be empty")
 	case errors.Is(err, domain.ErrDueDateInPast):

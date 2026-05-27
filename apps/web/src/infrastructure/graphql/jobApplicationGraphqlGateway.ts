@@ -17,7 +17,10 @@ import type {
   CompleteFollowUpReminderCommand,
   CreateFollowUpReminderCommand
 } from "../../domain/followUpReminder";
-import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
+import type {
+  RecordInterviewOutcomeCommand,
+  ScheduleInterviewCommand
+} from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 type GraphqlResponse<TData> = {
@@ -146,6 +149,14 @@ const scheduleInterviewMutation = `
   }
 `;
 
+const recordInterviewOutcomeMutation = `
+  mutation RecordInterviewOutcome($input: RecordInterviewOutcomeInput!) {
+    recordInterviewOutcome(input: $input) {
+      ${applicationFields}
+    }
+  }
+`;
+
 const createFollowUpReminderMutation = `
   mutation CreateFollowUpReminder($input: CreateFollowUpReminderInput!) {
     createFollowUpReminder(input: $input) {
@@ -175,6 +186,7 @@ export const jobApplicationGraphqlOperations = [
   createSavedOpportunityMutation,
   advanceApplicationStageMutation,
   scheduleInterviewMutation,
+  recordInterviewOutcomeMutation,
   createFollowUpReminderMutation,
   completeFollowUpReminderMutation,
   addApplicationNoteMutation
@@ -235,6 +247,20 @@ export function createJobApplicationGraphqlGateway(
       });
 
       return mapJobApplication(response.scheduleInterview);
+    },
+
+    async recordInterviewOutcome(command: RecordInterviewOutcomeCommand) {
+      const response = await requestGraphql<{
+        recordInterviewOutcome: GraphqlJobApplicationDto;
+      }>(endpoint, {
+        query: recordInterviewOutcomeMutation,
+        operationName: "RecordInterviewOutcome",
+        variables: {
+          input: command
+        }
+      });
+
+      return mapJobApplication(response.recordInterviewOutcome);
     },
 
     async createFollowUpReminder(command: CreateFollowUpReminderCommand) {

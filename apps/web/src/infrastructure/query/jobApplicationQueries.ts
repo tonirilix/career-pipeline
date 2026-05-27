@@ -12,6 +12,8 @@ export const jobApplicationMutationKeys = {
   completeFollowUp: () => ["job-applications", "complete-follow-up"] as const,
   submitOpportunity: () => ["job-applications", "submit-opportunity"] as const,
   scheduleInterview: () => ["job-applications", "schedule-interview"] as const,
+  recordInterviewOutcome: () =>
+    ["job-applications", "record-interview-outcome"] as const,
   createFollowUp: () => ["job-applications", "create-follow-up"] as const,
   addNote: () => ["job-applications", "add-note"] as const
 };

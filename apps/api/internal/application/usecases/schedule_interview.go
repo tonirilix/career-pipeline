@@ -12,7 +12,6 @@ type ScheduleInterviewCommand struct {
 	Type          domain.InterviewType
 	ScheduledAt   string
 	Notes         string
-	Outcome       domain.InterviewOutcome
 }
 
 type ScheduleInterview struct {
@@ -42,7 +41,7 @@ func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobA
 			return err
 		}
 
-		if app.Stage == domain.StageSaved {
+		if !isInterviewableStage(app.Stage) {
 			return domain.ErrCannotSchedule
 		}
 
@@ -51,7 +50,7 @@ func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobA
 			Type:        cmd.Type,
 			ScheduledAt: scheduledAt,
 			Notes:       cmd.Notes,
-			Outcome:     cmd.Outcome,
+			Outcome:     domain.OutcomeScheduled,
 		}
 		if err := repos.Interviews.Save(app.ID, interview); err != nil {
 			return err
@@ -74,4 +73,11 @@ func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobA
 		return nil
 	})
 	return result, err
+}
+
+func isInterviewableStage(stage domain.ApplicationStage) bool {
+	return stage == domain.StageApplied ||
+		stage == domain.StageScreening ||
+		stage == domain.StageTechnicalInterview ||
+		stage == domain.StageOnsite
 }

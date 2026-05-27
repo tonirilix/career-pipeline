@@ -84,12 +84,17 @@ type Mutation struct {
 type Query struct {
 }
 
+type RecordInterviewOutcomeInput struct {
+	ApplicationID string `json:"applicationId"`
+	InterviewID   string `json:"interviewId"`
+	Outcome       string `json:"outcome"`
+}
+
 type ScheduleInterviewInput struct {
 	ApplicationID string `json:"applicationId"`
 	Type          string `json:"type"`
 	ScheduledAt   string `json:"scheduledAt"`
 	Notes         string `json:"notes"`
-	Outcome       string `json:"outcome"`
 }
 
 type TimelineEvent struct {

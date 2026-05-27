@@ -50,6 +50,7 @@ function createGateway(
     createSavedOpportunity: unsupportedCommand,
     advanceApplicationStage: unsupportedCommand,
     scheduleInterview: unsupportedCommand,
+    recordInterviewOutcome: unsupportedCommand,
     createFollowUpReminder: unsupportedCommand,
     completeFollowUpReminder: unsupportedCommand,
     addApplicationNote: unsupportedCommand,

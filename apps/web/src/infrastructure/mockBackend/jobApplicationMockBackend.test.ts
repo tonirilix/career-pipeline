@@ -59,8 +59,12 @@ describe("JobApplicationMockBackend", () => {
       applicationId: saved.id,
       type: "Recruiter screen",
       scheduledAt: "2026-05-12T15:00:00.000Z",
-      notes: "Ask about team shape",
-      outcome: "Scheduled"
+      notes: "Ask about team shape"
+    });
+    const withOutcome = backend.recordInterviewOutcome({
+      applicationId: saved.id,
+      interviewId: withInterview.interviews[0].id,
+      outcome: "Passed"
     });
     const withFollowUp = backend.createFollowUpReminder({
       applicationId: saved.id,
@@ -77,11 +81,12 @@ describe("JobApplicationMockBackend", () => {
     });
 
     expect(applied.stage).toBe("Applied");
-    expect(withInterview.interviews[0]).toMatchObject({ id: "1" });
+    expect(withInterview.interviews[0]).toMatchObject({ id: "1", outcome: "Scheduled" });
+    expect(withOutcome.interviews[0]).toMatchObject({ id: "1", outcome: "Passed" });
     expect(withFollowUp.followUps[0]).toMatchObject({ id: "1" });
     expect(completed.followUps[0].completedAt).toBe("2026-05-10T12:00:00.000Z");
     expect(withNote.notes[0]).toMatchObject({ id: "1", body: "Recruiter was helpful." });
-    expect(withNote.timeline).toHaveLength(6);
+    expect(withNote.timeline).toHaveLength(7);
   });
 
   it("raises domain workflow failures as errors", () => {

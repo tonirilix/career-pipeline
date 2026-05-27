@@ -14,7 +14,9 @@ import {
   type SavedJobOpportunity
 } from "../../domain/jobOpportunity";
 import {
+  type RecordInterviewOutcomeCommand,
   type ScheduleInterviewCommand,
+  recordInterviewOutcome,
   scheduleInterview
 } from "../../domain/interviewScheduling";
 import {
@@ -89,6 +91,22 @@ export class JobApplicationMockBackend {
     }
 
     this.nextInterviewId += 1;
+    this.nextTimelineEventId += 1;
+    this.replaceApplication(result.application);
+    return result.application;
+  }
+
+  recordInterviewOutcome(command: RecordInterviewOutcomeCommand) {
+    const application = this.findApplication(command.applicationId);
+    const result = recordInterviewOutcome(application, command, {
+      timelineEventId: String(this.nextTimelineEventId),
+      occurredAt: this.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(result.failure.message);
+    }
+
     this.nextTimelineEventId += 1;
     this.replaceApplication(result.application);
     return result.application;

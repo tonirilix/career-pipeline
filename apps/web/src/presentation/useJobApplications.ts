@@ -13,6 +13,8 @@ import {
   createSavedOpportunity,
   type CreateSavedOpportunityResult,
   listApplications,
+  recordApplicationInterviewOutcome,
+  type RecordApplicationInterviewOutcomeResult,
   type ScheduleApplicationInterviewResult,
   scheduleApplicationInterview
 } from "../application/jobApplications";
@@ -23,7 +25,10 @@ import type {
   CompleteFollowUpReminderCommand,
   CreateFollowUpReminderCommand
 } from "../domain/followUpReminder";
-import type { ScheduleInterviewCommand } from "../domain/interviewScheduling";
+import type {
+  RecordInterviewOutcomeCommand,
+  ScheduleInterviewCommand
+} from "../domain/interviewScheduling";
 import type {
   CreateSavedJobOpportunityCommand,
   JobApplication
@@ -85,6 +90,13 @@ export function useJobApplications(gateway: JobApplicationGateway) {
     onSuccess: replaceApplicationFromResult
   });
 
+  const recordInterviewOutcomeMutation = useMutation({
+    mutationKey: jobApplicationMutationKeys.recordInterviewOutcome(),
+    mutationFn: (command: RecordInterviewOutcomeCommand) =>
+      recordApplicationInterviewOutcome(stableGateway, command),
+    onSuccess: replaceApplicationFromResult
+  });
+
   const createFollowUpMutation = useMutation({
     mutationKey: jobApplicationMutationKeys.createFollowUp(),
     mutationFn: (command: CreateFollowUpReminderCommand) =>
@@ -109,6 +121,7 @@ export function useJobApplications(gateway: JobApplicationGateway) {
   function replaceApplicationFromResult(
     result:
       | ScheduleApplicationInterviewResult
+      | RecordApplicationInterviewOutcomeResult
       | CreateApplicationFollowUpReminderResult
       | CompleteApplicationFollowUpReminderResult
       | AddNoteToApplicationResult
@@ -139,6 +152,8 @@ export function useJobApplications(gateway: JobApplicationGateway) {
     // Global status transitions (single-item contexts: details panel)
     submitOpportunityStatus: createOpportunityMutation.status as CommandStatus,
     scheduleInterviewStatus: scheduleInterviewMutation.status as CommandStatus,
+    recordInterviewOutcomeStatus:
+      recordInterviewOutcomeMutation.status as CommandStatus,
     createFollowUpStatus: createFollowUpMutation.status as CommandStatus,
     addNoteStatus: addNoteMutation.status as CommandStatus,
     // Raw commands (cache updates baked in via onSuccess)
@@ -148,6 +163,8 @@ export function useJobApplications(gateway: JobApplicationGateway) {
       advanceStageMutation.mutateAsync({ application, toStage }),
     scheduleInterviewCommand: (command: ScheduleInterviewCommand) =>
       scheduleInterviewMutation.mutateAsync(command),
+    recordInterviewOutcomeCommand: (command: RecordInterviewOutcomeCommand) =>
+      recordInterviewOutcomeMutation.mutateAsync(command),
     createFollowUpCommand: (command: CreateFollowUpReminderCommand) =>
       createFollowUpMutation.mutateAsync(command),
     completeFollowUpCommand: (command: CompleteFollowUpReminderCommand) =>
