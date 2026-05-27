@@ -8,7 +8,10 @@ import type {
   CreateFollowUpReminderCommand
 } from "../../domain/followUpReminder";
 import type { AddApplicationNoteCommand } from "../../domain/applicationNote";
-import type { ScheduleInterviewCommand } from "../../domain/interviewScheduling";
+import type {
+  RecordInterviewOutcomeCommand,
+  ScheduleInterviewCommand
+} from "../../domain/interviewScheduling";
 import type { StageTransitionCommand } from "../../domain/stageTransition";
 
 export type JobApplicationGateway = {
@@ -20,6 +23,9 @@ export type JobApplicationGateway = {
     command: StageTransitionCommand
   ): Promise<JobApplication>;
   scheduleInterview(command: ScheduleInterviewCommand): Promise<JobApplication>;
+  recordInterviewOutcome(
+    command: RecordInterviewOutcomeCommand
+  ): Promise<JobApplication>;
   createFollowUpReminder(
     command: CreateFollowUpReminderCommand
   ): Promise<JobApplication>;

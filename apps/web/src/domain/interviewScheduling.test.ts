@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { JobApplication } from "./jobOpportunity";
-import { scheduleInterview } from "./interviewScheduling";
+import { recordInterviewOutcome, scheduleInterview } from "./interviewScheduling";
 
 const appliedApplication: JobApplication = {
   id: "job-1",
@@ -33,8 +33,7 @@ describe("interview scheduling", () => {
         applicationId: "job-1",
         type: "Recruiter screen",
         scheduledAt: "2026-05-12T15:00:00.000Z",
-        notes: "Ask about team shape",
-        outcome: "Scheduled"
+        notes: "Ask about team shape"
       },
       {
         interviewId: "interview-1",
@@ -75,8 +74,7 @@ describe("interview scheduling", () => {
         applicationId: "job-1",
         type: "Recruiter screen",
         scheduledAt: "2026-05-12T15:00:00.000Z",
-        notes: "Ask about team shape",
-        outcome: "Scheduled"
+        notes: "Ask about team shape"
       },
       {
         interviewId: "interview-1",
@@ -89,9 +87,36 @@ describe("interview scheduling", () => {
       ok: false,
       failure: {
         message:
-          "Interviews can only be scheduled after an opportunity has been applied to."
+          "Interviews can only be scheduled for active applications before the offer stage."
       }
     });
+  });
+
+  it("rejects interviews for closed applications", () => {
+    for (const stage of ["Rejected", "Withdrawn"] as const) {
+      const result = scheduleInterview(
+        { ...appliedApplication, stage },
+        {
+          applicationId: "job-1",
+          type: "Recruiter screen",
+          scheduledAt: "2026-05-12T15:00:00.000Z",
+          notes: "Ask about team shape"
+        },
+        {
+          interviewId: "interview-1",
+          timelineEventId: "event-2",
+          occurredAt: "2026-05-10T02:00:00.000Z"
+        }
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        failure: {
+          message:
+            "Interviews can only be scheduled for active applications before the offer stage."
+        }
+      });
+    }
   });
 
   it("rejects interviews when the application id does not match", () => {
@@ -101,8 +126,7 @@ describe("interview scheduling", () => {
         applicationId: "missing-job",
         type: "Recruiter screen",
         scheduledAt: "2026-05-12T15:00:00.000Z",
-        notes: "Ask about team shape",
-        outcome: "Scheduled"
+        notes: "Ask about team shape"
       },
       {
         interviewId: "interview-1",
@@ -124,8 +148,7 @@ describe("interview scheduling", () => {
         applicationId: "job-1",
         type: "Recruiter screen",
         scheduledAt: "",
-        notes: "Ask about team shape",
-        outcome: "Scheduled"
+        notes: "Ask about team shape"
       },
       {
         interviewId: "interview-1",
@@ -137,6 +160,47 @@ describe("interview scheduling", () => {
     expect(result).toEqual({
       ok: false,
       failure: { message: "Interview date and time is required." }
+    });
+  });
+
+  it("records an outcome for an existing interview", () => {
+    const result = recordInterviewOutcome(
+      {
+        ...appliedApplication,
+        interviews: [
+          {
+            id: "interview-1",
+            type: "Recruiter screen",
+            scheduledAt: "2026-05-12T15:00:00.000Z",
+            notes: "Ask about team shape",
+            outcome: "Scheduled"
+          }
+        ]
+      },
+      {
+        applicationId: "job-1",
+        interviewId: "interview-1",
+        outcome: "Passed"
+      },
+      {
+        timelineEventId: "event-2",
+        occurredAt: "2026-05-13T02:00:00.000Z"
+      }
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      application: {
+        interviews: [{ id: "interview-1", outcome: "Passed" }],
+        timeline: [
+          ...appliedApplication.timeline,
+          {
+            id: "event-2",
+            occurredAt: "2026-05-13T02:00:00.000Z",
+            description: "Recorded interview outcome: Passed"
+          }
+        ]
+      }
     });
   });
 });

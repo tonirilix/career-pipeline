@@ -19,6 +19,7 @@ import type {
   ApplicationNoteFailure
 } from "../domain/applicationNote";
 import type {
+  RecordInterviewOutcomeCommand,
   ScheduleInterviewCommand,
   ScheduleInterviewFailure
 } from "../domain/interviewScheduling";
@@ -33,6 +34,10 @@ export type AdvanceApplicationStageResult =
   | { ok: false; failure: StageTransitionFailure };
 
 export type ScheduleApplicationInterviewResult =
+  | { ok: true; application: JobApplication }
+  | { ok: false; failure: ScheduleInterviewFailure };
+
+export type RecordApplicationInterviewOutcomeResult =
   | { ok: true; application: JobApplication }
   | { ok: false; failure: ScheduleInterviewFailure };
 
@@ -107,6 +112,28 @@ export async function scheduleApplicationInterview(
           error instanceof Error
             ? error.message
             : "Could not schedule the interview."
+      }
+    };
+  }
+}
+
+export async function recordApplicationInterviewOutcome(
+  gateway: JobApplicationGateway,
+  command: RecordInterviewOutcomeCommand
+): Promise<RecordApplicationInterviewOutcomeResult> {
+  try {
+    return {
+      ok: true,
+      application: await gateway.recordInterviewOutcome(command)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      failure: {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not record the interview outcome."
       }
     };
   }

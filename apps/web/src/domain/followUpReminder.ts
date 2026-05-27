@@ -3,6 +3,7 @@ import type {
   JobApplication,
   TimelineEvent
 } from "./jobOpportunity";
+import { isClosedApplication } from "./closedWork";
 
 export type CreateFollowUpReminderCommand = {
   applicationId: string;
@@ -48,6 +49,15 @@ export function createFollowUpReminder(
   command: CreateFollowUpReminderCommand,
   ids: CreateFollowUpReminderIds
 ): CreateFollowUpReminderResult {
+  if (isClosedApplication(application)) {
+    return {
+      ok: false,
+      failure: {
+        message: "Follow-ups can only be created for active applications."
+      }
+    };
+  }
+
   if (!command.dueAt.trim()) {
     return {
       ok: false,

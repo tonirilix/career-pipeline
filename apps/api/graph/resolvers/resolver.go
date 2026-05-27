@@ -8,6 +8,7 @@ type Resolver struct {
 	CreateApplicationUC *usecases.CreateApplication
 	AdvanceStageUC      *usecases.AdvanceStage
 	ScheduleInterviewUC *usecases.ScheduleInterview
+	RecordOutcomeUC     *usecases.RecordInterviewOutcome
 	AddFollowUpUC       *usecases.AddFollowUp
 	CompleteFollowUpUC  *usecases.CompleteFollowUp
 	AddNoteUC           *usecases.AddNote

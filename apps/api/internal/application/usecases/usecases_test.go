@@ -192,7 +192,6 @@ func TestDetailWorkflows_RollBackWhenTimelineFails(t *testing.T) {
 			ApplicationID: "app-1",
 			Type:          domain.InterviewRecruiterScreen,
 			ScheduledAt:   fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
-			Outcome:       domain.OutcomeScheduled,
 		})
 		if !errors.Is(err, errNotFound) {
 			t.Fatalf("expected timeline error, got %v", err)
@@ -257,6 +256,110 @@ func TestDetailWorkflows_RollBackWhenTimelineFails(t *testing.T) {
 
 // --- AddFollowUp ---
 
+func TestScheduleInterview_ValidStageCreatesScheduledInterview(t *testing.T) {
+	for _, stage := range []domain.ApplicationStage{
+		domain.StageApplied,
+		domain.StageScreening,
+		domain.StageTechnicalInterview,
+		domain.StageOnsite,
+	} {
+		t.Run(string(stage), func(t *testing.T) {
+			apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+			_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: stage})
+			uc := usecases.NewScheduleInterview(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+			app, err := uc.Execute(usecases.ScheduleInterviewCommand{
+				ApplicationID: "app-1",
+				Type:          domain.InterviewRecruiterScreen,
+				ScheduledAt:   fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
+				Notes:         "Ask about team shape",
+			})
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(app.Interviews) != 1 {
+				t.Fatalf("expected 1 interview, got %d", len(app.Interviews))
+			}
+			if app.Interviews[0].Outcome != domain.OutcomeScheduled {
+				t.Fatalf("expected scheduled outcome, got %s", app.Interviews[0].Outcome)
+			}
+		})
+	}
+}
+
+func TestScheduleInterview_InvalidStagesReturnError(t *testing.T) {
+	for _, stage := range []domain.ApplicationStage{
+		domain.StageSaved,
+		domain.StageOffer,
+		domain.StageRejected,
+		domain.StageWithdrawn,
+	} {
+		t.Run(string(stage), func(t *testing.T) {
+			apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+			_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: stage})
+			uc := usecases.NewScheduleInterview(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+			_, err := uc.Execute(usecases.ScheduleInterviewCommand{
+				ApplicationID: "app-1",
+				Type:          domain.InterviewRecruiterScreen,
+				ScheduledAt:   fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
+			})
+
+			if !errors.Is(err, domain.ErrCannotSchedule) {
+				t.Fatalf("expected ErrCannotSchedule, got %v", err)
+			}
+			if got, _ := interviews.ListByApplication("app-1"); len(got) != 0 {
+				t.Fatalf("expected no persisted interviews, got %d", len(got))
+			}
+		})
+	}
+}
+
+func TestRecordInterviewOutcome_Success(t *testing.T) {
+	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageScreening})
+	_ = interviews.Save("app-1", &domain.Interview{
+		ID:          "interview-1",
+		Type:        domain.InterviewRecruiterScreen,
+		ScheduledAt: fixedTime.Add(24 * time.Hour),
+		Outcome:     domain.OutcomeScheduled,
+	})
+	uc := usecases.NewRecordInterviewOutcome(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+	app, err := uc.Execute(usecases.RecordInterviewOutcomeCommand{
+		ApplicationID: "app-1",
+		InterviewID:   "interview-1",
+		Outcome:       domain.OutcomePassed,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if app.Interviews[0].Outcome != domain.OutcomePassed {
+		t.Fatalf("expected Passed outcome, got %s", app.Interviews[0].Outcome)
+	}
+	if len(app.Timeline) != 1 {
+		t.Fatalf("expected timeline event, got %d", len(app.Timeline))
+	}
+}
+
+func TestRecordInterviewOutcome_RejectsScheduledOutcome(t *testing.T) {
+	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageScreening})
+	uc := usecases.NewRecordInterviewOutcome(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+	_, err := uc.Execute(usecases.RecordInterviewOutcomeCommand{
+		ApplicationID: "app-1",
+		InterviewID:   "interview-1",
+		Outcome:       domain.OutcomeScheduled,
+	})
+
+	if !errors.Is(err, domain.ErrInvalidOutcome) {
+		t.Fatalf("expected ErrInvalidOutcome, got %v", err)
+	}
+}
+
 func TestAddFollowUp_PastDueDateReturnsError(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
 	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
@@ -272,6 +375,29 @@ func TestAddFollowUp_PastDueDateReturnsError(t *testing.T) {
 	})
 	if !errors.Is(err, domain.ErrDueDateInPast) {
 		t.Errorf("expected ErrDueDateInPast, got %v", err)
+	}
+}
+
+func TestAddFollowUp_ClosedApplicationsReturnError(t *testing.T) {
+	for _, stage := range []domain.ApplicationStage{domain.StageRejected, domain.StageWithdrawn} {
+		t.Run(string(stage), func(t *testing.T) {
+			apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+			_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: stage})
+			_ = timeline.Save("app-1", &domain.TimelineEvent{ID: "t-1", OccurredAt: fixedTime, Description: "Created"})
+			uc := usecases.NewAddFollowUp(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+			_, err := uc.Execute(usecases.CreateFollowUpCommand{
+				ApplicationID: "app-1",
+				DueAt:         fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
+				Note:          "Follow up",
+			})
+			if !errors.Is(err, domain.ErrCannotCreateWork) {
+				t.Fatalf("expected ErrCannotCreateWork, got %v", err)
+			}
+			if got, _ := followUps.ListByApplication("app-1"); len(got) != 0 {
+				t.Fatalf("expected no persisted follow-ups, got %d", len(got))
+			}
+		})
 	}
 }
 

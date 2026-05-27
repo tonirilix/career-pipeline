@@ -34,6 +34,10 @@ func (uc *AddFollowUp) Execute(cmd CreateFollowUpCommand) (*domain.JobApplicatio
 			return err
 		}
 
+		if domain.IsClosedStage(app.Stage) {
+			return domain.ErrCannotCreateWork
+		}
+
 		events, err := repos.Timeline.ListByApplication(app.ID)
 		if err != nil {
 			return err

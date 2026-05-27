@@ -22,6 +22,10 @@ func NewRecordInterviewOutcome(tx ports.Transactor, clock ports.Clock, ids ports
 }
 
 func (uc *RecordInterviewOutcome) Execute(cmd RecordInterviewOutcomeCommand) (*domain.JobApplication, error) {
+	if cmd.Outcome == domain.OutcomeScheduled {
+		return nil, domain.ErrInvalidOutcome
+	}
+
 	var result *domain.JobApplication
 	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
 		app, err := repos.Applications.FindByID(cmd.ApplicationID)

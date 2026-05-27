@@ -7,7 +7,10 @@ import type { JobApplicationGateway } from "../application/ports/jobApplicationG
 import type { JobApplication } from "../domain/jobOpportunity";
 import { createJobApplicationGraphqlGateway } from "../infrastructure/graphql/jobApplicationGraphqlGateway";
 import { createWebQueryClient } from "../infrastructure/query/queryClient";
-import { useZustandPipelineControlsStore } from "../infrastructure/zustand/pipelineControlsStore";
+import {
+  resetZustandPipelineControlsStore,
+  useZustandPipelineControlsStore
+} from "../infrastructure/zustand/pipelineControlsStore";
 import { App } from "./App";
 
 function createApplication(
@@ -49,6 +52,7 @@ function createReadOnlyGateway(
     createSavedOpportunity: unsupportedCommand,
     advanceApplicationStage: unsupportedCommand,
     scheduleInterview: unsupportedCommand,
+    recordInterviewOutcome: unsupportedCommand,
     createFollowUpReminder: unsupportedCommand,
     completeFollowUpReminder: unsupportedCommand,
     addApplicationNote: unsupportedCommand
@@ -67,6 +71,7 @@ function createGateway(
     createSavedOpportunity: unsupportedCommand,
     advanceApplicationStage: unsupportedCommand,
     scheduleInterview: unsupportedCommand,
+    recordInterviewOutcome: unsupportedCommand,
     createFollowUpReminder: unsupportedCommand,
     completeFollowUpReminder: unsupportedCommand,
     addApplicationNote: unsupportedCommand,
@@ -100,6 +105,7 @@ function getStatValue(label: string) {
 }
 
 function renderApp(gateway = createJobApplicationGraphqlGateway()) {
+  resetZustandPipelineControlsStore();
   const queryClient = createWebQueryClient();
 
   return render(
@@ -112,7 +118,295 @@ function renderApp(gateway = createJobApplicationGraphqlGateway()) {
   );
 }
 
+async function openDetailsSection(
+  user: ReturnType<typeof userEvent.setup>,
+  detail: HTMLElement,
+  section: "Notes" | "Follow-ups" | "Interviews" | "Timeline"
+) {
+  await user.click(within(detail).getByRole("button", { name: new RegExp(section) }));
+}
+
+async function clickFormSubmit(
+  user: ReturnType<typeof userEvent.setup>,
+  detail: HTMLElement,
+  name: string
+) {
+  const buttons = within(detail).getAllByRole("button", { name });
+  await user.click(buttons[buttons.length - 1]);
+}
+
 describe("Job application tracker shell", () => {
+  it("shows details workspace navigation counts while keeping the application summary visible", async () => {
+    const user = userEvent.setup();
+    const application = createApplication({
+      id: "linear",
+      company: "Linear",
+      roleTitle: "Frontend Engineer",
+      stage: "Applied",
+      notes: [
+        {
+          id: "note-1",
+          body: "Recruiter mentioned platform work.",
+          createdAt: "2026-05-02T09:00:00.000Z"
+        }
+      ],
+      followUps: [
+        {
+          id: "follow-up-1",
+          applicationId: "linear",
+          dueAt: "2026-05-10T12:00:00.000Z",
+          note: "Send thank-you note",
+          completedAt: null
+        }
+      ],
+      interviews: [
+        {
+          id: "interview-1",
+          type: "Recruiter screen",
+          scheduledAt: "2026-05-08T15:00:00.000Z",
+          outcome: "Scheduled",
+          notes: "Ask about team shape"
+        }
+      ],
+      timeline: [
+        {
+          id: "timeline-1",
+          occurredAt: "2026-05-01T09:00:00.000Z",
+          description: "Saved opportunity"
+        },
+        {
+          id: "timeline-2",
+          occurredAt: "2026-05-02T10:00:00.000Z",
+          description: "Moved from Saved to Applied"
+        }
+      ]
+    });
+
+    renderApp(createReadOnlyGateway([application]));
+
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
+    expect(
+      within(detail).getByRole("button", { name: /Notes.*1/ })
+    ).toBeInTheDocument();
+    expect(
+      within(detail).getByRole("button", { name: /Follow-ups.*1/ })
+    ).toBeInTheDocument();
+    expect(
+      within(detail).getByRole("button", { name: /Interviews.*1/ })
+    ).toBeInTheDocument();
+    expect(
+      within(detail).getByRole("button", { name: /Timeline.*2/ })
+    ).toBeInTheDocument();
+
+    await openDetailsSection(user, detail, "Interviews");
+
+    expect(within(detail).getByRole("heading", { name: "Linear" })).toBeInTheDocument();
+    expect(within(detail).getByText("Frontend Engineer")).toBeInTheDocument();
+    expect(within(detail).getByText("Applied")).toBeInTheDocument();
+    expect(
+      within(detail).getByRole("list", { name: "Scheduled interviews" })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps details forms hidden until explicit actions and lets users cancel them", async () => {
+    const user = userEvent.setup();
+    const application = createApplication({
+      id: "linear",
+      company: "Linear",
+      roleTitle: "Frontend Engineer",
+      stage: "Applied",
+      interviews: [
+        {
+          id: "interview-1",
+          type: "Recruiter screen",
+          scheduledAt: "2026-05-12T15:00:00.000Z",
+          outcome: "Scheduled",
+          notes: "Ask about team shape"
+        }
+      ]
+    });
+
+    renderApp(createReadOnlyGateway([application]));
+
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
+    await openDetailsSection(user, detail, "Notes");
+    expect(within(detail).queryByLabelText("Application note")).not.toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Add note" }));
+    expect(within(detail).getByLabelText("Application note")).toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Cancel" }));
+    expect(within(detail).queryByLabelText("Application note")).not.toBeInTheDocument();
+
+    await openDetailsSection(user, detail, "Follow-ups");
+    expect(
+      within(detail).queryByRole("group", { name: "Follow-up due date" })
+    ).not.toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Create follow-up" }));
+    expect(
+      within(detail).getByRole("group", { name: "Follow-up due date" })
+    ).toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Cancel" }));
+    expect(
+      within(detail).queryByRole("group", { name: "Follow-up due date" })
+    ).not.toBeInTheDocument();
+
+    await openDetailsSection(user, detail, "Interviews");
+    expect(
+      within(detail).queryByRole("group", { name: "Date and time" })
+    ).not.toBeInTheDocument();
+    await clickFormSubmit(user, detail, "Schedule interview");
+    expect(
+      within(detail).getByRole("group", { name: "Date and time" })
+    ).toBeInTheDocument();
+    expect(within(detail).queryByLabelText("Outcome")).not.toBeInTheDocument();
+    await user.click(within(detail).getByRole("button", { name: "Cancel" }));
+    expect(
+      within(detail).queryByRole("group", { name: "Date and time" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows application timeline events newest first", async () => {
+    const user = userEvent.setup();
+    const application = createApplication({
+      id: "linear",
+      company: "Linear",
+      roleTitle: "Frontend Engineer",
+      stage: "Applied",
+      timeline: [
+        {
+          id: "timeline-1",
+          occurredAt: "2026-05-01T09:00:00.000Z",
+          description: "Saved opportunity"
+        },
+        {
+          id: "timeline-2",
+          occurredAt: "2026-05-03T10:00:00.000Z",
+          description: "Moved from Saved to Applied"
+        },
+        {
+          id: "timeline-3",
+          occurredAt: "2026-05-02T11:00:00.000Z",
+          description: "Added note"
+        }
+      ]
+    });
+
+    renderApp(createReadOnlyGateway([application]));
+
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    await openDetailsSection(user, detail, "Timeline");
+
+    const timeline = within(detail).getByRole("list", { name: "Timeline events" });
+    const events = within(timeline).getAllByRole("listitem");
+
+    expect(events).toHaveLength(3);
+    expect(events[0]).toHaveTextContent("Moved from Saved to Applied");
+    expect(events[1]).toHaveTextContent("Added note");
+    expect(events[2]).toHaveTextContent("Saved opportunity");
+  });
+
+  it("keeps the interview schedule form above existing interviews with a single submit action", async () => {
+    const user = userEvent.setup();
+    const application = createApplication({
+      id: "linear",
+      company: "Linear",
+      roleTitle: "Frontend Engineer",
+      stage: "Applied",
+      interviews: [
+        {
+          id: "interview-1",
+          type: "Recruiter screen",
+          scheduledAt: "2026-05-12T15:00:00.000Z",
+          outcome: "Scheduled",
+          notes: "Ask about team shape"
+        }
+      ]
+    });
+
+    renderApp(createReadOnlyGateway([application]));
+
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    await openDetailsSection(user, detail, "Interviews");
+    await user.click(within(detail).getByRole("button", { name: "Schedule interview" }));
+
+    expect(
+      within(detail).getAllByRole("button", { name: "Schedule interview" })
+    ).toHaveLength(1);
+
+    const form = within(detail).getByRole("group", { name: "Date and time" }).closest("form");
+    const interviewList = within(detail).getByRole("list", {
+      name: "Scheduled interviews"
+    });
+
+    if (!form) {
+      throw new Error("Expected the schedule interview form to be visible.");
+    }
+    expect(
+      form.compareDocumentPosition(interviewList) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("hides active work actions for closed applications while allowing notes", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Add opportunity" }));
+    await user.type(screen.getByLabelText("Company"), "Linear");
+    await user.type(screen.getByLabelText("Role title"), "Frontend Engineer");
+    await user.type(
+      screen.getByLabelText("Posting URL"),
+      "https://linear.app/careers/frontend-engineer"
+    );
+    await user.click(screen.getByRole("button", { name: "Save opportunity" }));
+    await user.click(await screen.findByRole("button", { name: "Mark Linear as applied" }));
+    await user.selectOptions(await screen.findByLabelText("Jump Linear to stage"), "Rejected");
+    await user.click(screen.getByRole("button", { name: "Jump Linear to selected stage" }));
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
+
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+
+    await openDetailsSection(user, detail, "Follow-ups");
+    expect(
+      within(detail).queryByRole("button", { name: "Create follow-up" })
+    ).not.toBeInTheDocument();
+    expect(
+      within(detail).getByText("Reopen this application to create follow-ups.")
+    ).toBeInTheDocument();
+
+    await openDetailsSection(user, detail, "Interviews");
+    expect(
+      within(detail).queryByRole("button", { name: "Schedule interview" })
+    ).not.toBeInTheDocument();
+    expect(
+      within(detail).getByText(
+        "Interviews can only be scheduled for active applications before the offer stage."
+      )
+    ).toBeInTheDocument();
+
+    await openDetailsSection(user, detail, "Notes");
+    expect(within(detail).getByRole("button", { name: "Add note" })).toBeInTheDocument();
+  });
+
   it("shows an application funnel chart above the pipeline board in the main content area", async () => {
     renderApp();
 
@@ -521,6 +815,7 @@ describe("Job application tracker shell", () => {
         name: "https://linear.app/careers/frontend-engineer"
       })
     ).toHaveAttribute("href", "https://linear.app/careers/frontend-engineer");
+    await openDetailsSection(user, detail, "Timeline");
     expect(within(detail).getByText("Saved opportunity")).toBeInTheDocument();
   });
 
@@ -545,12 +840,13 @@ describe("Job application tracker shell", () => {
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Timeline");
     const timeline = within(detail).getByRole("list", { name: "Timeline events" });
     const events = within(timeline).getAllByRole("listitem");
 
     expect(events).toHaveLength(2);
-    expect(events[0]).toHaveTextContent("Saved opportunity");
-    expect(events[1]).toHaveTextContent("Moved from Saved to Applied");
+    expect(within(timeline).getByText("Saved opportunity")).toBeInTheDocument();
+    expect(within(timeline).getByText("Moved from Saved to Applied")).toBeInTheDocument();
   });
 
   it("lets a user schedule an interview for an applied application and see it in details", async () => {
@@ -571,23 +867,25 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "View Linear details" }));
 
-    await user.selectOptions(
-      screen.getByLabelText("Interview type"),
-      "Recruiter screen"
-    );
-    const interviewDateTime = screen.getByRole("group", { name: "Date and time" });
-    await user.type(within(interviewDateTime).getByLabelText("Date"), "2026-05-12");
-    await user.type(within(interviewDateTime).getByLabelText("Time"), "15:00");
-    await user.type(
-      screen.getByLabelText("Interview notes"),
-      "Ask about team shape"
-    );
-    await user.selectOptions(screen.getByLabelText("Outcome"), "Scheduled");
-    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
-
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Interviews");
+    await clickFormSubmit(user, detail, "Schedule interview");
+
+    await user.selectOptions(
+      within(detail).getByLabelText("Interview type"),
+      "Recruiter screen"
+    );
+    const interviewDateTime = within(detail).getByRole("group", { name: "Date and time" });
+    await user.type(within(interviewDateTime).getByLabelText("Date"), "2026-05-12");
+    await user.type(within(interviewDateTime).getByLabelText("Time"), "15:00");
+    await user.type(
+      within(detail).getByLabelText("Interview notes"),
+      "Ask about team shape"
+    );
+    await clickFormSubmit(user, detail, "Schedule interview");
+
     const interviews = within(detail).getByRole("list", {
       name: "Scheduled interviews"
     });
@@ -597,12 +895,13 @@ describe("Job application tracker shell", () => {
     ).toBeInTheDocument();
     expect(within(interviews).getByText("Scheduled")).toBeInTheDocument();
     expect(within(interviews).getByText("Ask about team shape")).toBeInTheDocument();
+    await openDetailsSection(user, detail, "Timeline");
     expect(
       within(detail).getByText("Scheduled Recruiter screen interview")
     ).toBeInTheDocument();
   });
 
-  it("shows an understandable error when scheduling an interview for a saved opportunity", async () => {
+  it("does not offer interview scheduling for a saved opportunity", async () => {
     const user = userEvent.setup();
 
     renderApp();
@@ -619,22 +918,77 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "View Linear details" })
     );
 
-    const interviewDateTime = screen.getByRole("group", { name: "Date and time" });
-    await user.type(within(interviewDateTime).getByLabelText("Date"), "2026-05-12");
-    await user.type(within(interviewDateTime).getByLabelText("Time"), "15:00");
-    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    await openDetailsSection(user, detail, "Interviews");
+
+    expect(
+      within(detail).queryByRole("button", { name: "Schedule interview" })
+    ).not.toBeInTheDocument();
+    expect(
+      within(detail).getByText(
+        "Interviews can only be scheduled for active applications before the offer stage."
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(detail).queryByRole("group", { name: "Date and time" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets a user record an interview outcome separately from scheduling", async () => {
+    const user = userEvent.setup();
+    const application = createApplication({
+      id: "linear",
+      company: "Linear",
+      roleTitle: "Frontend Engineer",
+      stage: "Applied",
+      interviews: [
+        {
+          id: "interview-1",
+          type: "Recruiter screen",
+          scheduledAt: "2026-05-12T15:00:00.000Z",
+          outcome: "Scheduled",
+          notes: "Ask about team shape"
+        }
+      ]
+    });
+
+    renderApp(
+      createGateway({
+        listApplications: async () => [application],
+        recordInterviewOutcome: async (command) => ({
+          ...application,
+          interviews: application.interviews.map((interview) =>
+            interview.id === command.interviewId
+              ? { ...interview, outcome: command.outcome }
+              : interview
+          ),
+          timeline: [
+            ...application.timeline,
+            {
+              id: "timeline-outcome",
+              occurredAt: "2026-05-12T16:00:00.000Z",
+              description: `Recorded ${command.outcome} for Recruiter screen interview`
+            }
+          ]
+        })
+      })
+    );
+
+    await user.click(await screen.findByRole("button", { name: "View Linear details" }));
 
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Interviews");
 
-    expect(
-      await within(detail).findByRole("alert")
-    ).toHaveTextContent(
-      "Interviews can only be scheduled after an opportunity has been applied to."
-    );
-    expect(within(interviewDateTime).getByLabelText("Date")).toHaveValue("2026-05-12");
-    expect(within(interviewDateTime).getByLabelText("Time")).toHaveValue("15:00");
+    await clickFormSubmit(user, detail, "Record outcome");
+    await user.selectOptions(within(detail).getByLabelText("Outcome"), "Passed");
+    await clickFormSubmit(user, detail, "Record outcome");
+
+    expect(await within(detail).findByText("Passed")).toBeInTheDocument();
+    expect(within(detail).queryByText("Scheduled")).not.toBeInTheDocument();
   });
 
   it("shows an understandable error when scheduling an interview without a date", async () => {
@@ -655,15 +1009,16 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "View Linear details" }));
 
-    await user.click(screen.getByRole("button", { name: "Schedule interview" }));
-
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Interviews");
+    await clickFormSubmit(user, detail, "Schedule interview");
+    await clickFormSubmit(user, detail, "Schedule interview");
 
     expect(
       await within(detail).findByRole("alert")
-    ).toHaveTextContent("Interview date and time is required.");
+    ).toHaveTextContent("Interview date and time are required.");
   });
 
   it("lets a user create and complete an upcoming follow-up reminder", async () => {
@@ -684,14 +1039,20 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "View Linear details" }));
 
-    const followUpDueDate = screen.getByRole("group", { name: "Follow-up due date" });
+    const detail = screen.getByRole("complementary", {
+      name: "Application details"
+    });
+    await openDetailsSection(user, detail, "Follow-ups");
+    await clickFormSubmit(user, detail, "Create follow-up");
+
+    const followUpDueDate = within(detail).getByRole("group", { name: "Follow-up due date" });
     await user.type(within(followUpDueDate).getByLabelText("Date"), "2026-05-11");
     await user.type(within(followUpDueDate).getByLabelText("Time"), "12:00");
     await user.type(
-      screen.getByLabelText("Follow-up note"),
+      within(detail).getByLabelText("Follow-up note"),
       "Send recruiter a thank-you note"
     );
-    await user.click(screen.getByRole("button", { name: "Create follow-up" }));
+    await clickFormSubmit(user, detail, "Create follow-up");
 
     const followUpWork = screen.getByRole("region", { name: "Follow-up work" });
     const upcoming = within(followUpWork).getByRole("list", {
@@ -731,25 +1092,27 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "View Linear details" })
     );
 
-    const followUpDueDate = screen.getByRole("group", { name: "Follow-up due date" });
-    await user.type(within(followUpDueDate).getByLabelText("Date"), "2026-05-09");
-    await user.type(within(followUpDueDate).getByLabelText("Time"), "12:00");
-    await user.type(
-      screen.getByLabelText("Follow-up note"),
-      "Send recruiter a thank-you note"
-    );
-    await user.click(screen.getByRole("button", { name: "Create follow-up" }));
-
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Follow-ups");
+    await clickFormSubmit(user, detail, "Create follow-up");
+
+    const followUpDueDate = within(detail).getByRole("group", { name: "Follow-up due date" });
+    await user.type(within(followUpDueDate).getByLabelText("Date"), "2026-05-09");
+    await user.type(within(followUpDueDate).getByLabelText("Time"), "12:00");
+    await user.type(
+      within(detail).getByLabelText("Follow-up note"),
+      "Send recruiter a thank-you note"
+    );
+    await clickFormSubmit(user, detail, "Create follow-up");
 
     expect(
       await within(detail).findByRole("alert")
     ).toHaveTextContent("Follow-up due date must be after the latest interaction.");
     expect(within(followUpDueDate).getByLabelText("Date")).toHaveValue("2026-05-09");
     expect(within(followUpDueDate).getByLabelText("Time")).toHaveValue("12:00");
-    expect(screen.getByLabelText("Follow-up note")).toHaveValue(
+    expect(within(detail).getByLabelText("Follow-up note")).toHaveValue(
       "Send recruiter a thank-you note"
     );
   });
@@ -771,19 +1134,21 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "View Linear details" })
     );
 
-    await user.type(
-      screen.getByLabelText("Follow-up note"),
-      "Send recruiter a thank-you note"
-    );
-    await user.click(screen.getByRole("button", { name: "Create follow-up" }));
-
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Follow-ups");
+    await clickFormSubmit(user, detail, "Create follow-up");
+
+    await user.type(
+      within(detail).getByLabelText("Follow-up note"),
+      "Send recruiter a thank-you note"
+    );
+    await clickFormSubmit(user, detail, "Create follow-up");
 
     expect(
       await within(detail).findByRole("alert")
-    ).toHaveTextContent("Follow-up due date is required.");
+    ).toHaveTextContent("Follow-up date and time are required.");
   });
 
   it("shows details command errors inside the details panel and preserves entered values", async () => {
@@ -792,7 +1157,16 @@ describe("Job application tracker shell", () => {
       id: "linear",
       company: "Linear",
       roleTitle: "Frontend Engineer",
-      stage: "Applied"
+      stage: "Applied",
+      interviews: [
+        {
+          id: "interview-1",
+          type: "Recruiter screen",
+          scheduledAt: "2026-05-12T15:00:00.000Z",
+          outcome: "Scheduled",
+          notes: "Ask about team shape"
+        }
+      ]
     });
 
     renderApp(
@@ -806,6 +1180,9 @@ describe("Job application tracker shell", () => {
         },
         scheduleInterview: async () => {
           throw new Error("Could not schedule the interview right now.");
+        },
+        recordInterviewOutcome: async () => {
+          throw new Error("Could not record the interview outcome right now.");
         }
       })
     );
@@ -816,11 +1193,13 @@ describe("Job application tracker shell", () => {
       name: "Application details"
     });
 
+    await openDetailsSection(user, detail, "Notes");
+    await clickFormSubmit(user, detail, "Add note");
     await user.type(
       within(detail).getByLabelText("Application note"),
       "Recruiter mentioned a platform team opening."
     );
-    await user.click(within(detail).getByRole("button", { name: "Add note" }));
+    await clickFormSubmit(user, detail, "Add note");
 
     expect(await within(detail).findByRole("alert")).toHaveTextContent(
       "Could not add the note right now."
@@ -829,6 +1208,8 @@ describe("Job application tracker shell", () => {
       "Recruiter mentioned a platform team opening."
     );
 
+    await openDetailsSection(user, detail, "Follow-ups");
+    await clickFormSubmit(user, detail, "Create follow-up");
     const followUpDueDate = within(detail).getByRole("group", {
       name: "Follow-up due date"
     });
@@ -838,7 +1219,7 @@ describe("Job application tracker shell", () => {
       within(detail).getByLabelText("Follow-up note"),
       "Ask recruiter for feedback."
     );
-    await user.click(within(detail).getByRole("button", { name: "Create follow-up" }));
+    await clickFormSubmit(user, detail, "Create follow-up");
 
     expect(await within(detail).findByRole("alert")).toHaveTextContent(
       "Could not create the follow-up right now."
@@ -849,6 +1230,8 @@ describe("Job application tracker shell", () => {
       "Ask recruiter for feedback."
     );
 
+    await openDetailsSection(user, detail, "Interviews");
+    await clickFormSubmit(user, detail, "Schedule interview");
     await user.selectOptions(within(detail).getByLabelText("Interview type"), "Technical");
     const interviewDateTime = within(detail).getByRole("group", {
       name: "Date and time"
@@ -859,8 +1242,7 @@ describe("Job application tracker shell", () => {
       within(detail).getByLabelText("Interview notes"),
       "Prepare architecture examples."
     );
-    await user.selectOptions(within(detail).getByLabelText("Outcome"), "No decision");
-    await user.click(within(detail).getByRole("button", { name: "Schedule interview" }));
+    await clickFormSubmit(user, detail, "Schedule interview");
 
     expect(await within(detail).findByRole("alert")).toHaveTextContent(
       "Could not schedule the interview right now."
@@ -870,6 +1252,15 @@ describe("Job application tracker shell", () => {
     expect(within(interviewDateTime).getByLabelText("Time")).toHaveValue("14:30");
     expect(within(detail).getByLabelText("Interview notes")).toHaveValue(
       "Prepare architecture examples."
+    );
+
+    await user.click(within(detail).getByRole("button", { name: "Cancel" }));
+    await clickFormSubmit(user, detail, "Record outcome");
+    await user.selectOptions(within(detail).getByLabelText("Outcome"), "No decision");
+    await clickFormSubmit(user, detail, "Record outcome");
+
+    expect(await within(detail).findByRole("alert")).toHaveTextContent(
+      "Could not record the interview outcome right now."
     );
     expect(within(detail).getByLabelText("Outcome")).toHaveValue("No decision");
   });
@@ -891,15 +1282,18 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "View Linear details" })
     );
 
-    await user.type(
-      screen.getByLabelText("Application note"),
-      "Recruiter mentioned the team is expanding."
-    );
-    await user.click(screen.getByRole("button", { name: "Add note" }));
-
     const detail = screen.getByRole("complementary", {
       name: "Application details"
     });
+    await openDetailsSection(user, detail, "Notes");
+    await clickFormSubmit(user, detail, "Add note");
+
+    await user.type(
+      within(detail).getByLabelText("Application note"),
+      "Recruiter mentioned the team is expanding."
+    );
+    await clickFormSubmit(user, detail, "Add note");
+
     const notes = within(detail).getByRole("list", {
       name: "Application notes"
     });
@@ -907,6 +1301,7 @@ describe("Job application tracker shell", () => {
     expect(
       await within(notes).findByText("Recruiter mentioned the team is expanding.")
     ).toBeInTheDocument();
+    await openDetailsSection(user, detail, "Timeline");
     expect(within(detail).getByText("Added note")).toBeInTheDocument();
   });
 

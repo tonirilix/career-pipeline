@@ -97,6 +97,7 @@ func main() {
 	createAppUC := usecases.NewCreateApplication(appRepo, timelineRepo, clock, ids)
 	advanceStageUC := usecases.NewAdvanceStage(transactor, clock, ids)
 	scheduleInterviewUC := usecases.NewScheduleInterview(transactor, clock, ids)
+	recordOutcomeUC := usecases.NewRecordInterviewOutcome(transactor, clock, ids)
 	addFollowUpUC := usecases.NewAddFollowUp(transactor, clock, ids)
 	completeFollowUpUC := usecases.NewCompleteFollowUp(transactor, clock, ids)
 	addNoteUC := usecases.NewAddNote(transactor, clock, ids)
@@ -107,6 +108,7 @@ func main() {
 		CreateApplicationUC: createAppUC,
 		AdvanceStageUC:      advanceStageUC,
 		ScheduleInterviewUC: scheduleInterviewUC,
+		RecordOutcomeUC:     recordOutcomeUC,
 		AddFollowUpUC:       addFollowUpUC,
 		CompleteFollowUpUC:  completeFollowUpUC,
 		AddNoteUC:           addNoteUC,

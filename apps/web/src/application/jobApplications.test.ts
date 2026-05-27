@@ -7,6 +7,7 @@ import {
   completeApplicationFollowUpReminder,
   createApplicationFollowUpReminder,
   createSavedOpportunity,
+  recordApplicationInterviewOutcome,
   scheduleApplicationInterview
 } from "./jobApplications";
 
@@ -17,6 +18,7 @@ describe("job application use cases", () => {
       createSavedOpportunity: vi.fn(),
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       createFollowUpReminder: vi.fn(),
       completeFollowUpReminder: vi.fn(),
       addApplicationNote: vi.fn()
@@ -63,6 +65,7 @@ describe("job application use cases", () => {
       }),
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       createFollowUpReminder: vi.fn(),
       completeFollowUpReminder: vi.fn(),
       addApplicationNote: vi.fn()
@@ -123,6 +126,7 @@ describe("job application use cases", () => {
         notes: []
       }),
       scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       createFollowUpReminder: vi.fn(),
       completeFollowUpReminder: vi.fn(),
       addApplicationNote: vi.fn()
@@ -151,6 +155,7 @@ describe("job application use cases", () => {
       listApplications: vi.fn(),
       createSavedOpportunity: vi.fn(),
       advanceApplicationStage: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       scheduleInterview: vi.fn().mockResolvedValue({
         id: "job-1",
         company: "Linear",
@@ -189,16 +194,14 @@ describe("job application use cases", () => {
       applicationId: "job-1",
       type: "Recruiter screen",
       scheduledAt: "2026-05-12T15:00:00.000Z",
-      notes: "Ask about team shape",
-      outcome: "Scheduled"
+      notes: "Ask about team shape"
     });
 
     expect(gateway.scheduleInterview).toHaveBeenCalledWith({
       applicationId: "job-1",
       type: "Recruiter screen",
       scheduledAt: "2026-05-12T15:00:00.000Z",
-      notes: "Ask about team shape",
-      outcome: "Scheduled"
+      notes: "Ask about team shape"
     });
     expect(result).toMatchObject({
       ok: true,
@@ -214,12 +217,78 @@ describe("job application use cases", () => {
     });
   });
 
+  it("records interview outcomes through the gateway port", async () => {
+    const gateway: JobApplicationGateway = {
+      listApplications: vi.fn(),
+      createSavedOpportunity: vi.fn(),
+      advanceApplicationStage: vi.fn(),
+      scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn().mockResolvedValue({
+        id: "job-1",
+        company: "Linear",
+        roleTitle: "Frontend Engineer",
+        postingUrl: "https://linear.app/careers/frontend-engineer",
+        source: "Referral",
+        location: "Remote",
+        compensation: "$160k-$190k",
+        employmentType: "Full-time",
+        stage: "Applied",
+        timeline: [
+          {
+            id: "event-1",
+            occurredAt: "2026-05-13T01:00:00.000Z",
+            description: "Recorded interview outcome: Passed"
+          }
+        ],
+        interviews: [
+          {
+            id: "interview-1",
+            type: "Recruiter screen",
+            scheduledAt: "2026-05-12T15:00:00.000Z",
+            notes: "Ask about team shape",
+            outcome: "Passed"
+          }
+        ],
+        followUps: [],
+        notes: []
+      }),
+      createFollowUpReminder: vi.fn(),
+      completeFollowUpReminder: vi.fn(),
+      addApplicationNote: vi.fn()
+    };
+
+    const result = await recordApplicationInterviewOutcome(gateway, {
+      applicationId: "job-1",
+      interviewId: "interview-1",
+      outcome: "Passed"
+    });
+
+    expect(gateway.recordInterviewOutcome).toHaveBeenCalledWith({
+      applicationId: "job-1",
+      interviewId: "interview-1",
+      outcome: "Passed"
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      application: {
+        id: "job-1",
+        interviews: [
+          {
+            id: "interview-1",
+            outcome: "Passed"
+          }
+        ]
+      }
+    });
+  });
+
   it("creates follow-up reminders through the gateway port", async () => {
     const gateway: JobApplicationGateway = {
       listApplications: vi.fn(),
       createSavedOpportunity: vi.fn(),
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       createFollowUpReminder: vi.fn().mockResolvedValue({
         id: "job-1",
         company: "Linear",
@@ -284,6 +353,7 @@ describe("job application use cases", () => {
       createSavedOpportunity: vi.fn(),
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       createFollowUpReminder: vi.fn(),
       completeFollowUpReminder: vi.fn().mockResolvedValue({
         id: "job-1",
@@ -346,6 +416,7 @@ describe("job application use cases", () => {
       createSavedOpportunity: vi.fn(),
       advanceApplicationStage: vi.fn(),
       scheduleInterview: vi.fn(),
+      recordInterviewOutcome: vi.fn(),
       createFollowUpReminder: vi.fn(),
       completeFollowUpReminder: vi.fn(),
       addApplicationNote: vi.fn().mockResolvedValue({

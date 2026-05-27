@@ -7,6 +7,107 @@ describe("GraphQL job application gateway", () => {
     vi.restoreAllMocks();
   });
 
+  it("schedules interviews without sending an outcome", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            scheduleInterview: graphqlApplication({
+              interviews: [
+                {
+                  __typename: "Interview",
+                  id: "interview-1",
+                  type: "Recruiter screen",
+                  scheduledAt: "2026-05-12T15:00:00.000Z",
+                  notes: "Ask about team shape",
+                  outcome: "Scheduled"
+                }
+              ]
+            })
+          }
+        })
+      )
+    );
+
+    const gateway = createJobApplicationGraphqlGateway("https://api.example.test/graphql");
+
+    const result = await gateway.scheduleInterview({
+      applicationId: "job-1",
+      type: "Recruiter screen",
+      scheduledAt: "2026-05-12T15:00:00.000Z",
+      notes: "Ask about team shape"
+    });
+
+    expect(result.interviews).toEqual([
+      {
+        id: "interview-1",
+        type: "Recruiter screen",
+        scheduledAt: "2026-05-12T15:00:00.000Z",
+        notes: "Ask about team shape",
+        outcome: "Scheduled"
+      }
+    ]);
+    expect(fetch).toHaveBeenCalledWith(
+      "https://api.example.test/graphql",
+      expect.objectContaining({
+        body: expect.stringContaining('"operationName":"ScheduleInterview"')
+      })
+    );
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body)).variables.input).toEqual({
+      applicationId: "job-1",
+      type: "Recruiter screen",
+      scheduledAt: "2026-05-12T15:00:00.000Z",
+      notes: "Ask about team shape"
+    });
+  });
+
+  it("records interview outcomes as a separate GraphQL operation", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            recordInterviewOutcome: graphqlApplication({
+              interviews: [
+                {
+                  __typename: "Interview",
+                  id: "interview-1",
+                  type: "Recruiter screen",
+                  scheduledAt: "2026-05-12T15:00:00.000Z",
+                  notes: "Ask about team shape",
+                  outcome: "Passed"
+                }
+              ]
+            })
+          }
+        })
+      )
+    );
+
+    const gateway = createJobApplicationGraphqlGateway("https://api.example.test/graphql");
+
+    const result = await gateway.recordInterviewOutcome({
+      applicationId: "job-1",
+      interviewId: "interview-1",
+      outcome: "Passed"
+    });
+
+    expect(result.interviews[0]).toMatchObject({
+      id: "interview-1",
+      outcome: "Passed"
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "https://api.example.test/graphql",
+      expect.objectContaining({
+        body: expect.stringContaining('"operationName":"RecordInterviewOutcome"')
+      })
+    );
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body)).variables.input).toEqual({
+      applicationId: "job-1",
+      interviewId: "interview-1",
+      outcome: "Passed"
+    });
+  });
+
   it("maps transport application records into domain applications", async () => {
     const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -141,3 +242,23 @@ describe("GraphQL job application gateway", () => {
     ).rejects.toThrow("invalid stage transition");
   });
 });
+
+function graphqlApplication(overrides = {}) {
+  return {
+    __typename: "JobApplication",
+    id: "job-1",
+    company: "Linear",
+    roleTitle: "Frontend Engineer",
+    postingUrl: "https://linear.app/careers/frontend-engineer",
+    source: "Referral",
+    location: "Remote",
+    compensation: "$160k-$190k",
+    employmentType: "Full-time",
+    stage: "Applied",
+    timeline: [],
+    interviews: [],
+    followUps: [],
+    notes: [],
+    ...overrides
+  };
+}
