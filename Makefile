@@ -1,4 +1,4 @@
-.PHONY: help dev dev-api dev-web dev-web-api build build-api build-web test test-api test-web db-up db-down db-reset codegen-api codegen-web
+.PHONY: help dev dev-api dev-web dev-web-api build build-api build-web test test-api test-web db-up db-down db-reset codegen-api codegen-web docker-dev docker-down docker-build docker-prod
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*##"}; {printf "  %-15s %s\n", $$1, $$2}'
@@ -47,6 +47,21 @@ codegen-api: ## Run Go code generation (gqlgen, etc.)
 
 codegen-web: ## Generate GraphQL types for the frontend
 	npm run graphql:codegen -w apps/web
+
+## Docker
+
+docker-dev: ## Start full stack in Docker with hot reload (api + web + postgres)
+	docker compose up --build
+
+docker-down: ## Stop and remove all Docker containers (dev and prod)
+	docker compose down
+	docker compose -f compose.prod.yaml down
+
+docker-build: ## Build production Docker images without starting containers
+	docker compose -f compose.prod.yaml build
+
+docker-prod: ## Run production images locally for smoke testing
+	docker compose -f compose.prod.yaml up --build
 
 ## Database
 

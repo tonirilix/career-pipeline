@@ -192,3 +192,31 @@ make build-web   # Vite bundle only → apps/web/dist/
 ```
 
 See [`apps/api/README.md`](apps/api/README.md) for full backend documentation.
+
+## Docker
+
+Docker is an alternative to the native dev workflow — useful for contributors who don't want to install Go or Node locally. Both modes use the same Dockerfiles with different build targets.
+
+> **Note:** Native and Docker stacks use the same ports (8080, 5173). Don't run both at the same time.
+
+### Development (hot reload)
+
+```sh
+make docker-dev    # build images and start postgres + api + web with hot reload
+make docker-down   # stop and remove all containers
+```
+
+- Go API recompiles automatically on `.go` file changes via `air`
+- React frontend updates instantly via Vite HMR
+- Source edits on the host reflect inside containers immediately (volume mounts)
+
+### Production smoke testing
+
+```sh
+make docker-build  # build production images only (no containers started)
+make docker-prod   # build and run production images locally
+```
+
+The production stack runs the compiled Go binary (no Go toolchain) and serves the Vite bundle via nginx on port 80. Use this to verify the production images before pushing to a registry.
+
+To deploy, push the images built by `make docker-build` to a container registry (Docker Hub, ECR, GCR, etc.) and run them on any container-capable platform.
