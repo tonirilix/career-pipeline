@@ -1,0 +1,5 @@
+mutation CompleteFollowUpReminder($input: CompleteFollowUpReminderInput!) {
+  completeFollowUpReminder(input: $input) {
+    ...JobApplicationFields
+  }
+}

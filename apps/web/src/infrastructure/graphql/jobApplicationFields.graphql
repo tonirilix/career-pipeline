@@ -1,0 +1,35 @@
+fragment JobApplicationFields on JobApplication {
+  id
+  company
+  roleTitle
+  postingUrl
+  source
+  location
+  compensation
+  employmentType
+  stage
+  timeline {
+    id
+    occurredAt
+    description
+  }
+  interviews {
+    id
+    type
+    scheduledAt
+    notes
+    outcome
+  }
+  followUps {
+    id
+    applicationId
+    dueAt
+    note
+    completedAt
+  }
+  notes {
+    id
+    body
+    createdAt
+  }
+}

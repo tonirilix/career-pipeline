@@ -196,6 +196,43 @@ describe("frontend architecture boundaries", () => {
     expect(source).not.toMatch(/function\s+compareFollowUpItems\b/);
     expect(source).not.toContain("normalizedSearchTerm");
   });
+
+  it("keeps generated GraphQL artifacts inside the GraphQL infrastructure adapter", () => {
+    const violations = sourceFilesIn(".").flatMap((filePath) =>
+      importsFrom(filePath)
+        .filter(
+          (specifier) =>
+            specifier.includes("infrastructure/graphql/generated") ||
+            specifier.endsWith("/generated") ||
+            specifier === "./generated"
+        )
+        .filter(
+          () =>
+            !relativeToSource(filePath).startsWith(
+              `infrastructure${sep}graphql${sep}`
+            )
+        )
+        .map((specifier) => `${relativeToSource(filePath)} imports ${specifier}`)
+    );
+
+    expect(violations).toEqual([]);
+  });
+
+  it("keeps GraphQL operation documents inside the GraphQL infrastructure adapter", () => {
+    const violations = sourceFilesIn(".").flatMap((filePath) =>
+      importsFrom(filePath)
+        .filter((specifier) => specifier.includes(".graphql"))
+        .filter(
+          () =>
+            !relativeToSource(filePath).startsWith(
+              `infrastructure${sep}graphql${sep}`
+            )
+        )
+        .map((specifier) => `${relativeToSource(filePath)} imports ${specifier}`)
+    );
+
+    expect(violations).toEqual([]);
+  });
 });
 
 function sourceFilesIn(directory: string) {
