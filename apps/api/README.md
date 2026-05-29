@@ -16,7 +16,7 @@ A Go backend for Career Pipeline. Exposes a GraphQL API consumed by `apps/web`.
 Follows hexagonal architecture with four explicit layers:
 
 ```text
-cmd/api/                        <- entrypoint, wiring
+cmd/api/                        <- thin executable entrypoint
 graph/
   schema.graphqls               <- GraphQL schema (source of truth)
   generated.go                  <- gqlgen-generated types
@@ -24,12 +24,15 @@ graph/
     schema.resolvers.go         <- thin: parse input -> call use case -> map result
     mapping.go                  <- domain structs -> GraphQL DTOs
 internal/
+  bootstrap/                     <- database open, embedded migrations, seed decisions
+  composition/                   <- explicit adapter/use-case/resolver wiring
+  config/                        <- runtime env configuration
+  server/                        <- GraphQL HTTP handler, playground, CORS
   domain/                       <- pure business rules, no imports from other layers
   application/
     ports/                      <- repository and supporting interfaces
     usecases/                   <- one file per use case
   infrastructure/
-    migrations/                 <- SQL migration files (up + down)
     persistence/                <- PostgreSQL repository adapters (sqlc-backed)
       queries/                  <- SQL query files (source of truth for query generation)
       db/                       <- sqlc-generated typed query functions (do not edit)
@@ -37,6 +40,8 @@ internal/
 
 Dependency direction: `resolvers -> usecases -> domain <- persistence`.
 Neither domain nor use cases import gqlgen or `database/sql`.
+
+`cmd/api/main.go` is intentionally thin: it parses flags, loads configuration, prepares the database, composes dependencies, builds the HTTP handler, and starts the server.
 
 ## Running Locally
 
@@ -92,8 +97,8 @@ Open `http://localhost:8080/` in a browser.
 ## Building
 
 ```sh
-go build -o api ./cmd/api
-DATABASE_URL="postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable" ./api
+make build
+DATABASE_URL="postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable" ./bin/api
 ```
 
 ## Tests
@@ -131,6 +136,8 @@ make sqlc       # regenerate typed query code from queries/*.sql
 ## Query generation
 
 SQL queries live in `.sql` files under `internal/infrastructure/persistence/queries/`. sqlc reads those files and the database schema (from `internal/infrastructure/migrations/`) and generates typed Go functions into `internal/infrastructure/persistence/db/`.
+
+Runtime migrations are embedded from `internal/bootstrap/migrations/`; keep them in sync with `internal/infrastructure/migrations/` when changing schema files.
 
 When to run `make sqlc`:
 - After adding or changing a query in any `queries/*.sql` file
@@ -182,7 +189,7 @@ Subsequent starts skip step 3. Existing data is never overwritten.
 
 ### Seed data
 
-The seed file is `cmd/api/seed.sql`. It inserts one application per pipeline stage so every part of the UI is exercisable immediately:
+The runtime seed file is `internal/bootstrap/seed.sql`. It inserts one application per pipeline stage so every part of the UI is exercisable immediately:
 
 | ID | Company | Stage | Notes |
 |---|---|---|---|
@@ -212,9 +219,9 @@ make seed
 
 ### Migration files
 
-Migration files appear under both `cmd/api/migrations/` and `internal/infrastructure/migrations/`:
+Migration files appear under both `internal/bootstrap/migrations/` and `internal/infrastructure/migrations/`:
 
-- `cmd/api/migrations/` - embedded into the binary via `//go:embed` and run at startup by the server.
+- `internal/bootstrap/migrations/` - embedded into the binary via `//go:embed` and run at startup by the server.
 - `internal/infrastructure/migrations/` - kept as infrastructure migration source for tests and review.
 
 Both sets of files must be kept in sync. When adding a migration, create the numbered `.up.sql` / `.down.sql` pair in both locations.
@@ -225,5 +232,5 @@ golang-migrate supports down migrations but the server does not expose a rollbac
 
 ```sh
 go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-migrate -source file://cmd/api/migrations -database "$DATABASE_URL" down 1
+migrate -source file://internal/bootstrap/migrations -database "$DATABASE_URL" down 1
 ```

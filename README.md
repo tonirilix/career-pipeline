@@ -6,8 +6,8 @@ A full-stack job application tracker with a React frontend, Go GraphQL backend, 
 
 | Path | Description |
 |---|---|
-| `apps/web` | React + Vite frontend |
-| `apps/api` | Go GraphQL backend |
+| `apps/web` | React 19 + Vite frontend |
+| `apps/api` | Go GraphQL backend with PostgreSQL persistence |
 
 ## Architecture
 
@@ -18,6 +18,8 @@ Career Pipeline intentionally uses hexagonal architecture to keep domain rules, 
 ### Frontend (`apps/web`)
 
 Ports point inward as interfaces; adapters sit outside and implement them. `main.tsx` wires the concrete adapters into React at startup.
+
+The frontend uses TanStack Query for server state, Zustand only for presentation control state, and GraphQL Code Generator to type frontend-owned GraphQL operation documents from the backend schema.
 
 ```mermaid
 flowchart LR
@@ -62,6 +64,8 @@ flowchart LR
 ### Backend (`apps/api`)
 
 Follows the same hexagonal architecture: domain → application (use cases + ports) → infrastructure (PostgreSQL adapters) → GraphQL adapter (gqlgen resolvers).
+
+The executable entrypoint stays thin. Runtime configuration, database bootstrap, dependency composition, and HTTP server setup live in focused internal modules so `cmd/api/main.go` remains process orchestration rather than a mixed wiring script.
 
 ```mermaid
 flowchart LR
@@ -116,8 +120,9 @@ flowchart TB
 
 ### Prerequisites
 
-- Node.js 20+
-- Go 1.22+
+- Node.js 24.15+ recommended
+- Go 1.26+
+- Docker, for the local PostgreSQL database
 
 ### Install dependencies
 
@@ -135,11 +140,12 @@ npm run dev --workspace apps/web
 
 ### Run frontend against the real Go backend
 
-Start the Go server first:
+Start PostgreSQL and the Go server first:
 
 ```sh
 cd apps/api
-go run ./cmd/api
+make db-up
+make run
 ```
 
 Then start the frontend in production mode (MSW disabled):
@@ -169,12 +175,22 @@ npm test --workspace apps/web
 cd apps/api && go test ./...
 ```
 
+### Generate GraphQL types
+
+Frontend GraphQL operation types are generated from `apps/api/graph/schema.graphqls`:
+
+```sh
+npm run graphql:codegen --workspace apps/web
+```
+
+The frontend build verifies generated artifacts are current.
+
 ### Build the Go binary
 
 ```sh
 cd apps/api
-go build -o api ./cmd/api
-./api
+make build
+DATABASE_URL="postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable" ./bin/api
 ```
 
 See [`apps/api/README.md`](apps/api/README.md) for full backend documentation.
