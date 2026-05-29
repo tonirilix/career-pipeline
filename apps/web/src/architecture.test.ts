@@ -153,6 +153,49 @@ describe("frontend architecture boundaries", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("keeps Job Application projections as pure presentation logic", () => {
+    const projectionFile = resolve(
+      sourceRoot,
+      "presentation/jobApplicationProjections.ts"
+    );
+
+    expect(
+      findForbiddenReferences([projectionFile], [
+        "@tanstack/react-query",
+        "infrastructure",
+        "React",
+        "react",
+        "zustand",
+        "graphql",
+        "msw",
+        "fetch",
+        "window",
+        "document",
+        "localStorage",
+        "sessionStorage",
+        "navigator",
+        "useMutation",
+        "useQuery",
+        "useQueryClient"
+      ])
+    ).toEqual([]);
+  });
+
+  it("keeps usePipelineWorkspace composed with centralized projections", () => {
+    const source = readFileSync(
+      resolve(sourceRoot, "presentation/pipelineWorkspace.ts"),
+      "utf8"
+    );
+
+    expect(source).toContain("./jobApplicationProjections");
+    expect(source).toContain("projectJobApplications");
+    expect(source).not.toMatch(/function\s+sortApplications\b/);
+    expect(source).not.toMatch(/function\s+latestActivityTime\b/);
+    expect(source).not.toMatch(/function\s+earliestActiveFollowUpTime\b/);
+    expect(source).not.toMatch(/function\s+compareFollowUpItems\b/);
+    expect(source).not.toContain("normalizedSearchTerm");
+  });
 });
 
 function sourceFilesIn(directory: string) {
