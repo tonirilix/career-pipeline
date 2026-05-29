@@ -1,0 +1,5 @@
+mutation RecordInterviewOutcome($input: RecordInterviewOutcomeInput!) {
+  recordInterviewOutcome(input: $input) {
+    ...JobApplicationFields
+  }
+}

@@ -5,9 +5,11 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:api": "vite --mode production --host 0.0.0.0",
+    "graphql:codegen": "graphql-codegen --config codegen.ts",
+    "graphql:codegen:check": "graphql-codegen --config codegen.ts && git diff --exit-code -- src/infrastructure/graphql/generated.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "tsc -b && vite build"
+    "build": "npm run graphql:codegen:check && tsc -b && vite build"
   },
   "dependencies": {
     "@nivo/core": "^0.99.0",
@@ -25,6 +27,9 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^7.1.0",
+    "@graphql-codegen/typescript": "^6.0.2",
+    "@graphql-codegen/typescript-operations": "^6.0.3",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
@@ -32,6 +37,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "graphql": "^16.14.0",
     "jsdom": "^27.3.0",
     "msw": "^2.14.5",
     "tailwindcss": "^4.3.0",

@@ -18,27 +18,25 @@ type CreateApplicationCommand struct {
 }
 
 type CreateApplication struct {
-	apps     ports.JobApplicationRepository
-	timeline ports.TimelineRepository
-	clock    ports.Clock
-	ids      ports.IDGenerator
+	tx    ports.Transactor
+	clock ports.Clock
+	ids   ports.IDGenerator
 }
 
 func NewCreateApplication(
-	apps ports.JobApplicationRepository,
-	timeline ports.TimelineRepository,
+	tx ports.Transactor,
 	clock ports.Clock,
 	ids ports.IDGenerator,
 ) *CreateApplication {
-	return &CreateApplication{apps: apps, timeline: timeline, clock: clock, ids: ids}
+	return &CreateApplication{tx: tx, clock: clock, ids: ids}
 }
 
 func (uc *CreateApplication) Execute(cmd CreateApplicationCommand) (*domain.JobApplication, error) {
 	if strings.TrimSpace(cmd.Company) == "" {
-		return nil, domain.ErrNoteBodyEmpty
+		return nil, domain.ErrCompanyRequired
 	}
 	if strings.TrimSpace(cmd.RoleTitle) == "" {
-		return nil, domain.ErrNoteBodyEmpty
+		return nil, domain.ErrRoleTitleRequired
 	}
 
 	now := uc.clock.Now()
@@ -55,19 +53,25 @@ func (uc *CreateApplication) Execute(cmd CreateApplicationCommand) (*domain.JobA
 		CreatedAt:      now,
 	}
 
-	if err := uc.apps.Save(app); err != nil {
-		return nil, err
-	}
-
 	event := &domain.TimelineEvent{
 		ID:          uc.ids.New(),
 		OccurredAt:  now,
 		Description: "Saved opportunity",
 	}
-	if err := uc.timeline.Save(app.ID, event); err != nil {
+
+	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
+		if err := repos.Applications.Save(app); err != nil {
+			return err
+		}
+		if err := repos.Timeline.Save(app.ID, event); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
-	app.Timeline = []domain.TimelineEvent{*event}
 
+	app.Timeline = []domain.TimelineEvent{*event}
 	return app, nil
 }

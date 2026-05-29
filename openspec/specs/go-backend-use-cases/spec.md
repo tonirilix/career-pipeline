@@ -3,9 +3,7 @@
 ## Purpose
 
 Application layer for the Go backend. Defines repository and supporting port interfaces, and implements all command and query use cases. Use cases orchestrate domain rules, call ports, and never import infrastructure or transport packages.
-
 ## Requirements
-
 ### Requirement: Repository port interfaces
 The system SHALL define Go interfaces in `internal/application/ports/` for all repository operations: `JobApplicationRepository`, `InterviewRepository`, `FollowUpRepository`, `NoteRepository`, `TimelineRepository`. Each interface SHALL define only the methods required by use cases.
 
@@ -21,15 +19,23 @@ The system SHALL define interfaces for: `Clock` (returns current time), `IDGener
 - **THEN** the use case SHALL use that time for all timestamp fields without calling time.Now() directly
 
 ### Requirement: Create application use case
-The system SHALL implement a `CreateApplication` use case that accepts a command with company, roleTitle, postingUrl, source, location, compensation, and employmentType, creates a `JobApplication` with stage Saved, persists it, creates an initial timeline event, and returns the created application.
+The system SHALL implement a `CreateApplication` use case that accepts a command with company, roleTitle, postingUrl, source, location, compensation, and employmentType, validates required intake fields, creates a `JobApplication` with stage Saved, persists it, creates an initial timeline event, and returns the created application. The Job Application write and initial timeline event write SHALL execute atomically through the transaction seam.
 
 #### Scenario: Application is created with Saved stage
 - **WHEN** CreateApplication is called with valid inputs
 - **THEN** the returned application SHALL have stage Saved and a createdAt set by the Clock port
 
-#### Scenario: Missing required fields return an error
-- **WHEN** CreateApplication is called with an empty company or roleTitle
-- **THEN** it SHALL return a domain error without persisting anything
+#### Scenario: Missing company returns a domain error
+- **WHEN** CreateApplication is called with an empty company
+- **THEN** it SHALL return `ErrCompanyRequired` and make no persistence changes
+
+#### Scenario: Missing role title returns a domain error
+- **WHEN** CreateApplication is called with an empty roleTitle
+- **THEN** it SHALL return `ErrRoleTitleRequired` and make no persistence changes
+
+#### Scenario: Initial timeline failure rolls back application creation
+- **WHEN** CreateApplication saves the Job Application but fails while saving the initial timeline event
+- **THEN** the entire workflow SHALL be rolled back with no persisted Job Application
 
 ### Requirement: Advance stage use case
 The system SHALL implement an `AdvanceStage` use case that accepts applicationId and newStage, validates the transition, updates the application stage, creates a timeline event, deactivates open follow-ups if the new stage is Rejected or Withdrawn, and returns the updated application.
@@ -122,3 +128,4 @@ The system SHALL implement read use cases for: `GetApplication` (by id), `ListAp
 #### Scenario: ListOverdueFollowUps returns past incomplete items
 - **WHEN** ListOverdueFollowUps is called
 - **THEN** only follow-ups with dueAt before now and completedAt nil are returned
+

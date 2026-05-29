@@ -1,12 +1,8 @@
 import { type FormEvent, useMemo, useState } from "react";
 
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
-import {
-  applicationStages,
-  type ApplicationStage
-} from "../domain/applicationStage";
+import type { ApplicationStage } from "../domain/applicationStage";
 import type { AddApplicationNoteCommand } from "../domain/applicationNote";
-import { isActiveApplication } from "../domain/closedWork";
 import type {
   CompleteFollowUpReminderCommand,
   CreateFollowUpReminderCommand
@@ -14,29 +10,21 @@ import type {
 import {
   type CreateSavedJobOpportunityCommand,
   type FieldError,
-  type FollowUpReminder,
   type JobApplication
 } from "../domain/jobOpportunity";
 import type {
   RecordInterviewOutcomeCommand,
   ScheduleInterviewCommand
 } from "../domain/interviewScheduling";
-import type {
-  PipelineSortOption,
-  UsePipelineControls
-} from "./ports/pipelineControls";
 import type { DetailsCommandError } from "./components/ApplicationDetails";
+import { projectJobApplications } from "./jobApplicationProjections";
+import type { UsePipelineControls } from "./ports/pipelineControls";
 import { useJobApplications } from "./useJobApplications";
 export type { CommandStatus } from "./useJobApplications";
 
 type BoardCommandError = {
   title: string;
   message: string;
-};
-
-type FollowUpWorkItem = {
-  application: JobApplication;
-  followUp: FollowUpReminder;
 };
 
 const emptyForm: CreateSavedJobOpportunityCommand = {
@@ -67,48 +55,29 @@ export function usePipelineWorkspace(
 
   const { applications } = jobApps;
 
-  const activeApplicationCount = applications.filter(isActiveApplication).length;
-  const stageCounts = useMemo(
+  const {
+    activeApplicationCount,
+    overdueFollowUpItems,
+    selectedApplication,
+    stageCounts,
+    upcomingFollowUpItems,
+    visibleApplications
+  } = useMemo(
     () =>
-      applicationStages.map((stage) => ({
-        stage,
-        count: applications.filter((application) => application.stage === stage).length
-      })),
-    [applications]
-  );
-
-  const normalizedSearchTerm = controls.searchTerm.trim().toLowerCase();
-  const visibleApplications = sortApplications(
-    applications.filter(
-      (application) =>
-        (controls.stageFilter === "All" || application.stage === controls.stageFilter) &&
-        (controls.sourceFilter === "All" || application.source === controls.sourceFilter) &&
-        (!normalizedSearchTerm ||
-          application.company.toLowerCase().includes(normalizedSearchTerm) ||
-          application.roleTitle.toLowerCase().includes(normalizedSearchTerm))
-    ),
-    controls.sortBy
-  );
-
-  const selectedApplication = applications.find(
-    (application) => application.id === selectedApplicationId
-  );
-
-  const activeFollowUpItems = applications
-    .filter(isActiveApplication)
-    .flatMap((application) =>
-      application.followUps
-        .filter((followUp) => !followUp.completedAt)
-        .map((followUp) => ({ application, followUp }))
-    )
-    .sort(compareFollowUpItems);
-
-  const now = Date.now();
-  const overdueFollowUpItems = activeFollowUpItems.filter(
-    ({ followUp }) => new Date(followUp.dueAt).getTime() < now
-  );
-  const upcomingFollowUpItems = activeFollowUpItems.filter(
-    ({ followUp }) => new Date(followUp.dueAt).getTime() >= now
+      projectJobApplications({
+        applications,
+        controls,
+        now: Date.now(),
+        selectedApplicationId
+      }),
+    [
+      applications,
+      controls.searchTerm,
+      controls.sortBy,
+      controls.sourceFilter,
+      controls.stageFilter,
+      selectedApplicationId
+    ]
   );
 
   async function submitOpportunity(event: FormEvent<HTMLFormElement>) {
@@ -264,45 +233,4 @@ function loadCommandError(isLoadError: boolean): BoardCommandError | null {
     title: "Applications could not load",
     message: "Refresh the page or try again in a moment."
   };
-}
-
-function compareFollowUpItems(left: FollowUpWorkItem, right: FollowUpWorkItem) {
-  return new Date(left.followUp.dueAt).getTime() - new Date(right.followUp.dueAt).getTime();
-}
-
-function sortApplications(applications: JobApplication[], sortBy: PipelineSortOption) {
-  if (sortBy === "created") return applications;
-
-  return [...applications].sort((left, right) => {
-    if (sortBy === "lastActivity") {
-      return latestActivityTime(right) - latestActivityTime(left);
-    }
-    return earliestActiveFollowUpTime(left) - earliestActiveFollowUpTime(right);
-  });
-}
-
-function latestActivityTime(application: JobApplication) {
-  return Math.max(
-    ...application.timeline.map((event) => dateTimeOrZero(event.occurredAt)),
-    0
-  );
-}
-
-function earliestActiveFollowUpTime(application: JobApplication) {
-  const activeDueTimes = application.followUps
-    .filter((followUp) => !followUp.completedAt)
-    .map((followUp) => dateTimeOrInfinity(followUp.dueAt));
-
-  if (activeDueTimes.length === 0) return Number.POSITIVE_INFINITY;
-  return Math.min(...activeDueTimes);
-}
-
-function dateTimeOrZero(value: string) {
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : 0;
-}
-
-function dateTimeOrInfinity(value: string) {
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : Number.POSITIVE_INFINITY;
 }

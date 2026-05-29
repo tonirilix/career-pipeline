@@ -1,0 +1,5 @@
+mutation CreateSavedOpportunity($input: CreateSavedOpportunityInput!) {
+  createSavedOpportunity(input: $input) {
+    ...JobApplicationFields
+  }
+}

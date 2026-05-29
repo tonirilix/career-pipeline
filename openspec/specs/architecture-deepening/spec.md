@@ -17,6 +17,10 @@ The backend application layer SHALL provide one module responsible for assemblin
 ### Requirement: Backend multi-step workflows are atomic
 Backend Job Application workflows that write more than one persisted record SHALL execute those writes atomically.
 
+#### Scenario: Application creation rolls back on timeline failure
+- **WHEN** creating a Job Application succeeds at saving the application but fails while writing the initial timeline event
+- **THEN** the entire workflow SHALL be rolled back with no partial persistence
+
 #### Scenario: Stage advance rolls back on later failure
 - **WHEN** advancing a Job Application stage succeeds at updating the stage but fails while writing a timeline event or deactivating follow-up reminders
 - **THEN** the entire workflow SHALL be rolled back with no partial persistence
@@ -65,4 +69,23 @@ The test suite SHALL include architecture or module-level tests that prevent the
 #### Scenario: MSW does not own mock backend state
 - **WHEN** frontend architecture tests run
 - **THEN** MSW handler modules SHALL NOT own mutable Job Application mock state
+
+#### Scenario: Application details workspace remains decomposed
+- **WHEN** frontend architecture tests run
+- **THEN** Application Details section rendering and workflow state SHALL remain in focused details workspace modules instead of returning to one monolithic `ApplicationDetails` implementation
+
+### Requirement: Frontend Job Application projections are centralized
+The frontend SHALL keep derived Job Application projection rules in a focused presentation module that is independent from React hooks, server-state libraries, browser APIs, infrastructure adapters, and UI rendering components.
+
+#### Scenario: Projection module is pure presentation logic
+- **WHEN** frontend architecture tests inspect the Job Application projection module
+- **THEN** the module SHALL NOT import React, TanStack Query, Zustand, infrastructure adapters, MSW, GraphQL clients, or browser APIs
+
+#### Scenario: Pipeline workspace composes projections
+- **WHEN** frontend architecture tests inspect `usePipelineWorkspace`
+- **THEN** the hook SHALL compose the centralized projection module rather than defining private filtering, sorting, stage-count, selected-application, or follow-up grouping helpers inline
+
+#### Scenario: Projection behavior is directly testable
+- **WHEN** projection behavior is changed
+- **THEN** tests SHALL be able to exercise stage counts, active counts, filtering, search, sorting, selected application lookup, and follow-up grouping without rendering React components or hooks
 

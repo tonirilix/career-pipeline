@@ -48,8 +48,8 @@ func newTx(
 // --- CreateApplication ---
 
 func TestCreateApplication_Success(t *testing.T) {
-	apps, _, timeline, _, _, clock, ids := newDeps()
-	uc := usecases.NewCreateApplication(apps, timeline, clock, ids)
+	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
 	app, err := uc.Execute(usecases.CreateApplicationCommand{
 		Company:        "Acme Corp",
@@ -70,6 +70,73 @@ func TestCreateApplication_Success(t *testing.T) {
 	}
 	if !app.CreatedAt.Equal(fixedTime) {
 		t.Errorf("expected createdAt %v, got %v", fixedTime, app.CreatedAt)
+	}
+}
+
+func TestCreateApplication_MissingCompanyReturnsDomainError(t *testing.T) {
+	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+	_, err := uc.Execute(usecases.CreateApplicationCommand{
+		Company:        " ",
+		RoleTitle:      "Engineer",
+		PostingURL:     "https://example.com",
+		Source:         domain.SourceLinkedIn,
+		EmploymentType: domain.EmploymentFullTime,
+	})
+
+	if !errors.Is(err, domain.ErrCompanyRequired) {
+		t.Fatalf("expected ErrCompanyRequired, got %v", err)
+	}
+	if !errors.Is(err, domain.ErrCompanyRequired) || errors.Is(err, domain.ErrNoteBodyEmpty) {
+		t.Fatalf("expected company error to be distinct from note body error")
+	}
+	if got, _ := apps.List(ports.ListApplicationsFilter{}); len(got) != 0 {
+		t.Fatalf("expected no persisted applications, got %d", len(got))
+	}
+}
+
+func TestCreateApplication_MissingRoleTitleReturnsDomainError(t *testing.T) {
+	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+	_, err := uc.Execute(usecases.CreateApplicationCommand{
+		Company:        "Acme Corp",
+		RoleTitle:      " ",
+		PostingURL:     "https://example.com",
+		Source:         domain.SourceLinkedIn,
+		EmploymentType: domain.EmploymentFullTime,
+	})
+
+	if !errors.Is(err, domain.ErrRoleTitleRequired) {
+		t.Fatalf("expected ErrRoleTitleRequired, got %v", err)
+	}
+	if errors.Is(err, domain.ErrNoteBodyEmpty) {
+		t.Fatalf("expected role title error to be distinct from note body error")
+	}
+	if got, _ := apps.List(ports.ListApplicationsFilter{}); len(got) != 0 {
+		t.Fatalf("expected no persisted applications, got %d", len(got))
+	}
+}
+
+func TestCreateApplication_RollsBackWhenTimelineFails(t *testing.T) {
+	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
+	timeline.saveErr = errNotFound
+	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
+
+	_, err := uc.Execute(usecases.CreateApplicationCommand{
+		Company:        "Acme Corp",
+		RoleTitle:      "Engineer",
+		PostingURL:     "https://example.com",
+		Source:         domain.SourceLinkedIn,
+		EmploymentType: domain.EmploymentFullTime,
+	})
+
+	if !errors.Is(err, errNotFound) {
+		t.Fatalf("expected timeline error, got %v", err)
+	}
+	if got, _ := apps.List(ports.ListApplicationsFilter{}); len(got) != 0 {
+		t.Fatalf("expected application rollback, got %d applications", len(got))
 	}
 }
 

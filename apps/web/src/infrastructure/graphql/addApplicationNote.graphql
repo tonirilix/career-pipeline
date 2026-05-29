@@ -1,0 +1,5 @@
+mutation AddApplicationNote($input: AddApplicationNoteInput!) {
+  addApplicationNote(input: $input) {
+    ...JobApplicationFields
+  }
+}

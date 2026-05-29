@@ -20,6 +20,10 @@ func mapDomainError(err error) error {
 		return errors.New("interview outcome must be a final result")
 	case errors.Is(err, domain.ErrNoteBodyEmpty):
 		return errors.New("note body must not be empty")
+	case errors.Is(err, domain.ErrCompanyRequired):
+		return errors.New("company is required")
+	case errors.Is(err, domain.ErrRoleTitleRequired):
+		return errors.New("role title is required")
 	case errors.Is(err, domain.ErrDueDateInPast):
 		return errors.New("follow-up due date must be after the latest interaction")
 	default:

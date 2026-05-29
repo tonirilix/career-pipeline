@@ -110,6 +110,129 @@ describe("frontend architecture boundaries", () => {
       expect.arrayContaining(["effect", "@effect/atom", "@effect/atom-react"])
     );
   });
+
+  it("keeps Application Details section rendering in focused workspace modules", () => {
+    const detailsModules = sourceFilesIn("presentation/components/application-details").map(
+      (filePath) => relativeToSource(filePath)
+    );
+
+    expect(detailsModules).toEqual(
+      expect.arrayContaining([
+        `presentation${sep}components${sep}application-details${sep}OverviewSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}NotesSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}FollowUpsSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}InterviewsSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}TimelineSection.tsx`
+      ])
+    );
+  });
+
+  it("keeps ApplicationDetails as the details workspace coordinator", () => {
+    const source = readFileSync(
+      resolve(sourceRoot, "presentation/components/ApplicationDetails.tsx"),
+      "utf8"
+    );
+
+    expect(source.split("\n").length).toBeLessThanOrEqual(250);
+    expect(source).toContain("./application-details/NotesSection");
+    expect(source).toContain("./application-details/FollowUpsSection");
+    expect(source).toContain("./application-details/InterviewsSection");
+  });
+
+  it("keeps details workspace modules independent from adapters and query libraries", () => {
+    const violations = findForbiddenReferences(
+      sourceFilesIn("presentation/components/application-details"),
+      [
+        "@tanstack/react-query",
+        "infrastructure",
+        "useMutation",
+        "useQuery",
+        "useQueryClient"
+      ]
+    );
+
+    expect(violations).toEqual([]);
+  });
+
+  it("keeps Job Application projections as pure presentation logic", () => {
+    const projectionFile = resolve(
+      sourceRoot,
+      "presentation/jobApplicationProjections.ts"
+    );
+
+    expect(
+      findForbiddenReferences([projectionFile], [
+        "@tanstack/react-query",
+        "infrastructure",
+        "React",
+        "react",
+        "zustand",
+        "graphql",
+        "msw",
+        "fetch",
+        "window",
+        "document",
+        "localStorage",
+        "sessionStorage",
+        "navigator",
+        "useMutation",
+        "useQuery",
+        "useQueryClient"
+      ])
+    ).toEqual([]);
+  });
+
+  it("keeps usePipelineWorkspace composed with centralized projections", () => {
+    const source = readFileSync(
+      resolve(sourceRoot, "presentation/pipelineWorkspace.ts"),
+      "utf8"
+    );
+
+    expect(source).toContain("./jobApplicationProjections");
+    expect(source).toContain("projectJobApplications");
+    expect(source).not.toMatch(/function\s+sortApplications\b/);
+    expect(source).not.toMatch(/function\s+latestActivityTime\b/);
+    expect(source).not.toMatch(/function\s+earliestActiveFollowUpTime\b/);
+    expect(source).not.toMatch(/function\s+compareFollowUpItems\b/);
+    expect(source).not.toContain("normalizedSearchTerm");
+  });
+
+  it("keeps generated GraphQL artifacts inside the GraphQL infrastructure adapter", () => {
+    const violations = sourceFilesIn(".").flatMap((filePath) =>
+      importsFrom(filePath)
+        .filter(
+          (specifier) =>
+            specifier.includes("infrastructure/graphql/generated") ||
+            specifier.endsWith("/generated") ||
+            specifier === "./generated"
+        )
+        .filter(
+          () =>
+            !relativeToSource(filePath).startsWith(
+              `infrastructure${sep}graphql${sep}`
+            )
+        )
+        .map((specifier) => `${relativeToSource(filePath)} imports ${specifier}`)
+    );
+
+    expect(violations).toEqual([]);
+  });
+
+  it("keeps GraphQL operation documents inside the GraphQL infrastructure adapter", () => {
+    const violations = sourceFilesIn(".").flatMap((filePath) =>
+      importsFrom(filePath)
+        .filter((specifier) => specifier.includes(".graphql"))
+        .filter(
+          () =>
+            !relativeToSource(filePath).startsWith(
+              `infrastructure${sep}graphql${sep}`
+            )
+        )
+        .map((specifier) => `${relativeToSource(filePath)} imports ${specifier}`)
+    );
+
+    expect(violations).toEqual([]);
+  });
 });
 
 function sourceFilesIn(directory: string) {

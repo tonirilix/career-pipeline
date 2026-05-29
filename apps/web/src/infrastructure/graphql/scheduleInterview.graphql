@@ -1,0 +1,5 @@
+mutation ScheduleInterview($input: ScheduleInterviewInput!) {
+  scheduleInterview(input: $input) {
+    ...JobApplicationFields
+  }
+}

@@ -1,0 +1,5 @@
+mutation AdvanceApplicationStage($input: AdvanceApplicationStageInput!) {
+  advanceApplicationStage(input: $input) {
+    ...JobApplicationFields
+  }
+}
