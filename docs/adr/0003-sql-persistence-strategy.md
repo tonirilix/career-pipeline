@@ -2,7 +2,7 @@
 
 ## Status
 
-Open — current implementation uses raw `database/sql` with PostgreSQL and centralized query definitions; query-generation strategy not yet finalized.
+Accepted — persistence layer uses sqlc-generated query code. SQL lives in `internal/infrastructure/persistence/queries/*.sql`; typed Go functions are generated into `internal/infrastructure/persistence/db/`. Run `make sqlc` to regenerate after schema or query changes.
 
 ## Context
 

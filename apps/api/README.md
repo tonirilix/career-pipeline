@@ -9,7 +9,7 @@ A Go backend for Career Pipeline. Exposes a GraphQL API consumed by `apps/web`.
 | GraphQL server | [gqlgen](https://gqlgen.com) (schema-first) |
 | Database | PostgreSQL via pgx stdlib |
 | Migrations | [golang-migrate](https://github.com/golang-migrate/migrate) (embedded, runs at startup) |
-| Persistence | Hand-written `database/sql` repository adapters with centralized PostgreSQL query definitions |
+| Persistence | [sqlc](https://sqlc.dev)-generated repository adapters (see [ADR 0003](../../docs/adr/0003-sql-persistence-strategy.md) and [Query generation](#query-generation)) |
 
 ## Architecture
 
@@ -30,8 +30,9 @@ internal/
     usecases/                   <- one file per use case
   infrastructure/
     migrations/                 <- SQL migration files (up + down)
-    persistence/                <- PostgreSQL repository adapters
-      postgresql_queries.go     <- centralized SQL text for interim raw-SQL strategy
+    persistence/                <- PostgreSQL repository adapters (sqlc-backed)
+      queries/                  <- SQL query files (source of truth for query generation)
+      db/                       <- sqlc-generated typed query functions (do not edit)
 ```
 
 Dependency direction: `resolvers -> usecases -> domain <- persistence`.
@@ -124,6 +125,31 @@ make test-db    # run PostgreSQL persistence tests
 make migrate    # run embedded migrations and exit
 make seed       # run seed data and exit
 make generate   # go generate ./...
+make sqlc       # regenerate typed query code from queries/*.sql
+```
+
+## Query generation
+
+SQL queries live in `.sql` files under `internal/infrastructure/persistence/queries/`. sqlc reads those files and the database schema (from `internal/infrastructure/migrations/`) and generates typed Go functions into `internal/infrastructure/persistence/db/`.
+
+When to run `make sqlc`:
+- After adding or changing a query in any `queries/*.sql` file
+- After adding a new migration that changes table columns used by existing queries
+
+The generated files in `db/` are committed — CI does not need sqlc installed.
+
+Install sqlc locally:
+
+```sh
+brew install sqlc
+# or
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+```
+
+Regenerate:
+
+```sh
+make sqlc
 ```
 
 ## Schema Changes
@@ -140,15 +166,9 @@ Implement any new resolver stubs in `graph/resolvers/schema.resolvers.go`.
 
 ### Query strategy
 
-The current persistence implementation uses raw `database/sql` repository adapters with SQL text centralized in `internal/infrastructure/persistence/postgresql_queries.go`. Repository callers interact only with application-layer ports; they do not know SQL text, placeholder numbering, row scan order, or generated query types.
+The persistence layer uses sqlc-generated typed query functions (see ADR 0003 — Accepted). SQL lives in `queries/*.sql` files; `db/` contains the generated Go code. Repository adapters call generated functions; callers see only application-layer port interfaces and never know SQL text, column order, or placeholder numbering.
 
-ADR 0003 still recommends sqlc as the long-term query strategy. To migrate:
-
-1. Install sqlc with `brew install sqlc` or `go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`.
-2. Move reviewed SQL from `postgresql_queries.go` into `.sql` query files under `internal/infrastructure/persistence/queries/`.
-3. Add `sqlc.yaml` and run `sqlc generate`.
-4. Replace repository adapter internals with generated query calls while keeping application port interfaces unchanged.
-5. Update ADR 0003 from Open to Accepted if sqlc becomes the committed strategy.
+See the [Query generation](#query-generation) section above for how to add or update queries.
 
 ### How the database is created
 
