@@ -70,3 +70,7 @@ The test suite SHALL include architecture or module-level tests that prevent the
 - **WHEN** frontend architecture tests run
 - **THEN** MSW handler modules SHALL NOT own mutable Job Application mock state
 
+#### Scenario: Application details workspace remains decomposed
+- **WHEN** frontend architecture tests run
+- **THEN** Application Details section rendering and workflow state SHALL remain in focused details workspace modules instead of returning to one monolithic `ApplicationDetails` implementation
+
