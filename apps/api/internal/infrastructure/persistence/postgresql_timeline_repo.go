@@ -23,8 +23,8 @@ func newPostgreSQLTimelineRepositoryWithExecutor(dbtx db.DBTX) *PostgreSQLTimeli
 
 var _ ports.TimelineRepository = (*PostgreSQLTimelineRepository)(nil)
 
-func (r *PostgreSQLTimelineRepository) Save(applicationID string, event *domain.TimelineEvent) error {
-	return r.q.InsertTimelineEvent(context.Background(), db.InsertTimelineEventParams{
+func (r *PostgreSQLTimelineRepository) Save(ctx context.Context, applicationID string, event *domain.TimelineEvent) error {
+	return r.q.InsertTimelineEvent(ctx, db.InsertTimelineEventParams{
 		ID:            event.ID,
 		ApplicationID: applicationID,
 		Description:   event.Description,
@@ -32,8 +32,8 @@ func (r *PostgreSQLTimelineRepository) Save(applicationID string, event *domain.
 	})
 }
 
-func (r *PostgreSQLTimelineRepository) ListByApplication(applicationID string) ([]*domain.TimelineEvent, error) {
-	rows, err := r.q.ListTimelineEventsByApplication(context.Background(), applicationID)
+func (r *PostgreSQLTimelineRepository) ListByApplication(ctx context.Context, applicationID string) ([]*domain.TimelineEvent, error) {
+	rows, err := r.q.ListTimelineEventsByApplication(ctx, applicationID)
 	if err != nil {
 		return nil, err
 	}

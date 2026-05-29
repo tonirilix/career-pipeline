@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"context"
+
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
@@ -14,8 +16,8 @@ func NewListUpcomingFollowUps(followUps ports.FollowUpRepository, clock ports.Cl
 	return &ListUpcomingFollowUps{followUps: followUps, clock: clock}
 }
 
-func (uc *ListUpcomingFollowUps) Execute() ([]*domain.FollowUpReminder, error) {
-	return uc.followUps.ListUpcoming(uc.clock.Now())
+func (uc *ListUpcomingFollowUps) Execute(ctx context.Context) ([]*domain.FollowUpReminder, error) {
+	return uc.followUps.ListUpcoming(ctx, uc.clock.Now())
 }
 
 type ListOverdueFollowUps struct {
@@ -27,6 +29,6 @@ func NewListOverdueFollowUps(followUps ports.FollowUpRepository, clock ports.Clo
 	return &ListOverdueFollowUps{followUps: followUps, clock: clock}
 }
 
-func (uc *ListOverdueFollowUps) Execute() ([]*domain.FollowUpReminder, error) {
-	return uc.followUps.ListOverdue(uc.clock.Now())
+func (uc *ListOverdueFollowUps) Execute(ctx context.Context) ([]*domain.FollowUpReminder, error) {
+	return uc.followUps.ListOverdue(ctx, uc.clock.Now())
 }

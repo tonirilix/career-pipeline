@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"strings"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
@@ -22,14 +23,14 @@ func NewAddNote(tx ports.Transactor, clock ports.Clock, ids ports.IDGenerator) *
 	return &AddNote{tx: tx, clock: clock, ids: ids}
 }
 
-func (uc *AddNote) Execute(cmd AddNoteCommand) (*domain.JobApplication, error) {
+func (uc *AddNote) Execute(ctx context.Context, cmd AddNoteCommand) (*domain.JobApplication, error) {
 	if strings.TrimSpace(cmd.Body) == "" {
 		return nil, domain.ErrNoteBodyEmpty
 	}
 
 	var result *domain.JobApplication
-	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
-		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+	err := uc.tx.WithTransaction(ctx, func(ctx context.Context, repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(ctx, cmd.ApplicationID)
 		if err != nil {
 			return err
 		}
@@ -40,7 +41,7 @@ func (uc *AddNote) Execute(cmd AddNoteCommand) (*domain.JobApplication, error) {
 			Body:      cmd.Body,
 			CreatedAt: now,
 		}
-		if err := repos.Notes.Save(app.ID, note); err != nil {
+		if err := repos.Notes.Save(ctx, app.ID, note); err != nil {
 			return err
 		}
 
@@ -49,11 +50,11 @@ func (uc *AddNote) Execute(cmd AddNoteCommand) (*domain.JobApplication, error) {
 			OccurredAt:  now,
 			Description: "Added note",
 		}
-		if err := repos.Timeline.Save(app.ID, event); err != nil {
+		if err := repos.Timeline.Save(ctx, app.ID, event); err != nil {
 			return err
 		}
 
-		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(ctx, app)
 		if err != nil {
 			return err
 		}

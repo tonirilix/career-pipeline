@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"context"
+
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
@@ -26,9 +28,9 @@ func NewFullApplicationAssembler(
 	}
 }
 
-func (a *FullApplicationAssembler) Load(app *domain.JobApplication) (*domain.JobApplication, error) {
+func (a *FullApplicationAssembler) Load(ctx context.Context, app *domain.JobApplication) (*domain.JobApplication, error) {
 	if a.timeline != nil {
-		events, err := a.timeline.ListByApplication(app.ID)
+		events, err := a.timeline.ListByApplication(ctx, app.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -36,7 +38,7 @@ func (a *FullApplicationAssembler) Load(app *domain.JobApplication) (*domain.Job
 	}
 
 	if a.interviews != nil {
-		ivs, err := a.interviews.ListByApplication(app.ID)
+		ivs, err := a.interviews.ListByApplication(ctx, app.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +46,7 @@ func (a *FullApplicationAssembler) Load(app *domain.JobApplication) (*domain.Job
 	}
 
 	if a.followUps != nil {
-		fus, err := a.followUps.ListByApplication(app.ID)
+		fus, err := a.followUps.ListByApplication(ctx, app.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +54,7 @@ func (a *FullApplicationAssembler) Load(app *domain.JobApplication) (*domain.Job
 	}
 
 	if a.notes != nil {
-		ns, err := a.notes.ListByApplication(app.ID)
+		ns, err := a.notes.ListByApplication(ctx, app.ID)
 		if err != nil {
 			return nil, err
 		}

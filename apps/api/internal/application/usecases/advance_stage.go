@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
@@ -26,10 +27,10 @@ func NewAdvanceStage(
 	return &AdvanceStage{tx: tx, clock: clock, ids: ids}
 }
 
-func (uc *AdvanceStage) Execute(cmd AdvanceStageCommand) (*domain.JobApplication, error) {
+func (uc *AdvanceStage) Execute(ctx context.Context, cmd AdvanceStageCommand) (*domain.JobApplication, error) {
 	var result *domain.JobApplication
-	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
-		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+	err := uc.tx.WithTransaction(ctx, func(ctx context.Context, repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(ctx, cmd.ApplicationID)
 		if err != nil {
 			return err
 		}
@@ -38,7 +39,7 @@ func (uc *AdvanceStage) Execute(cmd AdvanceStageCommand) (*domain.JobApplication
 			return err
 		}
 
-		if err := repos.Applications.UpdateStage(app.ID, cmd.ToStage); err != nil {
+		if err := repos.Applications.UpdateStage(ctx, app.ID, cmd.ToStage); err != nil {
 			return err
 		}
 
@@ -48,18 +49,18 @@ func (uc *AdvanceStage) Execute(cmd AdvanceStageCommand) (*domain.JobApplication
 			OccurredAt:  now,
 			Description: fmt.Sprintf("Moved from %s to %s", app.Stage, cmd.ToStage),
 		}
-		if err := repos.Timeline.Save(app.ID, event); err != nil {
+		if err := repos.Timeline.Save(ctx, app.ID, event); err != nil {
 			return err
 		}
 
 		if domain.IsClosedStage(cmd.ToStage) {
-			if err := repos.FollowUps.DeactivateByApplication(app.ID, now); err != nil {
+			if err := repos.FollowUps.DeactivateByApplication(ctx, app.ID, now); err != nil {
 				return err
 			}
 		}
 
 		app.Stage = cmd.ToStage
-		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(ctx, app)
 		if err != nil {
 			return err
 		}

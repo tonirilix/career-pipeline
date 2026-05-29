@@ -1,6 +1,9 @@
 package ports
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Clock interface {
 	Now() time.Time
@@ -19,5 +22,5 @@ type Repositories struct {
 }
 
 type Transactor interface {
-	WithTransaction(fn func(repos Repositories) error) error
+	WithTransaction(ctx context.Context, fn func(ctx context.Context, repos Repositories) error) error
 }

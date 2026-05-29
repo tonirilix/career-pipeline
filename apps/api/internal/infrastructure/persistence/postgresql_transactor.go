@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
@@ -16,8 +17,8 @@ func NewPostgreSQLTransactor(db *sql.DB) *PostgreSQLTransactor {
 
 var _ ports.Transactor = (*PostgreSQLTransactor)(nil)
 
-func (t *PostgreSQLTransactor) WithTransaction(fn func(repos ports.Repositories) error) error {
-	tx, err := t.db.Begin()
+func (t *PostgreSQLTransactor) WithTransaction(ctx context.Context, fn func(ctx context.Context, repos ports.Repositories) error) error {
+	tx, err := t.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -30,7 +31,7 @@ func (t *PostgreSQLTransactor) WithTransaction(fn func(repos ports.Repositories)
 		Timeline:     newPostgreSQLTimelineRepositoryWithExecutor(tx),
 	}
 
-	if err := fn(repos); err != nil {
+	if err := fn(ctx, repos); err != nil {
 		_ = tx.Rollback()
 		return err
 	}

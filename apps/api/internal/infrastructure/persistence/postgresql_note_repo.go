@@ -23,8 +23,8 @@ func newPostgreSQLNoteRepositoryWithExecutor(dbtx db.DBTX) *PostgreSQLNoteReposi
 
 var _ ports.NoteRepository = (*PostgreSQLNoteRepository)(nil)
 
-func (r *PostgreSQLNoteRepository) Save(applicationID string, note *domain.ApplicationNote) error {
-	return r.q.InsertApplicationNote(context.Background(), db.InsertApplicationNoteParams{
+func (r *PostgreSQLNoteRepository) Save(ctx context.Context, applicationID string, note *domain.ApplicationNote) error {
+	return r.q.InsertApplicationNote(ctx, db.InsertApplicationNoteParams{
 		ID:            note.ID,
 		ApplicationID: applicationID,
 		Body:          note.Body,
@@ -32,8 +32,8 @@ func (r *PostgreSQLNoteRepository) Save(applicationID string, note *domain.Appli
 	})
 }
 
-func (r *PostgreSQLNoteRepository) ListByApplication(applicationID string) ([]*domain.ApplicationNote, error) {
-	rows, err := r.q.ListApplicationNotesByApplication(context.Background(), applicationID)
+func (r *PostgreSQLNoteRepository) ListByApplication(ctx context.Context, applicationID string) ([]*domain.ApplicationNote, error) {
+	rows, err := r.q.ListApplicationNotesByApplication(ctx, applicationID)
 	if err != nil {
 		return nil, err
 	}

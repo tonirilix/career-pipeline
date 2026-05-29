@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,17 +14,18 @@ func TestFullApplicationAssembler_LoadsChildCollectionsInRepositoryOrder(t *test
 	application := &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied}
 	first := fixedTime.Add(-1 * time.Hour)
 	second := fixedTime.Add(1 * time.Hour)
+	ctx := context.Background()
 
-	_ = timeline.Save("app-1", &domain.TimelineEvent{ID: "event-1", OccurredAt: first, Description: "First"})
-	_ = timeline.Save("app-1", &domain.TimelineEvent{ID: "event-2", OccurredAt: second, Description: "Second"})
-	_ = interviews.Save("app-1", &domain.Interview{ID: "interview-1", Type: domain.InterviewRecruiterScreen, ScheduledAt: second})
-	_ = interviews.Save("app-1", &domain.Interview{ID: "interview-2", Type: domain.InterviewTechnical, ScheduledAt: first})
-	_ = followUps.Save(&domain.FollowUpReminder{ID: "follow-up-1", ApplicationID: "app-1", DueAt: second})
-	_ = followUps.Save(&domain.FollowUpReminder{ID: "follow-up-2", ApplicationID: "app-1", DueAt: first})
-	_ = notes.Save("app-1", &domain.ApplicationNote{ID: "note-1", Body: "First note", CreatedAt: first})
-	_ = notes.Save("app-1", &domain.ApplicationNote{ID: "note-2", Body: "Second note", CreatedAt: second})
+	_ = timeline.Save(ctx, "app-1", &domain.TimelineEvent{ID: "event-1", OccurredAt: first, Description: "First"})
+	_ = timeline.Save(ctx, "app-1", &domain.TimelineEvent{ID: "event-2", OccurredAt: second, Description: "Second"})
+	_ = interviews.Save(ctx, "app-1", &domain.Interview{ID: "interview-1", Type: domain.InterviewRecruiterScreen, ScheduledAt: second})
+	_ = interviews.Save(ctx, "app-1", &domain.Interview{ID: "interview-2", Type: domain.InterviewTechnical, ScheduledAt: first})
+	_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "follow-up-1", ApplicationID: "app-1", DueAt: second})
+	_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "follow-up-2", ApplicationID: "app-1", DueAt: first})
+	_ = notes.Save(ctx, "app-1", &domain.ApplicationNote{ID: "note-1", Body: "First note", CreatedAt: first})
+	_ = notes.Save(ctx, "app-1", &domain.ApplicationNote{ID: "note-2", Body: "Second note", CreatedAt: second})
 
-	loaded, err := usecases.NewFullApplicationAssembler(followUps, timeline, interviews, notes).Load(application)
+	loaded, err := usecases.NewFullApplicationAssembler(followUps, timeline, interviews, notes).Load(ctx, application)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

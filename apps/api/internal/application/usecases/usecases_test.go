@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -51,7 +52,7 @@ func TestCreateApplication_Success(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
 	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	app, err := uc.Execute(usecases.CreateApplicationCommand{
+	app, err := uc.Execute(context.Background(), usecases.CreateApplicationCommand{
 		Company:        "Acme Corp",
 		RoleTitle:      "Engineer",
 		PostingURL:     "https://example.com",
@@ -77,7 +78,7 @@ func TestCreateApplication_MissingCompanyReturnsDomainError(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
 	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.CreateApplicationCommand{
+	_, err := uc.Execute(context.Background(), usecases.CreateApplicationCommand{
 		Company:        " ",
 		RoleTitle:      "Engineer",
 		PostingURL:     "https://example.com",
@@ -91,7 +92,7 @@ func TestCreateApplication_MissingCompanyReturnsDomainError(t *testing.T) {
 	if !errors.Is(err, domain.ErrCompanyRequired) || errors.Is(err, domain.ErrNoteBodyEmpty) {
 		t.Fatalf("expected company error to be distinct from note body error")
 	}
-	if got, _ := apps.List(ports.ListApplicationsFilter{}); len(got) != 0 {
+	if got, _ := apps.List(context.Background(), ports.ListApplicationsFilter{}); len(got) != 0 {
 		t.Fatalf("expected no persisted applications, got %d", len(got))
 	}
 }
@@ -100,7 +101,7 @@ func TestCreateApplication_MissingRoleTitleReturnsDomainError(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
 	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.CreateApplicationCommand{
+	_, err := uc.Execute(context.Background(), usecases.CreateApplicationCommand{
 		Company:        "Acme Corp",
 		RoleTitle:      " ",
 		PostingURL:     "https://example.com",
@@ -114,7 +115,7 @@ func TestCreateApplication_MissingRoleTitleReturnsDomainError(t *testing.T) {
 	if errors.Is(err, domain.ErrNoteBodyEmpty) {
 		t.Fatalf("expected role title error to be distinct from note body error")
 	}
-	if got, _ := apps.List(ports.ListApplicationsFilter{}); len(got) != 0 {
+	if got, _ := apps.List(context.Background(), ports.ListApplicationsFilter{}); len(got) != 0 {
 		t.Fatalf("expected no persisted applications, got %d", len(got))
 	}
 }
@@ -124,7 +125,7 @@ func TestCreateApplication_RollsBackWhenTimelineFails(t *testing.T) {
 	timeline.saveErr = errNotFound
 	uc := usecases.NewCreateApplication(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.CreateApplicationCommand{
+	_, err := uc.Execute(context.Background(), usecases.CreateApplicationCommand{
 		Company:        "Acme Corp",
 		RoleTitle:      "Engineer",
 		PostingURL:     "https://example.com",
@@ -135,7 +136,7 @@ func TestCreateApplication_RollsBackWhenTimelineFails(t *testing.T) {
 	if !errors.Is(err, errNotFound) {
 		t.Fatalf("expected timeline error, got %v", err)
 	}
-	if got, _ := apps.List(ports.ListApplicationsFilter{}); len(got) != 0 {
+	if got, _ := apps.List(context.Background(), ports.ListApplicationsFilter{}); len(got) != 0 {
 		t.Fatalf("expected application rollback, got %d applications", len(got))
 	}
 }
@@ -144,10 +145,10 @@ func TestCreateApplication_RollsBackWhenTimelineFails(t *testing.T) {
 
 func TestAdvanceStage_ValidTransition(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 	uc := usecases.NewAdvanceStage(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	app, err := uc.Execute(usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageScreening})
+	app, err := uc.Execute(context.Background(), usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageScreening})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -158,10 +159,10 @@ func TestAdvanceStage_ValidTransition(t *testing.T) {
 
 func TestAdvanceStage_InvalidTransition(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageSaved})
+	_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: domain.StageSaved})
 	uc := usecases.NewAdvanceStage(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageOffer})
+	_, err := uc.Execute(context.Background(), usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageOffer})
 	if !errors.Is(err, domain.ErrInvalidStageTransition) {
 		t.Errorf("expected ErrInvalidStageTransition, got %v", err)
 	}
@@ -169,16 +170,17 @@ func TestAdvanceStage_InvalidTransition(t *testing.T) {
 
 func TestAdvanceStage_DeactivatesFollowUpsOnClose(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	ctx := context.Background()
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 	dueAt := fixedTime.Add(24 * time.Hour)
-	_ = followUps.Save(&domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: dueAt})
+	_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: dueAt})
 	uc := usecases.NewAdvanceStage(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageRejected})
+	_, err := uc.Execute(ctx, usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageRejected})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	fu, _ := followUps.FindByID("fu-1")
+	fu, _ := followUps.FindByID(ctx, "fu-1")
 	if fu.CompletedAt == nil {
 		t.Error("expected follow-up to be deactivated")
 	}
@@ -186,15 +188,16 @@ func TestAdvanceStage_DeactivatesFollowUpsOnClose(t *testing.T) {
 
 func TestAdvanceStage_RollsBackWhenTimelineFails(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	ctx := context.Background()
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 	timeline.saveErr = errNotFound
 	uc := usecases.NewAdvanceStage(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageScreening})
+	_, err := uc.Execute(ctx, usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageScreening})
 	if !errors.Is(err, errNotFound) {
 		t.Fatalf("expected timeline error, got %v", err)
 	}
-	app, _ := apps.FindByID("app-1")
+	app, _ := apps.FindByID(ctx, "app-1")
 	if app.Stage != domain.StageApplied {
 		t.Fatalf("expected stage rollback to Applied, got %s", app.Stage)
 	}
@@ -202,20 +205,21 @@ func TestAdvanceStage_RollsBackWhenTimelineFails(t *testing.T) {
 
 func TestAdvanceStage_RollsBackWhenFollowUpDeactivationFails(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
-	_ = followUps.Save(&domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: fixedTime.Add(24 * time.Hour)})
+	ctx := context.Background()
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: fixedTime.Add(24 * time.Hour)})
 	followUps.deactivateErr = errNotFound
 	uc := usecases.NewAdvanceStage(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageRejected})
+	_, err := uc.Execute(ctx, usecases.AdvanceStageCommand{ApplicationID: "app-1", ToStage: domain.StageRejected})
 	if !errors.Is(err, errNotFound) {
 		t.Fatalf("expected follow-up deactivation error, got %v", err)
 	}
-	app, _ := apps.FindByID("app-1")
+	app, _ := apps.FindByID(ctx, "app-1")
 	if app.Stage != domain.StageApplied {
 		t.Fatalf("expected stage rollback to Applied, got %s", app.Stage)
 	}
-	fu, _ := followUps.FindByID("fu-1")
+	fu, _ := followUps.FindByID(ctx, "fu-1")
 	if fu.CompletedAt != nil {
 		t.Fatal("expected follow-up completion rollback")
 	}
@@ -225,10 +229,10 @@ func TestAdvanceStage_RollsBackWhenFollowUpDeactivationFails(t *testing.T) {
 
 func TestAddNote_EmptyBodyReturnsError(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 	uc := usecases.NewAddNote(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.AddNoteCommand{ApplicationID: "app-1", Body: "  "})
+	_, err := uc.Execute(context.Background(), usecases.AddNoteCommand{ApplicationID: "app-1", Body: "  "})
 	if !errors.Is(err, domain.ErrNoteBodyEmpty) {
 		t.Errorf("expected ErrNoteBodyEmpty, got %v", err)
 	}
@@ -236,10 +240,10 @@ func TestAddNote_EmptyBodyReturnsError(t *testing.T) {
 
 func TestAddNote_Success(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 	uc := usecases.NewAddNote(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	app, err := uc.Execute(usecases.AddNoteCommand{ApplicationID: "app-1", Body: "Great company"})
+	app, err := uc.Execute(context.Background(), usecases.AddNoteCommand{ApplicationID: "app-1", Body: "Great company"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -249,13 +253,15 @@ func TestAddNote_Success(t *testing.T) {
 }
 
 func TestDetailWorkflows_RollBackWhenTimelineFails(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("schedule interview", func(t *testing.T) {
 		apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-		_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+		_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 		timeline.saveErr = errNotFound
 		uc := usecases.NewScheduleInterview(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-		_, err := uc.Execute(usecases.ScheduleInterviewCommand{
+		_, err := uc.Execute(ctx, usecases.ScheduleInterviewCommand{
 			ApplicationID: "app-1",
 			Type:          domain.InterviewRecruiterScreen,
 			ScheduledAt:   fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
@@ -263,19 +269,19 @@ func TestDetailWorkflows_RollBackWhenTimelineFails(t *testing.T) {
 		if !errors.Is(err, errNotFound) {
 			t.Fatalf("expected timeline error, got %v", err)
 		}
-		if got, _ := interviews.ListByApplication("app-1"); len(got) != 0 {
+		if got, _ := interviews.ListByApplication(ctx, "app-1"); len(got) != 0 {
 			t.Fatalf("expected interview rollback, got %d interviews", len(got))
 		}
 	})
 
 	t.Run("create follow-up", func(t *testing.T) {
 		apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-		_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
-		_ = timeline.Save("app-1", &domain.TimelineEvent{ID: "event-1", OccurredAt: fixedTime})
+		_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+		_ = timeline.Save(ctx, "app-1", &domain.TimelineEvent{ID: "event-1", OccurredAt: fixedTime})
 		timeline.saveErr = errNotFound
 		uc := usecases.NewAddFollowUp(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-		_, err := uc.Execute(usecases.CreateFollowUpCommand{
+		_, err := uc.Execute(ctx, usecases.CreateFollowUpCommand{
 			ApplicationID: "app-1",
 			DueAt:         fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
 			Note:          "Follow up",
@@ -283,23 +289,23 @@ func TestDetailWorkflows_RollBackWhenTimelineFails(t *testing.T) {
 		if !errors.Is(err, errNotFound) {
 			t.Fatalf("expected timeline error, got %v", err)
 		}
-		if got, _ := followUps.ListByApplication("app-1"); len(got) != 0 {
+		if got, _ := followUps.ListByApplication(ctx, "app-1"); len(got) != 0 {
 			t.Fatalf("expected follow-up rollback, got %d follow-ups", len(got))
 		}
 	})
 
 	t.Run("complete follow-up", func(t *testing.T) {
 		apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-		_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
-		_ = followUps.Save(&domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: fixedTime.Add(24 * time.Hour)})
+		_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+		_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: fixedTime.Add(24 * time.Hour)})
 		timeline.saveErr = errNotFound
 		uc := usecases.NewCompleteFollowUp(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-		_, err := uc.Execute(usecases.CompleteFollowUpCommand{ApplicationID: "app-1", ReminderID: "fu-1"})
+		_, err := uc.Execute(ctx, usecases.CompleteFollowUpCommand{ApplicationID: "app-1", ReminderID: "fu-1"})
 		if !errors.Is(err, errNotFound) {
 			t.Fatalf("expected timeline error, got %v", err)
 		}
-		fu, _ := followUps.FindByID("fu-1")
+		fu, _ := followUps.FindByID(ctx, "fu-1")
 		if fu.CompletedAt != nil {
 			t.Fatal("expected follow-up completion rollback")
 		}
@@ -307,21 +313,21 @@ func TestDetailWorkflows_RollBackWhenTimelineFails(t *testing.T) {
 
 	t.Run("add note", func(t *testing.T) {
 		apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-		_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+		_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
 		timeline.saveErr = errNotFound
 		uc := usecases.NewAddNote(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-		_, err := uc.Execute(usecases.AddNoteCommand{ApplicationID: "app-1", Body: "Great company"})
+		_, err := uc.Execute(ctx, usecases.AddNoteCommand{ApplicationID: "app-1", Body: "Great company"})
 		if !errors.Is(err, errNotFound) {
 			t.Fatalf("expected timeline error, got %v", err)
 		}
-		if got, _ := notes.ListByApplication("app-1"); len(got) != 0 {
+		if got, _ := notes.ListByApplication(ctx, "app-1"); len(got) != 0 {
 			t.Fatalf("expected note rollback, got %d notes", len(got))
 		}
 	})
 }
 
-// --- AddFollowUp ---
+// --- ScheduleInterview ---
 
 func TestScheduleInterview_ValidStageCreatesScheduledInterview(t *testing.T) {
 	for _, stage := range []domain.ApplicationStage{
@@ -332,10 +338,10 @@ func TestScheduleInterview_ValidStageCreatesScheduledInterview(t *testing.T) {
 	} {
 		t.Run(string(stage), func(t *testing.T) {
 			apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-			_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: stage})
+			_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: stage})
 			uc := usecases.NewScheduleInterview(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-			app, err := uc.Execute(usecases.ScheduleInterviewCommand{
+			app, err := uc.Execute(context.Background(), usecases.ScheduleInterviewCommand{
 				ApplicationID: "app-1",
 				Type:          domain.InterviewRecruiterScreen,
 				ScheduledAt:   fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
@@ -364,10 +370,10 @@ func TestScheduleInterview_InvalidStagesReturnError(t *testing.T) {
 	} {
 		t.Run(string(stage), func(t *testing.T) {
 			apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-			_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: stage})
+			_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: stage})
 			uc := usecases.NewScheduleInterview(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-			_, err := uc.Execute(usecases.ScheduleInterviewCommand{
+			_, err := uc.Execute(context.Background(), usecases.ScheduleInterviewCommand{
 				ApplicationID: "app-1",
 				Type:          domain.InterviewRecruiterScreen,
 				ScheduledAt:   fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
@@ -376,7 +382,7 @@ func TestScheduleInterview_InvalidStagesReturnError(t *testing.T) {
 			if !errors.Is(err, domain.ErrCannotSchedule) {
 				t.Fatalf("expected ErrCannotSchedule, got %v", err)
 			}
-			if got, _ := interviews.ListByApplication("app-1"); len(got) != 0 {
+			if got, _ := interviews.ListByApplication(context.Background(), "app-1"); len(got) != 0 {
 				t.Fatalf("expected no persisted interviews, got %d", len(got))
 			}
 		})
@@ -385,8 +391,9 @@ func TestScheduleInterview_InvalidStagesReturnError(t *testing.T) {
 
 func TestRecordInterviewOutcome_Success(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageScreening})
-	_ = interviews.Save("app-1", &domain.Interview{
+	ctx := context.Background()
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageScreening})
+	_ = interviews.Save(ctx, "app-1", &domain.Interview{
 		ID:          "interview-1",
 		Type:        domain.InterviewRecruiterScreen,
 		ScheduledAt: fixedTime.Add(24 * time.Hour),
@@ -394,7 +401,7 @@ func TestRecordInterviewOutcome_Success(t *testing.T) {
 	})
 	uc := usecases.NewRecordInterviewOutcome(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	app, err := uc.Execute(usecases.RecordInterviewOutcomeCommand{
+	app, err := uc.Execute(ctx, usecases.RecordInterviewOutcomeCommand{
 		ApplicationID: "app-1",
 		InterviewID:   "interview-1",
 		Outcome:       domain.OutcomePassed,
@@ -413,10 +420,10 @@ func TestRecordInterviewOutcome_Success(t *testing.T) {
 
 func TestRecordInterviewOutcome_RejectsScheduledOutcome(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageScreening})
+	_ = apps.Save(context.Background(), &domain.JobApplication{ID: "app-1", Stage: domain.StageScreening})
 	uc := usecases.NewRecordInterviewOutcome(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-	_, err := uc.Execute(usecases.RecordInterviewOutcomeCommand{
+	_, err := uc.Execute(context.Background(), usecases.RecordInterviewOutcomeCommand{
 		ApplicationID: "app-1",
 		InterviewID:   "interview-1",
 		Outcome:       domain.OutcomeScheduled,
@@ -429,13 +436,13 @@ func TestRecordInterviewOutcome_RejectsScheduledOutcome(t *testing.T) {
 
 func TestAddFollowUp_PastDueDateReturnsError(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
-	// Put a timeline event at fixedTime so dueAt must be after it
-	_ = timeline.Save("app-1", &domain.TimelineEvent{ID: "t-1", OccurredAt: fixedTime, Description: "Created"})
+	ctx := context.Background()
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	_ = timeline.Save(ctx, "app-1", &domain.TimelineEvent{ID: "t-1", OccurredAt: fixedTime, Description: "Created"})
 	uc := usecases.NewAddFollowUp(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
 	pastDue := fixedTime.Add(-1 * time.Hour)
-	_, err := uc.Execute(usecases.CreateFollowUpCommand{
+	_, err := uc.Execute(ctx, usecases.CreateFollowUpCommand{
 		ApplicationID: "app-1",
 		DueAt:         pastDue.Format(time.RFC3339),
 		Note:          "Follow up",
@@ -449,11 +456,12 @@ func TestAddFollowUp_ClosedApplicationsReturnError(t *testing.T) {
 	for _, stage := range []domain.ApplicationStage{domain.StageRejected, domain.StageWithdrawn} {
 		t.Run(string(stage), func(t *testing.T) {
 			apps, followUps, timeline, interviews, notes, clock, ids := newDeps()
-			_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: stage})
-			_ = timeline.Save("app-1", &domain.TimelineEvent{ID: "t-1", OccurredAt: fixedTime, Description: "Created"})
+			ctx := context.Background()
+			_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: stage})
+			_ = timeline.Save(ctx, "app-1", &domain.TimelineEvent{ID: "t-1", OccurredAt: fixedTime, Description: "Created"})
 			uc := usecases.NewAddFollowUp(newTx(apps, followUps, timeline, interviews, notes), clock, ids)
 
-			_, err := uc.Execute(usecases.CreateFollowUpCommand{
+			_, err := uc.Execute(ctx, usecases.CreateFollowUpCommand{
 				ApplicationID: "app-1",
 				DueAt:         fixedTime.Add(24 * time.Hour).Format(time.RFC3339),
 				Note:          "Follow up",
@@ -461,7 +469,7 @@ func TestAddFollowUp_ClosedApplicationsReturnError(t *testing.T) {
 			if !errors.Is(err, domain.ErrCannotCreateWork) {
 				t.Fatalf("expected ErrCannotCreateWork, got %v", err)
 			}
-			if got, _ := followUps.ListByApplication("app-1"); len(got) != 0 {
+			if got, _ := followUps.ListByApplication(ctx, "app-1"); len(got) != 0 {
 				t.Fatalf("expected no persisted follow-ups, got %d", len(got))
 			}
 		})
@@ -472,11 +480,12 @@ func TestAddFollowUp_ClosedApplicationsReturnError(t *testing.T) {
 
 func TestListApplications_FiltersAndReturnsAll(t *testing.T) {
 	apps, followUps, timeline, interviews, notes, _, _ := newDeps()
-	_ = apps.Save(&domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
-	_ = apps.Save(&domain.JobApplication{ID: "app-2", Stage: domain.StageSaved})
+	ctx := context.Background()
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-1", Stage: domain.StageApplied})
+	_ = apps.Save(ctx, &domain.JobApplication{ID: "app-2", Stage: domain.StageSaved})
 	uc := usecases.NewListApplications(apps, newAssembler(followUps, timeline, interviews, notes))
 
-	list, err := uc.Execute(ports.ListApplicationsFilter{})
+	list, err := uc.Execute(ctx, ports.ListApplicationsFilter{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -489,11 +498,12 @@ func TestListApplications_FiltersAndReturnsAll(t *testing.T) {
 
 func TestListUpcomingFollowUps(t *testing.T) {
 	_, followUps, _, _, _, clock, _ := newDeps()
+	ctx := context.Background()
 	future := fixedTime.Add(1 * time.Hour)
-	_ = followUps.Save(&domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: future})
+	_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: future})
 	uc := usecases.NewListUpcomingFollowUps(followUps, clock)
 
-	list, err := uc.Execute()
+	list, err := uc.Execute(ctx)
 	if err != nil || len(list) != 1 {
 		t.Errorf("expected 1 upcoming follow-up, got %d (err: %v)", len(list), err)
 	}
@@ -501,11 +511,12 @@ func TestListUpcomingFollowUps(t *testing.T) {
 
 func TestListOverdueFollowUps(t *testing.T) {
 	_, followUps, _, _, _, clock, _ := newDeps()
+	ctx := context.Background()
 	past := fixedTime.Add(-1 * time.Hour)
-	_ = followUps.Save(&domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: past})
+	_ = followUps.Save(ctx, &domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: past})
 	uc := usecases.NewListOverdueFollowUps(followUps, clock)
 
-	list, err := uc.Execute()
+	list, err := uc.Execute(ctx)
 	if err != nil || len(list) != 1 {
 		t.Errorf("expected 1 overdue follow-up, got %d (err: %v)", len(list), err)
 	}

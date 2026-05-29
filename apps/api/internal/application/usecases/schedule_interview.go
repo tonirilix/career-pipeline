@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"strings"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
@@ -24,7 +25,7 @@ func NewScheduleInterview(tx ports.Transactor, clock ports.Clock, ids ports.IDGe
 	return &ScheduleInterview{tx: tx, clock: clock, ids: ids}
 }
 
-func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobApplication, error) {
+func (uc *ScheduleInterview) Execute(ctx context.Context, cmd ScheduleInterviewCommand) (*domain.JobApplication, error) {
 	if strings.TrimSpace(cmd.ScheduledAt) == "" {
 		return nil, domain.ErrScheduledAtEmpty
 	}
@@ -35,8 +36,8 @@ func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobA
 	}
 
 	var result *domain.JobApplication
-	err = uc.tx.WithTransaction(func(repos ports.Repositories) error {
-		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+	err = uc.tx.WithTransaction(ctx, func(ctx context.Context, repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(ctx, cmd.ApplicationID)
 		if err != nil {
 			return err
 		}
@@ -52,7 +53,7 @@ func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobA
 			Notes:       cmd.Notes,
 			Outcome:     domain.OutcomeScheduled,
 		}
-		if err := repos.Interviews.Save(app.ID, interview); err != nil {
+		if err := repos.Interviews.Save(ctx, app.ID, interview); err != nil {
 			return err
 		}
 
@@ -61,11 +62,11 @@ func (uc *ScheduleInterview) Execute(cmd ScheduleInterviewCommand) (*domain.JobA
 			OccurredAt:  uc.clock.Now(),
 			Description: "Scheduled " + string(cmd.Type) + " interview",
 		}
-		if err := repos.Timeline.Save(app.ID, event); err != nil {
+		if err := repos.Timeline.Save(ctx, app.ID, event); err != nil {
 			return err
 		}
 
-		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(ctx, app)
 		if err != nil {
 			return err
 		}

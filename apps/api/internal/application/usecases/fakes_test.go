@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -29,25 +30,25 @@ type fakeAppRepo struct {
 
 func newFakeAppRepo() *fakeAppRepo { return &fakeAppRepo{apps: map[string]*domain.JobApplication{}} }
 
-func (r *fakeAppRepo) Save(app *domain.JobApplication) error {
+func (r *fakeAppRepo) Save(_ context.Context, app *domain.JobApplication) error {
 	r.apps[app.ID] = app
 	return nil
 }
-func (r *fakeAppRepo) FindByID(id string) (*domain.JobApplication, error) {
+func (r *fakeAppRepo) FindByID(_ context.Context, id string) (*domain.JobApplication, error) {
 	app, ok := r.apps[id]
 	if !ok {
 		return nil, domain.ErrApplicationNotFound
 	}
 	return app, nil
 }
-func (r *fakeAppRepo) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
+func (r *fakeAppRepo) List(_ context.Context, filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
 	var out []*domain.JobApplication
 	for _, app := range r.apps {
 		out = append(out, app)
 	}
 	return out, nil
 }
-func (r *fakeAppRepo) UpdateStage(id string, stage domain.ApplicationStage) error {
+func (r *fakeAppRepo) UpdateStage(_ context.Context, id string, stage domain.ApplicationStage) error {
 	app, ok := r.apps[id]
 	if !ok {
 		return domain.ErrApplicationNotFound
@@ -78,14 +79,14 @@ type fakeTimelineRepo struct {
 func newFakeTimelineRepo() *fakeTimelineRepo {
 	return &fakeTimelineRepo{events: map[string][]*domain.TimelineEvent{}}
 }
-func (r *fakeTimelineRepo) Save(applicationID string, event *domain.TimelineEvent) error {
+func (r *fakeTimelineRepo) Save(_ context.Context, applicationID string, event *domain.TimelineEvent) error {
 	if r.saveErr != nil {
 		return r.saveErr
 	}
 	r.events[applicationID] = append(r.events[applicationID], event)
 	return nil
 }
-func (r *fakeTimelineRepo) ListByApplication(applicationID string) ([]*domain.TimelineEvent, error) {
+func (r *fakeTimelineRepo) ListByApplication(_ context.Context, applicationID string) ([]*domain.TimelineEvent, error) {
 	return r.events[applicationID], nil
 }
 
@@ -115,19 +116,19 @@ func newFakeInterviewRepo() *fakeInterviewRepo {
 		byApp:      map[string][]string{},
 	}
 }
-func (r *fakeInterviewRepo) Save(applicationID string, iv *domain.Interview) error {
+func (r *fakeInterviewRepo) Save(_ context.Context, applicationID string, iv *domain.Interview) error {
 	r.interviews[iv.ID] = iv
 	r.byApp[applicationID] = append(r.byApp[applicationID], iv.ID)
 	return nil
 }
-func (r *fakeInterviewRepo) FindByID(id string) (*domain.Interview, error) {
+func (r *fakeInterviewRepo) FindByID(_ context.Context, id string) (*domain.Interview, error) {
 	iv, ok := r.interviews[id]
 	if !ok {
 		return nil, domain.ErrInterviewNotFound
 	}
 	return iv, nil
 }
-func (r *fakeInterviewRepo) UpdateOutcome(id string, outcome domain.InterviewOutcome) error {
+func (r *fakeInterviewRepo) UpdateOutcome(_ context.Context, id string, outcome domain.InterviewOutcome) error {
 	iv, ok := r.interviews[id]
 	if !ok {
 		return domain.ErrInterviewNotFound
@@ -135,7 +136,7 @@ func (r *fakeInterviewRepo) UpdateOutcome(id string, outcome domain.InterviewOut
 	iv.Outcome = outcome
 	return nil
 }
-func (r *fakeInterviewRepo) ListByApplication(applicationID string) ([]*domain.Interview, error) {
+func (r *fakeInterviewRepo) ListByApplication(_ context.Context, applicationID string) ([]*domain.Interview, error) {
 	var out []*domain.Interview
 	for _, id := range r.byApp[applicationID] {
 		out = append(out, r.interviews[id])
@@ -173,19 +174,19 @@ func newFakeFollowUpRepo() *fakeFollowUpRepo {
 		byApp:     map[string][]string{},
 	}
 }
-func (r *fakeFollowUpRepo) Save(fu *domain.FollowUpReminder) error {
+func (r *fakeFollowUpRepo) Save(_ context.Context, fu *domain.FollowUpReminder) error {
 	r.followUps[fu.ID] = fu
 	r.byApp[fu.ApplicationID] = append(r.byApp[fu.ApplicationID], fu.ID)
 	return nil
 }
-func (r *fakeFollowUpRepo) FindByID(id string) (*domain.FollowUpReminder, error) {
+func (r *fakeFollowUpRepo) FindByID(_ context.Context, id string) (*domain.FollowUpReminder, error) {
 	fu, ok := r.followUps[id]
 	if !ok {
 		return nil, domain.ErrFollowUpNotFound
 	}
 	return fu, nil
 }
-func (r *fakeFollowUpRepo) UpdateCompleted(id string, completedAt time.Time) error {
+func (r *fakeFollowUpRepo) UpdateCompleted(_ context.Context, id string, completedAt time.Time) error {
 	fu, ok := r.followUps[id]
 	if !ok {
 		return domain.ErrFollowUpNotFound
@@ -193,14 +194,14 @@ func (r *fakeFollowUpRepo) UpdateCompleted(id string, completedAt time.Time) err
 	fu.CompletedAt = &completedAt
 	return nil
 }
-func (r *fakeFollowUpRepo) ListByApplication(applicationID string) ([]*domain.FollowUpReminder, error) {
+func (r *fakeFollowUpRepo) ListByApplication(_ context.Context, applicationID string) ([]*domain.FollowUpReminder, error) {
 	var out []*domain.FollowUpReminder
 	for _, id := range r.byApp[applicationID] {
 		out = append(out, r.followUps[id])
 	}
 	return out, nil
 }
-func (r *fakeFollowUpRepo) ListUpcoming(now time.Time) ([]*domain.FollowUpReminder, error) {
+func (r *fakeFollowUpRepo) ListUpcoming(_ context.Context, now time.Time) ([]*domain.FollowUpReminder, error) {
 	var out []*domain.FollowUpReminder
 	for _, fu := range r.followUps {
 		if fu.CompletedAt == nil && fu.DueAt.After(now) {
@@ -209,7 +210,7 @@ func (r *fakeFollowUpRepo) ListUpcoming(now time.Time) ([]*domain.FollowUpRemind
 	}
 	return out, nil
 }
-func (r *fakeFollowUpRepo) ListOverdue(now time.Time) ([]*domain.FollowUpReminder, error) {
+func (r *fakeFollowUpRepo) ListOverdue(_ context.Context, now time.Time) ([]*domain.FollowUpReminder, error) {
 	var out []*domain.FollowUpReminder
 	for _, fu := range r.followUps {
 		if fu.CompletedAt == nil && fu.DueAt.Before(now) {
@@ -218,7 +219,7 @@ func (r *fakeFollowUpRepo) ListOverdue(now time.Time) ([]*domain.FollowUpReminde
 	}
 	return out, nil
 }
-func (r *fakeFollowUpRepo) DeactivateByApplication(applicationID string, completedAt time.Time) error {
+func (r *fakeFollowUpRepo) DeactivateByApplication(_ context.Context, applicationID string, completedAt time.Time) error {
 	if r.deactivateErr != nil {
 		return r.deactivateErr
 	}
@@ -266,12 +267,12 @@ func newFakeNoteRepo() *fakeNoteRepo {
 		byApp: map[string][]string{},
 	}
 }
-func (r *fakeNoteRepo) Save(applicationID string, note *domain.ApplicationNote) error {
+func (r *fakeNoteRepo) Save(_ context.Context, applicationID string, note *domain.ApplicationNote) error {
 	r.notes[note.ID] = note
 	r.byApp[applicationID] = append(r.byApp[applicationID], note.ID)
 	return nil
 }
-func (r *fakeNoteRepo) ListByApplication(applicationID string) ([]*domain.ApplicationNote, error) {
+func (r *fakeNoteRepo) ListByApplication(_ context.Context, applicationID string) ([]*domain.ApplicationNote, error) {
 	var out []*domain.ApplicationNote
 	for _, id := range r.byApp[applicationID] {
 		out = append(out, r.notes[id])
@@ -320,14 +321,14 @@ func newFakeTransactor(
 	}
 }
 
-func (t *fakeTransactor) WithTransaction(fn func(repos ports.Repositories) error) error {
+func (t *fakeTransactor) WithTransaction(_ context.Context, fn func(ctx context.Context, repos ports.Repositories) error) error {
 	appsSnapshot := t.apps.clone()
 	followUpsSnapshot := t.followUps.clone()
 	timelineSnapshot := t.timeline.clone()
 	interviewsSnapshot := t.interviews.clone()
 	notesSnapshot := t.notes.clone()
 
-	err := fn(ports.Repositories{
+	err := fn(context.Background(), ports.Repositories{
 		Applications: t.apps,
 		Interviews:   t.interviews,
 		FollowUps:    t.followUps,

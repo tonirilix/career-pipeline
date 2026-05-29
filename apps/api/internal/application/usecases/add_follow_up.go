@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"context"
+
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
@@ -21,15 +23,15 @@ func NewAddFollowUp(tx ports.Transactor, clock ports.Clock, ids ports.IDGenerato
 	return &AddFollowUp{tx: tx, clock: clock, ids: ids}
 }
 
-func (uc *AddFollowUp) Execute(cmd CreateFollowUpCommand) (*domain.JobApplication, error) {
+func (uc *AddFollowUp) Execute(ctx context.Context, cmd CreateFollowUpCommand) (*domain.JobApplication, error) {
 	dueAt, err := parseTime(cmd.DueAt)
 	if err != nil {
 		return nil, err
 	}
 
 	var result *domain.JobApplication
-	err = uc.tx.WithTransaction(func(repos ports.Repositories) error {
-		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+	err = uc.tx.WithTransaction(ctx, func(ctx context.Context, repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(ctx, cmd.ApplicationID)
 		if err != nil {
 			return err
 		}
@@ -38,7 +40,7 @@ func (uc *AddFollowUp) Execute(cmd CreateFollowUpCommand) (*domain.JobApplicatio
 			return domain.ErrCannotCreateWork
 		}
 
-		events, err := repos.Timeline.ListByApplication(app.ID)
+		events, err := repos.Timeline.ListByApplication(ctx, app.ID)
 		if err != nil {
 			return err
 		}
@@ -52,7 +54,7 @@ func (uc *AddFollowUp) Execute(cmd CreateFollowUpCommand) (*domain.JobApplicatio
 			DueAt:         dueAt,
 			Note:          cmd.Note,
 		}
-		if err := repos.FollowUps.Save(followUp); err != nil {
+		if err := repos.FollowUps.Save(ctx, followUp); err != nil {
 			return err
 		}
 
@@ -61,11 +63,11 @@ func (uc *AddFollowUp) Execute(cmd CreateFollowUpCommand) (*domain.JobApplicatio
 			OccurredAt:  uc.clock.Now(),
 			Description: "Created follow-up reminder",
 		}
-		if err := repos.Timeline.Save(app.ID, event); err != nil {
+		if err := repos.Timeline.Save(ctx, app.ID, event); err != nil {
 			return err
 		}
 
-		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(ctx, app)
 		if err != nil {
 			return err
 		}

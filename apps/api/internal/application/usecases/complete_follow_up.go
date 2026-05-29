@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"context"
+
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
@@ -20,16 +22,16 @@ func NewCompleteFollowUp(tx ports.Transactor, clock ports.Clock, ids ports.IDGen
 	return &CompleteFollowUp{tx: tx, clock: clock, ids: ids}
 }
 
-func (uc *CompleteFollowUp) Execute(cmd CompleteFollowUpCommand) (*domain.JobApplication, error) {
+func (uc *CompleteFollowUp) Execute(ctx context.Context, cmd CompleteFollowUpCommand) (*domain.JobApplication, error) {
 	var result *domain.JobApplication
-	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
-		app, err := repos.Applications.FindByID(cmd.ApplicationID)
+	err := uc.tx.WithTransaction(ctx, func(ctx context.Context, repos ports.Repositories) error {
+		app, err := repos.Applications.FindByID(ctx, cmd.ApplicationID)
 		if err != nil {
 			return err
 		}
 
 		now := uc.clock.Now()
-		if err := repos.FollowUps.UpdateCompleted(cmd.ReminderID, now); err != nil {
+		if err := repos.FollowUps.UpdateCompleted(ctx, cmd.ReminderID, now); err != nil {
 			return err
 		}
 
@@ -38,11 +40,11 @@ func (uc *CompleteFollowUp) Execute(cmd CompleteFollowUpCommand) (*domain.JobApp
 			OccurredAt:  now,
 			Description: "Completed follow-up reminder",
 		}
-		if err := repos.Timeline.Save(app.ID, event); err != nil {
+		if err := repos.Timeline.Save(ctx, app.ID, event); err != nil {
 			return err
 		}
 
-		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(app)
+		loaded, err := NewFullApplicationAssembler(repos.FollowUps, repos.Timeline, repos.Interviews, repos.Notes).Load(ctx, app)
 		if err != nil {
 			return err
 		}

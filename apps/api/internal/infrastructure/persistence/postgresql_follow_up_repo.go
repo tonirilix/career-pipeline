@@ -24,8 +24,8 @@ func newPostgreSQLFollowUpRepositoryWithExecutor(dbtx db.DBTX) *PostgreSQLFollow
 
 var _ ports.FollowUpRepository = (*PostgreSQLFollowUpRepository)(nil)
 
-func (r *PostgreSQLFollowUpRepository) Save(fu *domain.FollowUpReminder) error {
-	return r.q.InsertFollowUp(context.Background(), db.InsertFollowUpParams{
+func (r *PostgreSQLFollowUpRepository) Save(ctx context.Context, fu *domain.FollowUpReminder) error {
+	return r.q.InsertFollowUp(ctx, db.InsertFollowUpParams{
 		ID:            fu.ID,
 		ApplicationID: fu.ApplicationID,
 		DueAt:         fu.DueAt.UTC(),
@@ -35,8 +35,8 @@ func (r *PostgreSQLFollowUpRepository) Save(fu *domain.FollowUpReminder) error {
 	})
 }
 
-func (r *PostgreSQLFollowUpRepository) FindByID(id string) (*domain.FollowUpReminder, error) {
-	row, err := r.q.GetFollowUpByID(context.Background(), id)
+func (r *PostgreSQLFollowUpRepository) FindByID(ctx context.Context, id string) (*domain.FollowUpReminder, error) {
+	row, err := r.q.GetFollowUpByID(ctx, id)
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrFollowUpNotFound
 	}
@@ -52,24 +52,24 @@ func (r *PostgreSQLFollowUpRepository) FindByID(id string) (*domain.FollowUpRemi
 	}, nil
 }
 
-func (r *PostgreSQLFollowUpRepository) UpdateCompleted(id string, completedAt time.Time) error {
+func (r *PostgreSQLFollowUpRepository) UpdateCompleted(ctx context.Context, id string, completedAt time.Time) error {
 	t := completedAt.UTC()
-	return r.q.UpdateFollowUpCompleted(context.Background(), db.UpdateFollowUpCompletedParams{
+	return r.q.UpdateFollowUpCompleted(ctx, db.UpdateFollowUpCompletedParams{
 		CompletedAt: &t,
 		ID:          id,
 	})
 }
 
-func (r *PostgreSQLFollowUpRepository) ListByApplication(applicationID string) ([]*domain.FollowUpReminder, error) {
-	rows, err := r.q.ListFollowUpsByApplication(context.Background(), applicationID)
+func (r *PostgreSQLFollowUpRepository) ListByApplication(ctx context.Context, applicationID string) ([]*domain.FollowUpReminder, error) {
+	rows, err := r.q.ListFollowUpsByApplication(ctx, applicationID)
 	if err != nil {
 		return nil, err
 	}
 	return followUpRowsToDomain(rows), nil
 }
 
-func (r *PostgreSQLFollowUpRepository) ListUpcoming(now time.Time) ([]*domain.FollowUpReminder, error) {
-	rows, err := r.q.ListUpcomingFollowUps(context.Background(), now.UTC())
+func (r *PostgreSQLFollowUpRepository) ListUpcoming(ctx context.Context, now time.Time) ([]*domain.FollowUpReminder, error) {
+	rows, err := r.q.ListUpcomingFollowUps(ctx, now.UTC())
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +86,8 @@ func (r *PostgreSQLFollowUpRepository) ListUpcoming(now time.Time) ([]*domain.Fo
 	return out, nil
 }
 
-func (r *PostgreSQLFollowUpRepository) ListOverdue(now time.Time) ([]*domain.FollowUpReminder, error) {
-	rows, err := r.q.ListOverdueFollowUps(context.Background(), now.UTC())
+func (r *PostgreSQLFollowUpRepository) ListOverdue(ctx context.Context, now time.Time) ([]*domain.FollowUpReminder, error) {
+	rows, err := r.q.ListOverdueFollowUps(ctx, now.UTC())
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +104,9 @@ func (r *PostgreSQLFollowUpRepository) ListOverdue(now time.Time) ([]*domain.Fol
 	return out, nil
 }
 
-func (r *PostgreSQLFollowUpRepository) DeactivateByApplication(applicationID string, completedAt time.Time) error {
+func (r *PostgreSQLFollowUpRepository) DeactivateByApplication(ctx context.Context, applicationID string, completedAt time.Time) error {
 	t := completedAt.UTC()
-	return r.q.DeactivateFollowUpsByApplication(context.Background(), db.DeactivateFollowUpsByApplicationParams{
+	return r.q.DeactivateFollowUpsByApplication(ctx, db.DeactivateFollowUpsByApplicationParams{
 		CompletedAt:   &t,
 		ApplicationID: applicationID,
 	})

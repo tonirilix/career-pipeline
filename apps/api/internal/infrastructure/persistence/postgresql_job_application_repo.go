@@ -26,8 +26,8 @@ func newPostgreSQLJobApplicationRepositoryWithExecutor(dbtx db.DBTX) *PostgreSQL
 
 var _ ports.JobApplicationRepository = (*PostgreSQLJobApplicationRepository)(nil)
 
-func (r *PostgreSQLJobApplicationRepository) Save(app *domain.JobApplication) error {
-	return r.q.InsertJobApplication(context.Background(), db.InsertJobApplicationParams{
+func (r *PostgreSQLJobApplicationRepository) Save(ctx context.Context, app *domain.JobApplication) error {
+	return r.q.InsertJobApplication(ctx, db.InsertJobApplicationParams{
 		ID:             app.ID,
 		Company:        app.Company,
 		RoleTitle:      app.RoleTitle,
@@ -41,8 +41,8 @@ func (r *PostgreSQLJobApplicationRepository) Save(app *domain.JobApplication) er
 	})
 }
 
-func (r *PostgreSQLJobApplicationRepository) FindByID(id string) (*domain.JobApplication, error) {
-	row, err := r.q.GetJobApplicationByID(context.Background(), id)
+func (r *PostgreSQLJobApplicationRepository) FindByID(ctx context.Context, id string) (*domain.JobApplication, error) {
+	row, err := r.q.GetJobApplicationByID(ctx, id)
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrApplicationNotFound
 	}
@@ -52,7 +52,7 @@ func (r *PostgreSQLJobApplicationRepository) FindByID(id string) (*domain.JobApp
 	return dbJobApplicationToDomain(row), nil
 }
 
-func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
+func (r *PostgreSQLJobApplicationRepository) List(ctx context.Context, filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
 	query := `SELECT id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at FROM job_applications WHERE 1=1`
 	args := []any{}
 	nextArg := func() string {
@@ -87,7 +87,7 @@ func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsF
 		query += " ORDER BY created_at ASC"
 	}
 
-	rows, err := r.dbtx.QueryContext(context.Background(), query, args...)
+	rows, err := r.dbtx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +108,8 @@ func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsF
 	return apps, rows.Err()
 }
 
-func (r *PostgreSQLJobApplicationRepository) UpdateStage(id string, stage domain.ApplicationStage) error {
-	return r.q.UpdateJobApplicationStage(context.Background(), db.UpdateJobApplicationStageParams{
+func (r *PostgreSQLJobApplicationRepository) UpdateStage(ctx context.Context, id string, stage domain.ApplicationStage) error {
+	return r.q.UpdateJobApplicationStage(ctx, db.UpdateJobApplicationStageParams{
 		Stage: string(stage),
 		ID:    id,
 	})
