@@ -1,5 +1,9 @@
 # compiled binary
 api
+bin/
+
+# air hot reload
+tmp/
 
 # database
 data/
