@@ -1,6 +1,7 @@
 package persistence_test
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
@@ -50,6 +51,7 @@ func truncateTestDB(t *testing.T, db *sql.DB) {
 func TestPostgreSQLJobApplicationRepository_SaveAndFind(t *testing.T) {
 	db := openTestDB(t)
 	repo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	ctx := context.Background()
 
 	app := &domain.JobApplication{
 		ID:             "app-1",
@@ -64,11 +66,11 @@ func TestPostgreSQLJobApplicationRepository_SaveAndFind(t *testing.T) {
 		CreatedAt:      time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 
-	if err := repo.Save(app); err != nil {
+	if err := repo.Save(ctx, app); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	found, err := repo.FindByID("app-1")
+	found, err := repo.FindByID(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("FindByID: %v", err)
 	}
@@ -83,12 +85,13 @@ func TestPostgreSQLJobApplicationRepository_SaveAndFind(t *testing.T) {
 func TestPostgreSQLJobApplicationRepository_UpdateStage(t *testing.T) {
 	db := openTestDB(t)
 	repo := persistence.NewPostgreSQLJobApplicationRepository(db)
-	_ = repo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
+	ctx := context.Background()
+	_ = repo.Save(ctx, &domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 
-	if err := repo.UpdateStage("app-1", domain.StageApplied); err != nil {
+	if err := repo.UpdateStage(ctx, "app-1", domain.StageApplied); err != nil {
 		t.Fatalf("UpdateStage: %v", err)
 	}
-	found, _ := repo.FindByID("app-1")
+	found, _ := repo.FindByID(ctx, "app-1")
 	if found.Stage != domain.StageApplied {
 		t.Errorf("expected Applied, got %s", found.Stage)
 	}
@@ -98,13 +101,14 @@ func TestPostgreSQLTimelineRepository_SaveAndList(t *testing.T) {
 	db := openTestDB(t)
 	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
 	repo := persistence.NewPostgreSQLTimelineRepository(db)
+	ctx := context.Background()
 
-	_ = appRepo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
+	_ = appRepo.Save(ctx, &domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 	event := &domain.TimelineEvent{ID: "ev-1", Description: "Saved", OccurredAt: time.Now()}
-	if err := repo.Save("app-1", event); err != nil {
+	if err := repo.Save(ctx, "app-1", event); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	events, err := repo.ListByApplication("app-1")
+	events, err := repo.ListByApplication(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("ListByApplication: %v", err)
 	}
@@ -117,13 +121,14 @@ func TestPostgreSQLNoteRepository_SaveAndList(t *testing.T) {
 	db := openTestDB(t)
 	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
 	repo := persistence.NewPostgreSQLNoteRepository(db)
+	ctx := context.Background()
 
-	_ = appRepo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
+	_ = appRepo.Save(ctx, &domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 	note := &domain.ApplicationNote{ID: "n-1", Body: "Test note", CreatedAt: time.Now()}
-	if err := repo.Save("app-1", note); err != nil {
+	if err := repo.Save(ctx, "app-1", note); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	notes, err := repo.ListByApplication("app-1")
+	notes, err := repo.ListByApplication(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("ListByApplication: %v", err)
 	}
@@ -136,24 +141,25 @@ func TestPostgreSQLFollowUpRepository(t *testing.T) {
 	db := openTestDB(t)
 	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
 	repo := persistence.NewPostgreSQLFollowUpRepository(db)
+	ctx := context.Background()
 
-	_ = appRepo.Save(&domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
+	_ = appRepo.Save(ctx, &domain.JobApplication{ID: "app-1", Company: "X", RoleTitle: "Y", Stage: domain.StageSaved, CreatedAt: time.Now()})
 	future := time.Now().Add(24 * time.Hour)
 	fu := &domain.FollowUpReminder{ID: "fu-1", ApplicationID: "app-1", DueAt: future, Note: "Follow up"}
-	if err := repo.Save(fu); err != nil {
+	if err := repo.Save(ctx, fu); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	upcoming, err := repo.ListUpcoming(time.Now())
+	upcoming, err := repo.ListUpcoming(ctx, time.Now())
 	if err != nil || len(upcoming) != 1 {
 		t.Errorf("expected 1 upcoming, got %d (err: %v)", len(upcoming), err)
 	}
 
 	now := time.Now()
-	if err := repo.UpdateCompleted("fu-1", now); err != nil {
+	if err := repo.UpdateCompleted(ctx, "fu-1", now); err != nil {
 		t.Fatalf("UpdateCompleted: %v", err)
 	}
-	found, _ := repo.FindByID("fu-1")
+	found, _ := repo.FindByID(ctx, "fu-1")
 	if found.CompletedAt == nil {
 		t.Error("expected CompletedAt to be set")
 	}
@@ -166,6 +172,7 @@ func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
 	followUpRepo := persistence.NewPostgreSQLFollowUpRepository(db)
 	noteRepo := persistence.NewPostgreSQLNoteRepository(db)
 	timelineRepo := persistence.NewPostgreSQLTimelineRepository(db)
+	ctx := context.Background()
 	now := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
 
 	app := &domain.JobApplication{
@@ -180,10 +187,10 @@ func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
 		Stage:          domain.StageApplied,
 		CreatedAt:      now,
 	}
-	if err := appRepo.Save(app); err != nil {
+	if err := appRepo.Save(ctx, app); err != nil {
 		t.Fatalf("save app: %v", err)
 	}
-	if err := interviewRepo.Save("app-1", &domain.Interview{
+	if err := interviewRepo.Save(ctx, "app-1", &domain.Interview{
 		ID:          "interview-1",
 		Type:        domain.InterviewTechnical,
 		ScheduledAt: now.Add(24 * time.Hour),
@@ -192,7 +199,7 @@ func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("save interview: %v", err)
 	}
-	if err := followUpRepo.Save(&domain.FollowUpReminder{
+	if err := followUpRepo.Save(ctx, &domain.FollowUpReminder{
 		ID:            "follow-up-1",
 		ApplicationID: "app-1",
 		DueAt:         now.Add(48 * time.Hour),
@@ -200,14 +207,14 @@ func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("save follow-up: %v", err)
 	}
-	if err := noteRepo.Save("app-1", &domain.ApplicationNote{
+	if err := noteRepo.Save(ctx, "app-1", &domain.ApplicationNote{
 		ID:        "note-1",
 		Body:      "Recruiter prefers email.",
 		CreatedAt: now.Add(time.Hour),
 	}); err != nil {
 		t.Fatalf("save note: %v", err)
 	}
-	if err := timelineRepo.Save("app-1", &domain.TimelineEvent{
+	if err := timelineRepo.Save(ctx, "app-1", &domain.TimelineEvent{
 		ID:          "event-1",
 		Description: "Applied",
 		OccurredAt:  now,
@@ -215,23 +222,23 @@ func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
 		t.Fatalf("save timeline: %v", err)
 	}
 
-	found, err := appRepo.FindByID("app-1")
+	found, err := appRepo.FindByID(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("find app: %v", err)
 	}
-	interviews, err := interviewRepo.ListByApplication("app-1")
+	interviews, err := interviewRepo.ListByApplication(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("list interviews: %v", err)
 	}
-	followUps, err := followUpRepo.ListByApplication("app-1")
+	followUps, err := followUpRepo.ListByApplication(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("list follow-ups: %v", err)
 	}
-	notes, err := noteRepo.ListByApplication("app-1")
+	notes, err := noteRepo.ListByApplication(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("list notes: %v", err)
 	}
-	events, err := timelineRepo.ListByApplication("app-1")
+	events, err := timelineRepo.ListByApplication(ctx, "app-1")
 	if err != nil {
 		t.Fatalf("list timeline: %v", err)
 	}

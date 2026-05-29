@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"strings"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
@@ -31,7 +32,7 @@ func NewCreateApplication(
 	return &CreateApplication{tx: tx, clock: clock, ids: ids}
 }
 
-func (uc *CreateApplication) Execute(cmd CreateApplicationCommand) (*domain.JobApplication, error) {
+func (uc *CreateApplication) Execute(ctx context.Context, cmd CreateApplicationCommand) (*domain.JobApplication, error) {
 	if strings.TrimSpace(cmd.Company) == "" {
 		return nil, domain.ErrCompanyRequired
 	}
@@ -59,11 +60,11 @@ func (uc *CreateApplication) Execute(cmd CreateApplicationCommand) (*domain.JobA
 		Description: "Saved opportunity",
 	}
 
-	err := uc.tx.WithTransaction(func(repos ports.Repositories) error {
-		if err := repos.Applications.Save(app); err != nil {
+	err := uc.tx.WithTransaction(ctx, func(ctx context.Context, repos ports.Repositories) error {
+		if err := repos.Applications.Save(ctx, app); err != nil {
 			return err
 		}
-		if err := repos.Timeline.Save(app.ID, event); err != nil {
+		if err := repos.Timeline.Save(ctx, app.ID, event); err != nil {
 			return err
 		}
 		return nil

@@ -24,7 +24,7 @@ func (r *mutationResolver) CreateSavedOpportunity(ctx context.Context, input mod
 	if err != nil {
 		return nil, err
 	}
-	app, err := r.CreateApplicationUC.Execute(usecases.CreateApplicationCommand{
+	app, err := r.CreateApplicationUC.Execute(ctx, usecases.CreateApplicationCommand{
 		Company:        input.Company,
 		RoleTitle:      input.RoleTitle,
 		PostingURL:     input.PostingURL,
@@ -45,7 +45,7 @@ func (r *mutationResolver) AdvanceApplicationStage(ctx context.Context, input mo
 	if err != nil {
 		return nil, err
 	}
-	app, err := r.AdvanceStageUC.Execute(usecases.AdvanceStageCommand{
+	app, err := r.AdvanceStageUC.Execute(ctx, usecases.AdvanceStageCommand{
 		ApplicationID: input.ApplicationID,
 		ToStage:       toStage,
 	})
@@ -61,7 +61,7 @@ func (r *mutationResolver) ScheduleInterview(ctx context.Context, input model.Sc
 	if err != nil {
 		return nil, err
 	}
-	app, err := r.ScheduleInterviewUC.Execute(usecases.ScheduleInterviewCommand{
+	app, err := r.ScheduleInterviewUC.Execute(ctx, usecases.ScheduleInterviewCommand{
 		ApplicationID: input.ApplicationID,
 		Type:          interviewType,
 		ScheduledAt:   input.ScheduledAt,
@@ -79,7 +79,7 @@ func (r *mutationResolver) RecordInterviewOutcome(ctx context.Context, input mod
 	if err != nil {
 		return nil, err
 	}
-	app, err := r.RecordOutcomeUC.Execute(usecases.RecordInterviewOutcomeCommand{
+	app, err := r.RecordOutcomeUC.Execute(ctx, usecases.RecordInterviewOutcomeCommand{
 		ApplicationID: input.ApplicationID,
 		InterviewID:   input.InterviewID,
 		Outcome:       outcome,
@@ -92,7 +92,7 @@ func (r *mutationResolver) RecordInterviewOutcome(ctx context.Context, input mod
 
 // CreateFollowUpReminder is the resolver for the createFollowUpReminder field.
 func (r *mutationResolver) CreateFollowUpReminder(ctx context.Context, input model.CreateFollowUpReminderInput) (*model.JobApplication, error) {
-	app, err := r.AddFollowUpUC.Execute(usecases.CreateFollowUpCommand{
+	app, err := r.AddFollowUpUC.Execute(ctx, usecases.CreateFollowUpCommand{
 		ApplicationID: input.ApplicationID,
 		DueAt:         input.DueAt,
 		Note:          input.Note,
@@ -105,7 +105,7 @@ func (r *mutationResolver) CreateFollowUpReminder(ctx context.Context, input mod
 
 // CompleteFollowUpReminder is the resolver for the completeFollowUpReminder field.
 func (r *mutationResolver) CompleteFollowUpReminder(ctx context.Context, input model.CompleteFollowUpReminderInput) (*model.JobApplication, error) {
-	app, err := r.CompleteFollowUpUC.Execute(usecases.CompleteFollowUpCommand{
+	app, err := r.CompleteFollowUpUC.Execute(ctx, usecases.CompleteFollowUpCommand{
 		ApplicationID: input.ApplicationID,
 		ReminderID:    input.ReminderID,
 	})
@@ -117,7 +117,7 @@ func (r *mutationResolver) CompleteFollowUpReminder(ctx context.Context, input m
 
 // AddApplicationNote is the resolver for the addApplicationNote field.
 func (r *mutationResolver) AddApplicationNote(ctx context.Context, input model.AddApplicationNoteInput) (*model.JobApplication, error) {
-	app, err := r.AddNoteUC.Execute(usecases.AddNoteCommand{
+	app, err := r.AddNoteUC.Execute(ctx, usecases.AddNoteCommand{
 		ApplicationID: input.ApplicationID,
 		Body:          input.Body,
 	})
@@ -129,7 +129,7 @@ func (r *mutationResolver) AddApplicationNote(ctx context.Context, input model.A
 
 // Applications is the resolver for the applications field.
 func (r *queryResolver) Applications(ctx context.Context) ([]*model.JobApplication, error) {
-	apps, err := r.ListApplicationsUC.Execute(ports.ListApplicationsFilter{})
+	apps, err := r.ListApplicationsUC.Execute(ctx, ports.ListApplicationsFilter{})
 	if err != nil {
 		return nil, err
 	}

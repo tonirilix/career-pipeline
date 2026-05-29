@@ -1,6 +1,7 @@
 package ports
 
 import (
+	"context"
 	"time"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
@@ -14,35 +15,35 @@ type ListApplicationsFilter struct {
 }
 
 type JobApplicationRepository interface {
-	Save(app *domain.JobApplication) error
-	FindByID(id string) (*domain.JobApplication, error)
-	List(filter ListApplicationsFilter) ([]*domain.JobApplication, error)
-	UpdateStage(id string, stage domain.ApplicationStage) error
+	Save(ctx context.Context, app *domain.JobApplication) error
+	FindByID(ctx context.Context, id string) (*domain.JobApplication, error)
+	List(ctx context.Context, filter ListApplicationsFilter) ([]*domain.JobApplication, error)
+	UpdateStage(ctx context.Context, id string, stage domain.ApplicationStage) error
 }
 
 type InterviewRepository interface {
-	Save(applicationID string, interview *domain.Interview) error
-	FindByID(id string) (*domain.Interview, error)
-	UpdateOutcome(id string, outcome domain.InterviewOutcome) error
-	ListByApplication(applicationID string) ([]*domain.Interview, error)
+	Save(ctx context.Context, applicationID string, interview *domain.Interview) error
+	FindByID(ctx context.Context, id string) (*domain.Interview, error)
+	UpdateOutcome(ctx context.Context, id string, outcome domain.InterviewOutcome) error
+	ListByApplication(ctx context.Context, applicationID string) ([]*domain.Interview, error)
 }
 
 type FollowUpRepository interface {
-	Save(followUp *domain.FollowUpReminder) error
-	FindByID(id string) (*domain.FollowUpReminder, error)
-	UpdateCompleted(id string, completedAt time.Time) error
-	ListByApplication(applicationID string) ([]*domain.FollowUpReminder, error)
-	ListUpcoming(now time.Time) ([]*domain.FollowUpReminder, error)
-	ListOverdue(now time.Time) ([]*domain.FollowUpReminder, error)
-	DeactivateByApplication(applicationID string, completedAt time.Time) error
+	Save(ctx context.Context, followUp *domain.FollowUpReminder) error
+	FindByID(ctx context.Context, id string) (*domain.FollowUpReminder, error)
+	UpdateCompleted(ctx context.Context, id string, completedAt time.Time) error
+	ListByApplication(ctx context.Context, applicationID string) ([]*domain.FollowUpReminder, error)
+	ListUpcoming(ctx context.Context, now time.Time) ([]*domain.FollowUpReminder, error)
+	ListOverdue(ctx context.Context, now time.Time) ([]*domain.FollowUpReminder, error)
+	DeactivateByApplication(ctx context.Context, applicationID string, completedAt time.Time) error
 }
 
 type NoteRepository interface {
-	Save(applicationID string, note *domain.ApplicationNote) error
-	ListByApplication(applicationID string) ([]*domain.ApplicationNote, error)
+	Save(ctx context.Context, applicationID string, note *domain.ApplicationNote) error
+	ListByApplication(ctx context.Context, applicationID string) ([]*domain.ApplicationNote, error)
 }
 
 type TimelineRepository interface {
-	Save(applicationID string, event *domain.TimelineEvent) error
-	ListByApplication(applicationID string) ([]*domain.TimelineEvent, error)
+	Save(ctx context.Context, applicationID string, event *domain.TimelineEvent) error
+	ListByApplication(ctx context.Context, applicationID string) ([]*domain.TimelineEvent, error)
 }

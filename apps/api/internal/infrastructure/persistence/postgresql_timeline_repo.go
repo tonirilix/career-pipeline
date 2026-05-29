@@ -1,52 +1,49 @@
 package persistence
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/infrastructure/persistence/db"
 )
 
 type PostgreSQLTimelineRepository struct {
-	db sqlExecutor
+	q *db.Queries
 }
 
-func NewPostgreSQLTimelineRepository(db *sql.DB) *PostgreSQLTimelineRepository {
-	return &PostgreSQLTimelineRepository{db: db}
+func NewPostgreSQLTimelineRepository(database *sql.DB) *PostgreSQLTimelineRepository {
+	return &PostgreSQLTimelineRepository{q: db.New(database)}
 }
 
-func newPostgreSQLTimelineRepositoryWithExecutor(db sqlExecutor) *PostgreSQLTimelineRepository {
-	return &PostgreSQLTimelineRepository{db: db}
+func newPostgreSQLTimelineRepositoryWithExecutor(dbtx db.DBTX) *PostgreSQLTimelineRepository {
+	return &PostgreSQLTimelineRepository{q: db.New(dbtx)}
 }
 
 var _ ports.TimelineRepository = (*PostgreSQLTimelineRepository)(nil)
 
-func (r *PostgreSQLTimelineRepository) Save(applicationID string, event *domain.TimelineEvent) error {
-	_, err := r.db.Exec(
-		insertTimelineEventSQL,
-		event.ID, applicationID, event.Description,
-		event.OccurredAt.UTC(),
-	)
-	return err
+func (r *PostgreSQLTimelineRepository) Save(ctx context.Context, applicationID string, event *domain.TimelineEvent) error {
+	return r.q.InsertTimelineEvent(ctx, db.InsertTimelineEventParams{
+		ID:            event.ID,
+		ApplicationID: applicationID,
+		Description:   event.Description,
+		OccurredAt:    event.OccurredAt.UTC(),
+	})
 }
 
-func (r *PostgreSQLTimelineRepository) ListByApplication(applicationID string) ([]*domain.TimelineEvent, error) {
-	rows, err := r.db.Query(
-		selectTimelineEventsByApplicationSQL,
-		applicationID,
-	)
+func (r *PostgreSQLTimelineRepository) ListByApplication(ctx context.Context, applicationID string) ([]*domain.TimelineEvent, error) {
+	rows, err := r.q.ListTimelineEventsByApplication(ctx, applicationID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var out []*domain.TimelineEvent
-	for rows.Next() {
-		var e domain.TimelineEvent
-		if err := rows.Scan(&e.ID, &e.Description, &e.OccurredAt); err != nil {
-			return nil, err
+	out := make([]*domain.TimelineEvent, len(rows))
+	for i, row := range rows {
+		out[i] = &domain.TimelineEvent{
+			ID:          row.ID,
+			Description: row.Description,
+			OccurredAt:  row.OccurredAt,
 		}
-		out = append(out, &e)
 	}
-	return out, rows.Err()
+	return out, nil
 }

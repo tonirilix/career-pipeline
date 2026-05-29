@@ -1,48 +1,60 @@
 package persistence
 
 import (
+	"context"
 	"database/sql"
 	"strconv"
 	"strings"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/infrastructure/persistence/db"
 )
 
 type PostgreSQLJobApplicationRepository struct {
-	db sqlExecutor
+	q    *db.Queries
+	dbtx db.DBTX // kept for dynamic List query which cannot be statically generated
 }
 
-func NewPostgreSQLJobApplicationRepository(db *sql.DB) *PostgreSQLJobApplicationRepository {
-	return &PostgreSQLJobApplicationRepository{db: db}
+func NewPostgreSQLJobApplicationRepository(database *sql.DB) *PostgreSQLJobApplicationRepository {
+	return &PostgreSQLJobApplicationRepository{q: db.New(database), dbtx: database}
 }
 
-func newPostgreSQLJobApplicationRepositoryWithExecutor(db sqlExecutor) *PostgreSQLJobApplicationRepository {
-	return &PostgreSQLJobApplicationRepository{db: db}
+func newPostgreSQLJobApplicationRepositoryWithExecutor(dbtx db.DBTX) *PostgreSQLJobApplicationRepository {
+	return &PostgreSQLJobApplicationRepository{q: db.New(dbtx), dbtx: dbtx}
 }
 
 var _ ports.JobApplicationRepository = (*PostgreSQLJobApplicationRepository)(nil)
 
-func (r *PostgreSQLJobApplicationRepository) Save(app *domain.JobApplication) error {
-	_, err := r.db.Exec(
-		insertJobApplicationSQL,
-		app.ID, app.Company, app.RoleTitle, app.PostingURL, string(app.Source),
-		app.Location, app.Compensation, string(app.EmploymentType), string(app.Stage),
-		app.CreatedAt.UTC(),
-	)
-	return err
+func (r *PostgreSQLJobApplicationRepository) Save(ctx context.Context, app *domain.JobApplication) error {
+	return r.q.InsertJobApplication(ctx, db.InsertJobApplicationParams{
+		ID:             app.ID,
+		Company:        app.Company,
+		RoleTitle:      app.RoleTitle,
+		PostingUrl:     app.PostingURL,
+		Source:         string(app.Source),
+		Location:       app.Location,
+		Compensation:   app.Compensation,
+		EmploymentType: string(app.EmploymentType),
+		Stage:          string(app.Stage),
+		CreatedAt:      app.CreatedAt.UTC(),
+	})
 }
 
-func (r *PostgreSQLJobApplicationRepository) FindByID(id string) (*domain.JobApplication, error) {
-	row := r.db.QueryRow(
-		selectJobApplicationByIDSQL, id,
-	)
-	return scanApplication(row)
+func (r *PostgreSQLJobApplicationRepository) FindByID(ctx context.Context, id string) (*domain.JobApplication, error) {
+	row, err := r.q.GetJobApplicationByID(ctx, id)
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrApplicationNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return dbJobApplicationToDomain(row), nil
 }
 
-func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
-	query := selectJobApplicationsBaseSQL
-	args := []interface{}{}
+func (r *PostgreSQLJobApplicationRepository) List(ctx context.Context, filter ports.ListApplicationsFilter) ([]*domain.JobApplication, error) {
+	query := `SELECT id, company, role_title, posting_url, source, location, compensation, employment_type, stage, created_at FROM job_applications WHERE 1=1`
+	args := []any{}
 	nextArg := func() string {
 		args = append(args, nil)
 		return "$" + strconv.Itoa(len(args))
@@ -75,7 +87,7 @@ func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsF
 		query += " ORDER BY created_at ASC"
 	}
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.dbtx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -83,45 +95,37 @@ func (r *PostgreSQLJobApplicationRepository) List(filter ports.ListApplicationsF
 
 	var apps []*domain.JobApplication
 	for rows.Next() {
-		app, err := scanApplicationRow(rows)
-		if err != nil {
+		var a db.JobApplication
+		if err := rows.Scan(
+			&a.ID, &a.Company, &a.RoleTitle, &a.PostingUrl,
+			&a.Source, &a.Location, &a.Compensation, &a.EmploymentType,
+			&a.Stage, &a.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
-		apps = append(apps, app)
+		apps = append(apps, dbJobApplicationToDomain(a))
 	}
 	return apps, rows.Err()
 }
 
-func (r *PostgreSQLJobApplicationRepository) UpdateStage(id string, stage domain.ApplicationStage) error {
-	_, err := r.db.Exec(updateJobApplicationStageSQL, string(stage), id)
-	return err
+func (r *PostgreSQLJobApplicationRepository) UpdateStage(ctx context.Context, id string, stage domain.ApplicationStage) error {
+	return r.q.UpdateJobApplicationStage(ctx, db.UpdateJobApplicationStageParams{
+		Stage: string(stage),
+		ID:    id,
+	})
 }
 
-func scanApplication(row *sql.Row) (*domain.JobApplication, error) {
-	var app domain.JobApplication
-	err := row.Scan(
-		&app.ID, &app.Company, &app.RoleTitle, &app.PostingURL,
-		&app.Source, &app.Location, &app.Compensation, &app.EmploymentType,
-		&app.Stage, &app.CreatedAt,
-	)
-	if err == sql.ErrNoRows {
-		return nil, domain.ErrApplicationNotFound
+func dbJobApplicationToDomain(a db.JobApplication) *domain.JobApplication {
+	return &domain.JobApplication{
+		ID:             a.ID,
+		Company:        a.Company,
+		RoleTitle:      a.RoleTitle,
+		PostingURL:     a.PostingUrl,
+		Source:         domain.JobSource(a.Source),
+		Location:       a.Location,
+		Compensation:   a.Compensation,
+		EmploymentType: domain.EmploymentType(a.EmploymentType),
+		Stage:          domain.ApplicationStage(a.Stage),
+		CreatedAt:      a.CreatedAt,
 	}
-	if err != nil {
-		return nil, err
-	}
-	return &app, nil
-}
-
-func scanApplicationRow(rows *sql.Rows) (*domain.JobApplication, error) {
-	var app domain.JobApplication
-	err := rows.Scan(
-		&app.ID, &app.Company, &app.RoleTitle, &app.PostingURL,
-		&app.Source, &app.Location, &app.Compensation, &app.EmploymentType,
-		&app.Stage, &app.CreatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return &app, nil
 }

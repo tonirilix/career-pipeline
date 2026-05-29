@@ -2,7 +2,7 @@ BINARY_NAME=api
 DATABASE_URL?=postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable
 TEST_DATABASE_URL?=$(DATABASE_URL)
 
-.PHONY: build run generate test test-db migrate seed db-up db-down db-reset
+.PHONY: build run generate sqlc test test-db migrate seed db-up db-down db-reset
 
 build:
 	go build -o bin/$(BINARY_NAME) ./cmd/api
@@ -12,6 +12,9 @@ run: build
 
 generate:
 	go generate ./...
+
+sqlc:
+	cd internal/infrastructure/persistence && go run github.com/sqlc-dev/sqlc/cmd/sqlc generate
 
 test:
 	go test ./...
