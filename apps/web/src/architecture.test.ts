@@ -110,6 +110,49 @@ describe("frontend architecture boundaries", () => {
       expect.arrayContaining(["effect", "@effect/atom", "@effect/atom-react"])
     );
   });
+
+  it("keeps Application Details section rendering in focused workspace modules", () => {
+    const detailsModules = sourceFilesIn("presentation/components/application-details").map(
+      (filePath) => relativeToSource(filePath)
+    );
+
+    expect(detailsModules).toEqual(
+      expect.arrayContaining([
+        `presentation${sep}components${sep}application-details${sep}OverviewSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}NotesSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}FollowUpsSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}InterviewsSection.tsx`,
+        `presentation${sep}components${sep}application-details${sep}TimelineSection.tsx`
+      ])
+    );
+  });
+
+  it("keeps ApplicationDetails as the details workspace coordinator", () => {
+    const source = readFileSync(
+      resolve(sourceRoot, "presentation/components/ApplicationDetails.tsx"),
+      "utf8"
+    );
+
+    expect(source.split("\n").length).toBeLessThanOrEqual(250);
+    expect(source).toContain("./application-details/NotesSection");
+    expect(source).toContain("./application-details/FollowUpsSection");
+    expect(source).toContain("./application-details/InterviewsSection");
+  });
+
+  it("keeps details workspace modules independent from adapters and query libraries", () => {
+    const violations = findForbiddenReferences(
+      sourceFilesIn("presentation/components/application-details"),
+      [
+        "@tanstack/react-query",
+        "infrastructure",
+        "useMutation",
+        "useQuery",
+        "useQueryClient"
+      ]
+    );
+
+    expect(violations).toEqual([]);
+  });
 });
 
 function sourceFilesIn(directory: string) {
