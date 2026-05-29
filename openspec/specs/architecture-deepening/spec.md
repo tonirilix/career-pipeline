@@ -89,3 +89,33 @@ The frontend SHALL keep derived Job Application projection rules in a focused pr
 - **WHEN** projection behavior is changed
 - **THEN** tests SHALL be able to exercise stage counts, active counts, filtering, search, sorting, selected application lookup, and follow-up grouping without rendering React components or hooks
 
+### Requirement: Backend composition concerns stay at the outer layer
+Backend configuration, bootstrap, composition, and HTTP server modules SHALL remain outer-layer concerns and SHALL NOT be imported by domain or application packages.
+
+#### Scenario: Domain remains independent from runtime composition
+- **WHEN** backend architecture tests inspect the domain package
+- **THEN** domain files SHALL NOT import backend configuration, bootstrap, composition, server, GraphQL, persistence, database, migration, or HTTP packages
+
+#### Scenario: Application remains independent from runtime composition
+- **WHEN** backend architecture tests inspect the application packages
+- **THEN** application files SHALL NOT import backend configuration, bootstrap, composition, server, GraphQL, persistence, database, migration, or HTTP packages
+
+#### Scenario: Composition module is the only backend layer that wires adapters to use cases
+- **WHEN** backend architecture tests inspect repository/use-case/resolver construction
+- **THEN** infrastructure adapters and GraphQL resolvers SHALL be connected to application use cases from the composition root or its focused composition module, not from domain or application packages
+
+### Requirement: Generated GraphQL artifacts stay inside infrastructure
+Frontend generated GraphQL artifacts SHALL remain an infrastructure adapter detail and SHALL NOT be imported by domain, application, presentation, or port modules.
+
+#### Scenario: Generated GraphQL imports are infrastructure-only
+- **WHEN** frontend architecture tests scan imports of generated GraphQL artifacts
+- **THEN** only modules under `apps/web/src/infrastructure/graphql/` SHALL import those artifacts
+
+#### Scenario: Domain and application layers remain GraphQL-free
+- **WHEN** frontend architecture tests inspect domain and application modules
+- **THEN** those modules SHALL NOT import generated GraphQL types, GraphQL operation documents, or GraphQL Code Generator helper types
+
+#### Scenario: Presentation remains behind workspace and gateway ports
+- **WHEN** presentation components or hooks need Job Application data
+- **THEN** they SHALL continue to use existing workspace hooks and application ports rather than generated GraphQL artifacts directly
+

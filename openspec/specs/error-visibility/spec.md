@@ -4,9 +4,7 @@
 Defines how and where application errors are surfaced to the user. Establishes that workflow failures are displayed near the failed action, that form input is preserved after a failure, and that error alerts remain visible until the related workflow is retried, succeeds, or is closed.
 
 ---
-
 ## Requirements
-
 ### Requirement: Workflow errors are visible near the failed action
 The system SHALL render validation, load, and command failures in the active workflow where the failure happened.
 
@@ -27,13 +25,11 @@ The system SHALL render validation, load, and command failures in the active wor
 - **THEN** the add-opportunity slide-over SHALL display an alert containing the command failure message
 
 #### Scenario: Details workflow failure is visible
-- **WHEN** adding a note, creating a follow-up, or scheduling an interview fails from the application details slide-over
-- **THEN** the application details slide-over SHALL display an alert containing the failure message
-
----
+- **WHEN** adding a note, creating a follow-up, scheduling an interview, or recording an interview outcome fails from the application details workspace
+- **THEN** the active details section SHALL display an alert containing the failure message near the failed action
 
 ### Requirement: Failed detail forms preserve user input
-The system SHALL preserve local detail-panel form input when a note, follow-up, or interview command fails.
+The system SHALL preserve local detail-panel form input when a note, follow-up, interview scheduling, or interview outcome command fails.
 
 #### Scenario: Note text remains after failure
 - **WHEN** adding an application note fails
@@ -41,13 +37,15 @@ The system SHALL preserve local detail-panel form input when a note, follow-up, 
 
 #### Scenario: Follow-up fields remain after failure
 - **WHEN** creating a follow-up reminder fails
-- **THEN** the due date and note entered by the user SHALL remain in the follow-up fields
+- **THEN** the due date, time, and note entered by the user SHALL remain in the follow-up fields
 
-#### Scenario: Interview fields remain after failure
+#### Scenario: Interview scheduling fields remain after failure
 - **WHEN** scheduling an interview fails
-- **THEN** the interview type, date, notes, and outcome entered by the user SHALL remain in the interview fields
+- **THEN** the interview type, date, time, and notes entered by the user SHALL remain in the interview fields
 
----
+#### Scenario: Interview outcome fields remain after failure
+- **WHEN** recording an interview outcome fails
+- **THEN** the selected outcome and notes entered by the user SHALL remain in the outcome form
 
 ### Requirement: Error alerts are persistent until resolved
 The system SHALL keep a workflow error visible until the related workflow is retried, succeeds, or is closed.
@@ -63,3 +61,19 @@ The system SHALL keep a workflow error visible until the related workflow is ret
 #### Scenario: Form error clears on close
 - **WHEN** the user closes the add-opportunity slide-over
 - **THEN** any add-opportunity validation or command error SHALL be cleared before the form is opened again
+
+### Requirement: Details date and time validation is user-facing
+The system SHALL validate missing detail-workflow date and time inputs before or during command execution and SHALL display user-facing messages instead of raw parsing errors.
+
+#### Scenario: Missing follow-up date or time shows clear error
+- **WHEN** the user submits a follow-up without a date or time
+- **THEN** the details workspace SHALL display a message explaining that the follow-up date and time are required
+
+#### Scenario: Missing interview date or time shows clear error
+- **WHEN** the user submits an interview without a date or time
+- **THEN** the details workspace SHALL display a message explaining that the interview date and time are required
+
+#### Scenario: Raw parse errors are not shown
+- **WHEN** a date/time value cannot be parsed for a details workflow
+- **THEN** the user-facing alert SHALL not display raw implementation text such as parser internals
+
