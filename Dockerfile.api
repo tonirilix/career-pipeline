@@ -1,0 +1,24 @@
+# dev stage — hot reload via air, source mounted as volume
+FROM golang:1.26-alpine AS dev
+WORKDIR /app
+RUN go install github.com/air-verse/air@latest
+COPY apps/api/go.mod apps/api/go.sum ./
+RUN go mod download
+EXPOSE 8080
+CMD ["air"]
+
+# builder — compiles the binary
+FROM golang:1.26-alpine AS builder
+WORKDIR /build
+COPY apps/api/go.mod apps/api/go.sum ./
+RUN go mod download
+COPY apps/api/ .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/api
+
+# prod stage — minimal runtime image
+FROM alpine:3.20 AS prod
+RUN apk --no-cache add ca-certificates
+WORKDIR /app
+COPY --from=builder /api .
+EXPOSE 8080
+CMD ["./api"]

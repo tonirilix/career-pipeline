@@ -10,6 +10,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src")
     }
   },
+  server: {
+    watch: {
+      // Polling ensures file changes are detected through Docker volume mounts
+      usePolling: true
+    }
+  },
   test: {
     environment: "jsdom",
     globals: true,
