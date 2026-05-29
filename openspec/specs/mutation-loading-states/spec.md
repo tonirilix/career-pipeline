@@ -2,15 +2,13 @@
 
 ## Purpose
 TBD - created by syncing change expose-mutation-loading-states. Update Purpose after review.
-
 ## Requirements
-
 ### Requirement: Pipeline workspace exposes per-mutation status transitions
-The Pipeline workspace module SHALL return a `CommandStatus` value (`'idle' | 'pending' | 'error' | 'success'`) for each of its 6 mutations so that UI controls can react to all state transitions, not just the pending state.
+The Pipeline workspace module SHALL return a `CommandStatus` value (`'idle' | 'pending' | 'error' | 'success'`) for each of its command mutations so that UI controls can react to all state transitions, not just the pending state.
 
 #### Scenario: Status values are idle when no mutation is running
 - **WHEN** no command is in progress
-- **THEN** `submitOpportunityStatus`, `changeStageStatus`, `scheduleInterviewStatus`, `createFollowUpStatus`, `completeFollowUpStatus`, and `addNoteStatus` SHALL all be `'idle'`
+- **THEN** `submitOpportunityStatus`, `changeStageStatus`, `scheduleInterviewStatus`, `recordInterviewOutcomeStatus`, `createFollowUpStatus`, `completeFollowUpStatus`, and `addNoteStatus` SHALL all be `'idle'`
 
 #### Scenario: Status is pending while its mutation is in-flight
 - **WHEN** a command mutation is pending (network request in-flight)
@@ -54,3 +52,19 @@ Each command control in the Pipeline board and details panel SHALL be disabled w
 #### Scenario: Add note submit is disabled while pending
 - **WHEN** `addNoteStatus` is `'pending'`
 - **THEN** the add note submit control SHALL be disabled
+
+### Requirement: Interview outcome mutation exposes status
+The Pipeline workspace module SHALL return a `recordInterviewOutcomeStatus` value so the interview outcome UI can react to idle, pending, error, and success transitions.
+
+#### Scenario: Outcome status is idle when unused
+- **WHEN** no interview outcome command has been invoked
+- **THEN** `recordInterviewOutcomeStatus` SHALL be `idle`
+
+#### Scenario: Outcome status is pending while recording
+- **WHEN** an interview outcome command is in flight
+- **THEN** `recordInterviewOutcomeStatus` SHALL be `pending`
+
+#### Scenario: Outcome control is disabled while pending
+- **WHEN** `recordInterviewOutcomeStatus` is `pending`
+- **THEN** the record-interview-outcome submit control SHALL be disabled
+

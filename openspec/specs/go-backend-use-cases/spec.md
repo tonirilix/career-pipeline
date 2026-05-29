@@ -5,18 +5,26 @@
 Application layer for the Go backend. Defines repository and supporting port interfaces, and implements all command and query use cases. Use cases orchestrate domain rules, call ports, and never import infrastructure or transport packages.
 ## Requirements
 ### Requirement: Repository port interfaces
-The system SHALL define Go interfaces in `internal/application/ports/` for all repository operations: `JobApplicationRepository`, `InterviewRepository`, `FollowUpRepository`, `NoteRepository`, `TimelineRepository`. Each interface SHALL define only the methods required by use cases.
+The system SHALL define Go interfaces in `internal/application/ports/` for all repository operations: `JobApplicationRepository`, `InterviewRepository`, `FollowUpRepository`, `NoteRepository`, `TimelineRepository`. Each interface SHALL define only the methods required by use cases. All interface methods SHALL accept `context.Context` as their first parameter.
 
 #### Scenario: Interfaces are in the application layer
 - **WHEN** a use case file is compiled
 - **THEN** it SHALL import port interfaces from `internal/application/ports`, not from `internal/infrastructure`
 
+#### Scenario: Repository methods accept context
+- **WHEN** a repository port interface method is called
+- **THEN** the caller SHALL provide a `context.Context` as the first argument, and the implementation SHALL forward it to the underlying database call
+
 ### Requirement: Supporting port interfaces
-The system SHALL define interfaces for: `Clock` (returns current time), `IDGenerator` (returns a new unique string ID), and `Transactor` (executes a function inside a database transaction).
+The system SHALL define interfaces for: `Clock` (returns current time), `IDGenerator` (returns a new unique string ID), and `Transactor` (executes a function inside a database transaction). The `Transactor.WithTransaction` method SHALL accept `context.Context` as its first parameter and forward it to all repository operations executed within the transaction.
 
 #### Scenario: Clock port enables deterministic tests
 - **WHEN** a use case test provides a fake Clock returning a fixed time
 - **THEN** the use case SHALL use that time for all timestamp fields without calling time.Now() directly
+
+#### Scenario: Transactor forwards context into transaction
+- **WHEN** `WithTransaction` is called with a context that is subsequently cancelled
+- **THEN** repository operations inside the transaction closure SHALL receive the cancelled context and MAY fail fast rather than continuing
 
 ### Requirement: Create application use case
 The system SHALL implement a `CreateApplication` use case that accepts a command with company, roleTitle, postingUrl, source, location, compensation, and employmentType, validates required intake fields, creates a `JobApplication` with stage Saved, persists it, creates an initial timeline event, and returns the created application. The Job Application write and initial timeline event write SHALL execute atomically through the transaction seam.
@@ -53,22 +61,30 @@ The system SHALL implement an `AdvanceStage` use case that accepts applicationId
 - **THEN** all open follow-ups for that application SHALL have their completedAt set
 
 ### Requirement: Schedule interview use case
-The system SHALL implement a `ScheduleInterview` use case that accepts applicationId, type, scheduledAt, and notes, validates that the application is in an interviewable stage, persists the interview, creates a timeline event, and returns the interview.
+The system SHALL implement a `ScheduleInterview` use case that accepts applicationId, type, scheduledAt, and notes, validates that the application is in an interviewable stage, persists the interview with outcome `Scheduled`, creates a timeline event, and returns the updated application.
 
 #### Scenario: Interview created for valid stage
-- **WHEN** ScheduleInterview is called on an application in Screening, Technical Interview, or Onsite stage
-- **THEN** the interview is persisted and a timeline event is created
+- **WHEN** ScheduleInterview is called on an application in Applied, Screening, Technical Interview, or Onsite stage
+- **THEN** the interview SHALL be persisted with outcome `Scheduled` and a timeline event SHALL be created
 
 #### Scenario: Interview rejected for invalid stage
-- **WHEN** ScheduleInterview is called on an application in Saved or Rejected stage
+- **WHEN** ScheduleInterview is called on an application in Saved, Offer, Rejected, or Withdrawn stage
 - **THEN** it SHALL return an error without persisting
 
+#### Scenario: Schedule command ignores final outcomes
+- **WHEN** ScheduleInterview is called
+- **THEN** it SHALL not accept or persist a final outcome from the scheduling command
+
 ### Requirement: Record interview outcome use case
-The system SHALL implement a `RecordInterviewOutcome` use case that accepts interviewId and outcome, updates the interview record, creates a timeline event, and returns the updated interview.
+The system SHALL implement a `RecordInterviewOutcome` use case that accepts interviewId and outcome, updates the interview record, creates a timeline event, and returns the updated application.
 
 #### Scenario: Outcome is recorded and timeline updated
 - **WHEN** RecordInterviewOutcome is called with a valid interviewId and outcome
 - **THEN** the interview outcome is updated and a timeline event is appended
+
+#### Scenario: Scheduled outcome is not recorded as final result
+- **WHEN** RecordInterviewOutcome is called with outcome `Scheduled`
+- **THEN** it SHALL return a domain error without changing the interview
 
 ### Requirement: Add follow-up use case
 The system SHALL implement an `AddFollowUp` use case that accepts applicationId, dueAt, and note, validates that dueAt is in the future, persists the follow-up, and returns it.
@@ -128,4 +144,26 @@ The system SHALL implement read use cases for: `GetApplication` (by id), `ListAp
 #### Scenario: ListOverdueFollowUps returns past incomplete items
 - **WHEN** ListOverdueFollowUps is called
 - **THEN** only follow-ups with dueAt before now and completedAt nil are returned
+
+### Requirement: Use case methods accept and forward context
+All use case `Execute` methods SHALL accept `context.Context` as their first parameter and forward it to every port method they call. Use cases SHALL NOT create or replace context values.
+
+#### Scenario: Use case forwards caller context to ports
+- **WHEN** a use case Execute method is called with a context
+- **THEN** every repository and transactor call inside that use case SHALL receive the same context
+
+#### Scenario: Cancelled context propagates to persistence
+- **WHEN** a use case is called with an already-cancelled context
+- **THEN** the first port call that reaches the database layer SHALL return a context error without executing the SQL
+
+### Requirement: Active work cannot be created for closed applications
+The backend SHALL reject use cases that create active future work for applications in Rejected or Withdrawn stages.
+
+#### Scenario: Follow-up rejected for rejected application
+- **WHEN** AddFollowUp is called for an application in Rejected stage
+- **THEN** it SHALL return a domain error without persisting a follow-up or timeline event
+
+#### Scenario: Follow-up rejected for withdrawn application
+- **WHEN** AddFollowUp is called for an application in Withdrawn stage
+- **THEN** it SHALL return a domain error without persisting a follow-up or timeline event
 

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# Funnel Chart
+
+## Purpose
+
+Defines the interactive application funnel chart shown above the pipeline board, including stage counts, conversion indicators, stage filtering, and accessible chart region behavior.
+
+## Requirements
 
 ### Requirement: Main content area displays an interactive funnel chart above the pipeline board
 The system SHALL render a `FunnelChart` component in the main content area, above the pipeline board, showing the count of applications in each of the eight pipeline stages as a flowing horizontal funnel shape powered by `@nivo/funnel`.
