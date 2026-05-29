@@ -35,3 +35,21 @@ func sourceFilesWithReference(t *testing.T, reference string, allowedFiles ...st
 
 	return violations
 }
+
+func TestCreateApplicationUsesTransactionSeam(t *testing.T) {
+	source, err := os.ReadFile("create_application.go")
+	if err != nil {
+		t.Fatalf("read create_application.go: %v", err)
+	}
+	text := string(source)
+
+	if !strings.Contains(text, "ports.Transactor") {
+		t.Fatal("CreateApplication must depend on the transaction port")
+	}
+	if !strings.Contains(text, "WithTransaction") {
+		t.Fatal("CreateApplication must execute persistence through the transaction seam")
+	}
+	if strings.Contains(text, "ports.JobApplicationRepository") || strings.Contains(text, "ports.TimelineRepository") {
+		t.Fatal("CreateApplication must not depend directly on write repositories")
+	}
+}

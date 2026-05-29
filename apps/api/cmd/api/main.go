@@ -94,7 +94,7 @@ func main() {
 	ids := &uuidGenerator{}
 
 	// Wire up use cases
-	createAppUC := usecases.NewCreateApplication(appRepo, timelineRepo, clock, ids)
+	createAppUC := usecases.NewCreateApplication(transactor, clock, ids)
 	advanceStageUC := usecases.NewAdvanceStage(transactor, clock, ids)
 	scheduleInterviewUC := usecases.NewScheduleInterview(transactor, clock, ids)
 	recordOutcomeUC := usecases.NewRecordInterviewOutcome(transactor, clock, ids)

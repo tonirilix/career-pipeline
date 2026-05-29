@@ -67,3 +67,18 @@ func TestIsClosedStage(t *testing.T) {
 		}
 	}
 }
+
+func TestApplicationIntakeErrorsAreRecognizableAndDistinct(t *testing.T) {
+	if !errors.Is(domain.ErrCompanyRequired, domain.ErrCompanyRequired) {
+		t.Fatal("expected ErrCompanyRequired to be recognizable")
+	}
+	if !errors.Is(domain.ErrRoleTitleRequired, domain.ErrRoleTitleRequired) {
+		t.Fatal("expected ErrRoleTitleRequired to be recognizable")
+	}
+	if errors.Is(domain.ErrCompanyRequired, domain.ErrNoteBodyEmpty) {
+		t.Fatal("expected company error to be distinct from note body error")
+	}
+	if errors.Is(domain.ErrRoleTitleRequired, domain.ErrNoteBodyEmpty) {
+		t.Fatal("expected role title error to be distinct from note body error")
+	}
+}

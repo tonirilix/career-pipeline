@@ -7,6 +7,8 @@ var (
 	ErrInterviewNotFound   = errors.New("interview not found")
 	ErrFollowUpNotFound    = errors.New("follow-up not found")
 	ErrNoteBodyEmpty       = errors.New("note body must not be empty")
+	ErrCompanyRequired     = errors.New("company is required")
+	ErrRoleTitleRequired   = errors.New("role title is required")
 	ErrDueDateInPast       = errors.New("follow-up due date must be after the latest interaction")
 	ErrScheduledAtEmpty    = errors.New("interview scheduled date is required")
 	ErrCannotSchedule      = errors.New("interviews can only be scheduled for active applications before the offer stage")
