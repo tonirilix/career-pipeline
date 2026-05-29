@@ -3,9 +3,7 @@
 ## Purpose
 
 Pure domain layer for the Go backend. Defines all structs, value objects, stage transition rules, and typed error values. Has no dependencies on infrastructure, GraphQL, or database packages.
-
 ## Requirements
-
 ### Requirement: Job application domain struct
 The system SHALL define a `JobApplication` struct in the domain layer containing all fields required to represent a tracked job opportunity: id, company, roleTitle, postingUrl, source, location, compensation, employmentType, stage, and createdAt.
 
@@ -57,8 +55,13 @@ The system SHALL define a `TimelineEvent` struct with fields: id, applicationId,
 - **THEN** the operation SHALL return a `TimelineEvent` to be persisted by the use case
 
 ### Requirement: Domain error types
-The system SHALL define typed error values for expected domain failures: `ErrApplicationNotFound`, `ErrInvalidStageTransition`, `ErrInterviewNotFound`, `ErrFollowUpNotFound`, `ErrNoteBodyEmpty`, `ErrDueDateInPast`.
+The system SHALL define typed error values for expected domain failures: `ErrApplicationNotFound`, `ErrInvalidStageTransition`, `ErrInterviewNotFound`, `ErrFollowUpNotFound`, `ErrNoteBodyEmpty`, `ErrCompanyRequired`, `ErrRoleTitleRequired`, `ErrDueDateInPast`.
 
 #### Scenario: Error types are recognizable by callers
 - **WHEN** a use case returns a domain error
 - **THEN** callers SHALL be able to use `errors.Is` to identify the specific failure
+
+#### Scenario: Application intake errors are distinct from note errors
+- **WHEN** CreateApplication receives a missing company or role title
+- **THEN** it SHALL return an application intake error rather than `ErrNoteBodyEmpty`
+
