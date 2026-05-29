@@ -124,6 +124,15 @@ flowchart TB
 - Go 1.26+
 - Docker, for the local PostgreSQL database
 
+### Quick start
+
+```sh
+make help        # list all available targets
+make dev         # start full stack: Postgres + API + web (connected to real API)
+make test        # run all tests
+make build       # build Go binary + Vite production bundle
+```
+
 ### Install dependencies
 
 ```sh
@@ -135,62 +144,51 @@ npm install
 MSW intercepts all GraphQL requests in-process. No Go server needed.
 
 ```sh
-npm run dev --workspace apps/web
+make dev-web
 ```
 
 ### Run frontend against the real Go backend
 
-Start PostgreSQL and the Go server first:
-
 ```sh
-cd apps/api
-make db-up
-make run
-```
-
-Then start the frontend in production mode (MSW disabled):
-
-```sh
-npm run dev:api --workspace apps/web
+make db-up           # start Postgres
+make dev-api         # start Go server (terminal 1)
+make dev-web-api     # start frontend against real API, MSW disabled (terminal 2)
 ```
 
 The frontend defaults to `http://localhost:8080/graphql`. Override with `VITE_API_URL` in `.env.local` if your backend runs elsewhere.
 
 ### MSW toggle
 
-| Script | `MODE` | MSW | Backend |
+| Command | `MODE` | MSW | Backend |
 |---|---|---|---|
-| `npm run dev` | `development` | starts | mock (in-process) |
-| `npm run dev:api` | `production` | skipped | Go server on :8080 |
+| `make dev-web` | `development` | starts | mock (in-process) |
+| `make dev-web-api` | `production` | skipped | Go server on :8080 |
 
 MSW is controlled by `import.meta.env.MODE !== 'production'` in `apps/web/src/main.tsx`. It is not tied to `VITE_API_URL`.
 
 ### Run tests
 
 ```sh
-# Frontend
-npm test --workspace apps/web
-
-# Backend
-cd apps/api && go test ./...
+make test        # both API and web
+make test-api    # Go tests only
+make test-web    # Vitest only
 ```
 
 ### Generate GraphQL types
 
-Frontend GraphQL operation types are generated from `apps/api/graph/schema.graphqls`:
-
 ```sh
-npm run graphql:codegen --workspace apps/web
+make codegen-web   # generate frontend GraphQL types from the backend schema
+make codegen-api   # run Go code generation (gqlgen, sqlc wiring, etc.)
 ```
 
 The frontend build verifies generated artifacts are current.
 
-### Build the Go binary
+### Build
 
 ```sh
-cd apps/api
-make build
-DATABASE_URL="postgres://tracker:tracker@localhost:5432/tracker?sslmode=disable" ./bin/api
+make build       # both apps
+make build-api   # Go binary only → apps/api/bin/api
+make build-web   # Vite bundle only → apps/web/dist/
 ```
 
 See [`apps/api/README.md`](apps/api/README.md) for full backend documentation.
