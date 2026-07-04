@@ -143,6 +143,9 @@ func (uc *CandidateMemory) Update(ctx context.Context, cmd UpdateMemoryRecordCom
 	if err != nil {
 		return nil, err
 	}
+	if !record.Current() {
+		return nil, domain.ErrMemoryRecordNotCurrent
+	}
 	record.MemoryType = cmd.MemoryType
 	record.Title = cmd.Title
 	record.Body = cmd.Body

@@ -21,4 +21,5 @@ var (
 	ErrInvalidMemoryType         = errors.New("invalid candidate memory type")
 	ErrInvalidArtifactType       = errors.New("invalid ai artifact type")
 	ErrArtifactSupersedeRequired = errors.New("use supersede to mark an ai artifact as superseded")
+	ErrMemoryRecordNotCurrent    = errors.New("archived or superseded memory records cannot be edited")
 )

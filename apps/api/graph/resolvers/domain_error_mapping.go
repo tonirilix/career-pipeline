@@ -40,6 +40,8 @@ func mapDomainError(err error) error {
 		return errors.New("AI artifact type is invalid")
 	case errors.Is(err, domain.ErrArtifactSupersedeRequired):
 		return errors.New("use supersede to mark an AI artifact as superseded")
+	case errors.Is(err, domain.ErrMemoryRecordNotCurrent):
+		return errors.New("archived or superseded memory records cannot be edited")
 	default:
 		return err
 	}

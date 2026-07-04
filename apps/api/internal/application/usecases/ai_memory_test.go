@@ -221,6 +221,66 @@ func TestCandidateMemoryTypeValidation(t *testing.T) {
 	}
 }
 
+func TestCandidateMemoryUpdateRejectsArchivedRecord(t *testing.T) {
+	uc := usecases.NewCandidateMemory(newFakeCandidateMemoryRepo(), &fakeClock{t: time.Now()}, &fakeIDs{})
+
+	record, err := uc.Create(context.Background(), usecases.CreateMemoryRecordCommand{
+		MemoryType: domain.MemorySkill,
+		Title:      "React",
+		Body:       "Strong React background.",
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if _, err := uc.Archive(context.Background(), record.ID); err != nil {
+		t.Fatalf("Archive: %v", err)
+	}
+
+	_, err = uc.Update(context.Background(), usecases.UpdateMemoryRecordCommand{
+		ID:         record.ID,
+		MemoryType: record.MemoryType,
+		Title:      "React (edited)",
+		Body:       record.Body,
+	})
+	if !errors.Is(err, domain.ErrMemoryRecordNotCurrent) {
+		t.Fatalf("expected not-current error, got %v", err)
+	}
+}
+
+func TestCandidateMemoryUpdateRejectsSupersededRecord(t *testing.T) {
+	uc := usecases.NewCandidateMemory(newFakeCandidateMemoryRepo(), &fakeClock{t: time.Now()}, &fakeIDs{})
+
+	record, err := uc.Create(context.Background(), usecases.CreateMemoryRecordCommand{
+		MemoryType: domain.MemorySkill,
+		Title:      "React",
+		Body:       "Strong React background.",
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	replacement, err := uc.Create(context.Background(), usecases.CreateMemoryRecordCommand{
+		MemoryType: domain.MemorySkill,
+		Title:      "React (v2)",
+		Body:       "Stronger React background.",
+	})
+	if err != nil {
+		t.Fatalf("Create replacement: %v", err)
+	}
+	if _, err := uc.Supersede(context.Background(), record.ID, replacement.ID); err != nil {
+		t.Fatalf("Supersede: %v", err)
+	}
+
+	_, err = uc.Update(context.Background(), usecases.UpdateMemoryRecordCommand{
+		ID:         record.ID,
+		MemoryType: record.MemoryType,
+		Title:      "React (edited)",
+		Body:       record.Body,
+	})
+	if !errors.Is(err, domain.ErrMemoryRecordNotCurrent) {
+		t.Fatalf("expected not-current error, got %v", err)
+	}
+}
+
 func TestGetCandidateProfileUsesClockWhenProfileNotYetSaved(t *testing.T) {
 	clock := &fakeClock{t: time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)}
 	uc := usecases.NewGetCandidateProfile(newFakeCandidateProfileRepo(), clock)
