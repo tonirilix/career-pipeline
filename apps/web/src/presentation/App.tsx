@@ -1,11 +1,10 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, lazy, Suspense, useState } from "react";
 import { Briefcase, Database, Plus } from "lucide-react";
 
 import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import type { UsePipelineControls } from "./ports/pipelineControls";
 import { ApplicationDetails } from "./components/ApplicationDetails";
-import { CandidateMemoryWorkspace } from "./components/CandidateMemoryWorkspace";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
@@ -17,6 +16,12 @@ import { ErrorNotice } from "./components/ui/error-notice";
 import { Sidebar } from "./components/ui/sidebar";
 import { SlideOver } from "./components/ui/slide-over";
 import { usePipelineWorkspace } from "./pipelineWorkspace";
+
+const CandidateMemoryWorkspace = lazy(() =>
+  import("./components/CandidateMemoryWorkspace").then((module) => ({
+    default: module.CandidateMemoryWorkspace
+  }))
+);
 
 type AppProps = {
   candidateContextGateway: CandidateContextGateway;
@@ -159,7 +164,9 @@ export function App({
                 )}
               </>
             ) : (
-              <CandidateMemoryWorkspace gateway={candidateContextGateway} />
+              <Suspense fallback={null}>
+                <CandidateMemoryWorkspace gateway={candidateContextGateway} />
+              </Suspense>
             )}
           </div>
         </div>
