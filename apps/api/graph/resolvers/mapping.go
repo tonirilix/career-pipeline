@@ -95,9 +95,7 @@ func mapCandidateMemoryRecord(record *domain.CandidateMemoryRecord) *model.Candi
 		s := record.ArchivedAt.UTC().Format(time.RFC3339)
 		out.ArchivedAt = &s
 	}
-	if record.SupersededBy != nil {
-		out.SupersededBy = record.SupersededBy
-	}
+	out.SupersededBy = record.SupersededBy
 	return out
 }
 
@@ -141,12 +139,8 @@ func mapAIArtifact(artifact *domain.AIArtifact) *model.AIArtifact {
 		CreatedAt: artifact.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt: artifact.UpdatedAt.UTC().Format(time.RFC3339),
 	}
-	if artifact.UserEditedContent != nil {
-		out.UserEditedContent = artifact.UserEditedContent
-	}
-	if artifact.SupersededBy != nil {
-		out.SupersededBy = artifact.SupersededBy
-	}
+	out.UserEditedContent = artifact.UserEditedContent
+	out.SupersededBy = artifact.SupersededBy
 	return out
 }
 

@@ -51,7 +51,7 @@ func TestMapAIArtifactPreservesOwnerProvenanceAndCurrentContent(t *testing.T) {
 	artifact := &domain.AIArtifact{
 		ID:                "artifact-old",
 		ArtifactType:      domain.ArtifactRecruiterMessage,
-		Owner:             domain.OwnerReference{Type: "Application", ID: "app-1"},
+		Owner:             domain.OwnerReference{Type: domain.OwnerTypeApplication, ID: "app-1"},
 		Title:             "Recruiter reply",
 		SourceInputs:      json.RawMessage(`[{"type":"memory","id":"memory-1"}]`),
 		GeneratedContent:  "Generated recruiter message",
@@ -72,7 +72,7 @@ func TestMapAIArtifactPreservesOwnerProvenanceAndCurrentContent(t *testing.T) {
 
 	got := mapAIArtifact(artifact)
 
-	if got.Owner.Type != "Application" || got.Owner.ID != "app-1" {
+	if got.Owner.Type != domain.OwnerTypeApplication || got.Owner.ID != "app-1" {
 		t.Fatalf("expected owner reference to be preserved, got %#v", got.Owner)
 	}
 	if got.CurrentContent != edited {

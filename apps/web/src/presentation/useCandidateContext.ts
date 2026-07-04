@@ -8,6 +8,7 @@ import {
   getCandidateProfile,
   listAIArtifacts,
   listCandidateMemoryRecords,
+  supersedeAIArtifact,
   supersedeCandidateMemoryRecord,
   updateAIArtifactStatus,
   updateCandidateMemoryRecord,
@@ -34,6 +35,9 @@ import type { CommandStatus } from "./useJobApplications";
 const emptyMemoryRecords: CandidateMemoryRecord[] = [];
 const emptyArtifacts: AIArtifact[] = [];
 
+// "CandidateProfile" matches the backend's domain.OwnerTypeCandidateProfile
+// constant (apps/api/internal/domain/ai_memory.go) so artifact owner lookups
+// agree regardless of which side creates the artifact.
 export const profileArtifactOwner: OwnerReference = {
   type: "CandidateProfile",
   id: "default"
@@ -116,6 +120,13 @@ export function useCandidateContext(gateway: CandidateContextGateway) {
     onSuccess: (artifact) => upsertCachedAIArtifact(queryClient, artifact)
   });
 
+  const supersedeArtifactMutation = useMutation({
+    mutationKey: candidateContextMutationKeys.supersedeArtifact(),
+    mutationFn: ({ id, supersededBy }: { id: string; supersededBy: string }) =>
+      supersedeAIArtifact(stableGateway, id, supersededBy),
+    onSuccess: (artifact) => upsertCachedAIArtifact(queryClient, artifact)
+  });
+
   return {
     artifacts: artifactsQuery.data ?? emptyArtifacts,
     archiveMemory: (id: string) => archiveMemoryMutation.mutateAsync(id),
@@ -132,6 +143,9 @@ export function useCandidateContext(gateway: CandidateContextGateway) {
       profileQuery.isPending || memoryQuery.isPending || artifactsQuery.isPending,
     memoryRecords: memoryQuery.data ?? emptyMemoryRecords,
     profile: profileQuery.data ?? null,
+    supersedeArtifact: (id: string, supersededBy: string) =>
+      supersedeArtifactMutation.mutateAsync({ id, supersededBy }),
+    supersedeArtifactStatus: supersedeArtifactMutation.status as CommandStatus,
     supersedeMemory: (id: string, supersededBy: string) =>
       supersedeMemoryMutation.mutateAsync({ id, supersededBy }),
     supersedeMemoryStatus: supersedeMemoryMutation.status as CommandStatus,

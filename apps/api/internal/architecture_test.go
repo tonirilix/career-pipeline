@@ -62,6 +62,11 @@ func TestRuntimeWiringStaysInCompositionModule(t *testing.T) {
 		"usecases.NewCompleteFollowUp",
 		"usecases.NewAddNote",
 		"usecases.NewListApplications",
+		"usecases.NewGetCandidateProfile",
+		"usecases.NewUpdateCandidateProfile",
+		"usecases.NewCandidateMemory",
+		"usecases.NewGetCandidateGroundingContext",
+		"usecases.NewAIArtifacts",
 		"&resolvers.Resolver",
 	}, map[string]bool{
 		filepath.Join("internal", "composition", "composition.go"): true,

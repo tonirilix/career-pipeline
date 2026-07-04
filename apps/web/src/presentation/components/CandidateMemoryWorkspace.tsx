@@ -44,6 +44,13 @@ const emptyMemoryCommand: CandidateMemoryRecordCommand = {
   metadata: "{}"
 };
 
+// "Superseded" is only ever set via the dedicated supersede action below,
+// which also records supersededBy - setting it through the raw status
+// control would leave supersededBy unset.
+const editableArtifactStatuses = artifactStatuses.filter(
+  (status) => status !== "Superseded"
+);
+
 export function CandidateMemoryWorkspace({
   gateway
 }: CandidateMemoryWorkspaceProps) {
@@ -56,6 +63,8 @@ export function CandidateMemoryWorkspace({
   const [supersessionTargets, setSupersessionTargets] = useState<
     Record<string, string>
   >({});
+  const [artifactSupersessionTargets, setArtifactSupersessionTargets] =
+    useState<Record<string, string>>({});
   const [artifactEdits, setArtifactEdits] = useState<Record<string, string>>({});
   const [commandError, setCommandError] = useState<string | null>(null);
 
@@ -92,6 +101,14 @@ export function CandidateMemoryWorkspace({
         context.memoryRecords.map((record) => [record.id, record])
       ),
     [context.memoryRecords]
+  );
+
+  const artifactById = useMemo(
+    () =>
+      Object.fromEntries(
+        context.artifacts.map((artifact) => [artifact.id, artifact])
+      ),
+    [context.artifacts]
   );
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
@@ -148,6 +165,12 @@ export function CandidateMemoryWorkspace({
 
   async function updateArtifactStatus(artifact: AIArtifact, status: ArtifactStatus) {
     await runCommand(() => context.updateArtifactStatus(artifact.id, status));
+  }
+
+  async function supersedeArtifact(id: string) {
+    const supersededBy = artifactSupersessionTargets[id];
+    if (!supersededBy) return;
+    await runCommand(() => context.supersedeArtifact(id, supersededBy));
   }
 
   async function runCommand(command: () => Promise<unknown>) {
@@ -422,7 +445,12 @@ export function CandidateMemoryWorkspace({
                     ) : null}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
-                    <Button type="button" variant="outline" onClick={() => editMemory(record)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => editMemory(record)}
+                      disabled={!!record.archivedAt || !!record.supersededBy}
+                    >
                       <Edit3 className="h-4 w-4" aria-hidden="true" />
                       Edit
                     </Button>
@@ -509,24 +537,34 @@ export function CandidateMemoryWorkspace({
                         Sensitive
                       </Badge>
                     ) : null}
-                    <Select
-                      aria-label={`Status for ${artifact.title}`}
-                      value={artifact.status}
-                      onChange={(event) =>
-                        updateArtifactStatus(
-                          artifact,
-                          event.target.value as ArtifactStatus
-                        )
-                      }
-                    >
-                      {artifactStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </Select>
+                    {artifact.status === "Superseded" ? (
+                      <Badge variant="outline">Superseded</Badge>
+                    ) : (
+                      <Select
+                        aria-label={`Status for ${artifact.title}`}
+                        value={artifact.status}
+                        onChange={(event) =>
+                          updateArtifactStatus(
+                            artifact,
+                            event.target.value as ArtifactStatus
+                          )
+                        }
+                      >
+                        {editableArtifactStatuses.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
                   </div>
                 </div>
+                {artifact.supersededBy ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Superseded by:{" "}
+                    {artifactById[artifact.supersededBy]?.title ?? artifact.supersededBy}
+                  </p>
+                ) : null}
                 <Textarea
                   aria-label={`Edited content for ${artifact.title}`}
                   value={artifactEdits[artifact.id] ?? artifact.currentContent}
@@ -547,6 +585,39 @@ export function CandidateMemoryWorkspace({
                     Save artifact edit
                   </Button>
                   <Badge variant="outline">Current content shown</Badge>
+                </div>
+                <div className="mt-4 grid gap-2 md:grid-cols-[1fr_auto]">
+                  <Select
+                    aria-label={`Supersede ${artifact.title || artifact.id} with`}
+                    value={artifactSupersessionTargets[artifact.id] ?? ""}
+                    onChange={(event) =>
+                      setArtifactSupersessionTargets((current) => ({
+                        ...current,
+                        [artifact.id]: event.target.value
+                      }))
+                    }
+                    disabled={artifact.status === "Superseded"}
+                  >
+                    <option value="">Choose replacement artifact</option>
+                    {context.artifacts
+                      .filter((candidate) => candidate.id !== artifact.id)
+                      .map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.title || candidate.id}
+                        </option>
+                      ))}
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => supersedeArtifact(artifact.id)}
+                    disabled={
+                      artifact.status === "Superseded" ||
+                      !artifactSupersessionTargets[artifact.id]
+                    }
+                  >
+                    Mark superseded
+                  </Button>
                 </div>
               </article>
             ))}

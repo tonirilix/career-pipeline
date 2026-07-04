@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
@@ -11,18 +12,30 @@ import (
 
 type GetCandidateProfile struct {
 	profiles ports.CandidateProfileRepository
+	clock    ports.Clock
 }
 
-func NewGetCandidateProfile(profiles ports.CandidateProfileRepository) *GetCandidateProfile {
-	return &GetCandidateProfile{profiles: profiles}
+func NewGetCandidateProfile(profiles ports.CandidateProfileRepository, clock ports.Clock) *GetCandidateProfile {
+	return &GetCandidateProfile{profiles: profiles, clock: clock}
 }
 
 func (uc *GetCandidateProfile) Execute(ctx context.Context) (*domain.CandidateProfile, error) {
 	profile, err := uc.profiles.GetActive(ctx)
 	if errors.Is(err, domain.ErrCandidateProfileNotFound) {
-		return &domain.CandidateProfile{ID: domain.ActiveCandidateProfileID}, nil
+		return newUnsavedCandidateProfile(uc.clock.Now()), nil
 	}
 	return profile, err
+}
+
+// newUnsavedCandidateProfile represents the active profile before it has ever
+// been saved. Its timestamps use the current time rather than the zero value
+// so callers never observe a fabricated "0001-01-01" date.
+func newUnsavedCandidateProfile(now time.Time) *domain.CandidateProfile {
+	return &domain.CandidateProfile{
+		ID:        domain.ActiveCandidateProfileID,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
 }
 
 type UpdateCandidateProfileCommand struct {
@@ -99,6 +112,9 @@ func NewCandidateMemory(memory ports.CandidateMemoryRepository, clock ports.Cloc
 }
 
 func (uc *CandidateMemory) Create(ctx context.Context, cmd CreateMemoryRecordCommand) (*domain.CandidateMemoryRecord, error) {
+	if err := domain.ValidateMemoryType(cmd.MemoryType); err != nil {
+		return nil, err
+	}
 	now := uc.clock.Now()
 	record := &domain.CandidateMemoryRecord{
 		ID:         uc.ids.New(),
@@ -120,6 +136,9 @@ func (uc *CandidateMemory) List(ctx context.Context) ([]*domain.CandidateMemoryR
 }
 
 func (uc *CandidateMemory) Update(ctx context.Context, cmd UpdateMemoryRecordCommand) (*domain.CandidateMemoryRecord, error) {
+	if err := domain.ValidateMemoryType(cmd.MemoryType); err != nil {
+		return nil, err
+	}
 	record, err := uc.memory.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return nil, err
@@ -146,19 +165,21 @@ func (uc *CandidateMemory) Supersede(ctx context.Context, id string, supersededB
 type GetCandidateGroundingContext struct {
 	profiles ports.CandidateProfileRepository
 	memory   ports.CandidateMemoryRepository
+	clock    ports.Clock
 }
 
 func NewGetCandidateGroundingContext(
 	profiles ports.CandidateProfileRepository,
 	memory ports.CandidateMemoryRepository,
+	clock ports.Clock,
 ) *GetCandidateGroundingContext {
-	return &GetCandidateGroundingContext{profiles: profiles, memory: memory}
+	return &GetCandidateGroundingContext{profiles: profiles, memory: memory, clock: clock}
 }
 
 func (uc *GetCandidateGroundingContext) Execute(ctx context.Context) (*domain.CandidateGroundingContext, error) {
 	profile, err := uc.profiles.GetActive(ctx)
 	if errors.Is(err, domain.ErrCandidateProfileNotFound) {
-		profile = &domain.CandidateProfile{ID: domain.ActiveCandidateProfileID}
+		profile = newUnsavedCandidateProfile(uc.clock.Now())
 	} else if err != nil {
 		return nil, err
 	}
@@ -199,12 +220,18 @@ func NewAIArtifacts(artifacts ports.AIArtifactRepository, clock ports.Clock, ids
 }
 
 func (uc *AIArtifacts) Create(ctx context.Context, cmd CreateAIArtifactCommand) (*domain.AIArtifact, error) {
+	if err := domain.ValidateArtifactType(cmd.ArtifactType); err != nil {
+		return nil, err
+	}
 	status := cmd.Status
 	if status == "" {
 		status = domain.ArtifactDraft
 	}
 	if err := domain.ValidateArtifactStatus(status); err != nil {
 		return nil, err
+	}
+	if status == domain.ArtifactSuperseded {
+		return nil, domain.ErrArtifactSupersedeRequired
 	}
 	now := uc.clock.Now()
 	artifact := &domain.AIArtifact{
@@ -235,6 +262,9 @@ func (uc *AIArtifacts) Edit(ctx context.Context, id string, editedContent *strin
 func (uc *AIArtifacts) UpdateStatus(ctx context.Context, id string, status domain.ArtifactStatus) (*domain.AIArtifact, error) {
 	if err := domain.ValidateArtifactStatus(status); err != nil {
 		return nil, err
+	}
+	if status == domain.ArtifactSuperseded {
+		return nil, domain.ErrArtifactSupersedeRequired
 	}
 	return uc.artifacts.UpdateStatus(ctx, id, status, uc.clock.Now())
 }

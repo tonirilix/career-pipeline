@@ -80,7 +80,7 @@ func TestCandidateGroundingContextUsesApprovedCurrentMemory(t *testing.T) {
 		t.Fatalf("supersede: %v", err)
 	}
 
-	contextUC := usecases.NewGetCandidateGroundingContext(profiles, memory)
+	contextUC := usecases.NewGetCandidateGroundingContext(profiles, memory, clock)
 	grounding, err := contextUC.Execute(context.Background())
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
@@ -105,7 +105,7 @@ func TestAIArtifactsPreserveGeneratedAndEditedContent(t *testing.T) {
 
 	artifact, err := uc.Create(context.Background(), usecases.CreateAIArtifactCommand{
 		ArtifactType:     domain.ArtifactApplicationDraft,
-		Owner:            domain.OwnerReference{Type: "candidate_profile", ID: domain.ActiveCandidateProfileID},
+		Owner:            domain.OwnerReference{Type: domain.OwnerTypeCandidateProfile, ID: domain.ActiveCandidateProfileID},
 		Title:            "Cover letter",
 		SourceInputs:     json.RawMessage(`[{"type":"candidate_profile","id":"default"}]`),
 		GeneratedContent: "Generated draft",
@@ -137,7 +137,7 @@ func TestAIArtifactStatusValidation(t *testing.T) {
 
 	_, err := uc.Create(context.Background(), usecases.CreateAIArtifactCommand{
 		ArtifactType:     domain.ArtifactOther,
-		Owner:            domain.OwnerReference{Type: "candidate_profile", ID: domain.ActiveCandidateProfileID},
+		Owner:            domain.OwnerReference{Type: domain.OwnerTypeCandidateProfile, ID: domain.ActiveCandidateProfileID},
 		Title:            "Invalid",
 		GeneratedContent: "content",
 		Status:           domain.ArtifactStatus("Published"),
@@ -147,11 +147,115 @@ func TestAIArtifactStatusValidation(t *testing.T) {
 	}
 }
 
+func TestAIArtifactTypeValidation(t *testing.T) {
+	uc := usecases.NewAIArtifacts(newFakeAIArtifactRepo(), &fakeClock{t: time.Now()}, &fakeIDs{})
+
+	_, err := uc.Create(context.Background(), usecases.CreateAIArtifactCommand{
+		ArtifactType:     domain.ArtifactType("Poem"),
+		Owner:            domain.OwnerReference{Type: domain.OwnerTypeCandidateProfile, ID: domain.ActiveCandidateProfileID},
+		Title:            "Invalid",
+		GeneratedContent: "content",
+	})
+	if !errors.Is(err, domain.ErrInvalidArtifactType) {
+		t.Fatalf("expected invalid artifact type error, got %v", err)
+	}
+}
+
+func TestAIArtifactCannotBeCreatedAlreadySuperseded(t *testing.T) {
+	uc := usecases.NewAIArtifacts(newFakeAIArtifactRepo(), &fakeClock{t: time.Now()}, &fakeIDs{})
+
+	_, err := uc.Create(context.Background(), usecases.CreateAIArtifactCommand{
+		ArtifactType:     domain.ArtifactOther,
+		Owner:            domain.OwnerReference{Type: domain.OwnerTypeCandidateProfile, ID: domain.ActiveCandidateProfileID},
+		Title:            "Invalid",
+		GeneratedContent: "content",
+		Status:           domain.ArtifactSuperseded,
+	})
+	if !errors.Is(err, domain.ErrArtifactSupersedeRequired) {
+		t.Fatalf("expected supersede-required error, got %v", err)
+	}
+}
+
+func TestAIArtifactUpdateStatusRejectsDirectSupersede(t *testing.T) {
+	repo := newFakeAIArtifactRepo()
+	uc := usecases.NewAIArtifacts(repo, &fakeClock{t: time.Now()}, &fakeIDs{})
+
+	artifact, err := uc.Create(context.Background(), usecases.CreateAIArtifactCommand{
+		ArtifactType:     domain.ArtifactOther,
+		Owner:            domain.OwnerReference{Type: domain.OwnerTypeCandidateProfile, ID: domain.ActiveCandidateProfileID},
+		Title:            "Draft",
+		GeneratedContent: "content",
+		Status:           domain.ArtifactDraft,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	_, err = uc.UpdateStatus(context.Background(), artifact.ID, domain.ArtifactSuperseded)
+	if !errors.Is(err, domain.ErrArtifactSupersedeRequired) {
+		t.Fatalf("expected supersede-required error, got %v", err)
+	}
+
+	replacement, err := uc.Supersede(context.Background(), artifact.ID, "replacement-id")
+	if err != nil {
+		t.Fatalf("Supersede: %v", err)
+	}
+	if replacement.Status != domain.ArtifactSuperseded {
+		t.Fatalf("expected superseded status, got %q", replacement.Status)
+	}
+	if replacement.SupersededBy == nil || *replacement.SupersededBy != "replacement-id" {
+		t.Fatalf("expected supersededBy to be set, got %+v", replacement.SupersededBy)
+	}
+}
+
+func TestCandidateMemoryTypeValidation(t *testing.T) {
+	uc := usecases.NewCandidateMemory(newFakeCandidateMemoryRepo(), &fakeClock{t: time.Now()}, &fakeIDs{})
+
+	_, err := uc.Create(context.Background(), usecases.CreateMemoryRecordCommand{
+		MemoryType: domain.MemoryType("Hobby"),
+		Title:      "Invalid",
+		Body:       "content",
+	})
+	if !errors.Is(err, domain.ErrInvalidMemoryType) {
+		t.Fatalf("expected invalid memory type error, got %v", err)
+	}
+}
+
+func TestGetCandidateProfileUsesClockWhenProfileNotYetSaved(t *testing.T) {
+	clock := &fakeClock{t: time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)}
+	uc := usecases.NewGetCandidateProfile(newFakeCandidateProfileRepo(), clock)
+
+	profile, err := uc.Execute(context.Background())
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !profile.CreatedAt.Equal(clock.t) || !profile.UpdatedAt.Equal(clock.t) {
+		t.Fatalf("expected clock timestamps for unsaved profile, got %+v", profile)
+	}
+}
+
+func TestCandidateGroundingContextUsesClockWhenProfileNotYetSaved(t *testing.T) {
+	clock := &fakeClock{t: time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)}
+	uc := usecases.NewGetCandidateGroundingContext(
+		newFakeCandidateProfileRepo(),
+		newFakeCandidateMemoryRepo(),
+		clock,
+	)
+
+	grounding, err := uc.Execute(context.Background())
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !grounding.Profile.CreatedAt.Equal(clock.t) || !grounding.Profile.UpdatedAt.Equal(clock.t) {
+		t.Fatalf("expected clock timestamps for unsaved profile, got %+v", grounding.Profile)
+	}
+}
+
 func TestAIArtifactsListByOwner(t *testing.T) {
 	repo := newFakeAIArtifactRepo()
 	uc := usecases.NewAIArtifacts(repo, &fakeClock{t: time.Now()}, &fakeIDs{})
-	targetOwner := domain.OwnerReference{Type: "application", ID: "app-1"}
-	otherOwner := domain.OwnerReference{Type: "application", ID: "app-2"}
+	targetOwner := domain.OwnerReference{Type: domain.OwnerTypeApplication, ID: "app-1"}
+	otherOwner := domain.OwnerReference{Type: domain.OwnerTypeApplication, ID: "app-2"}
 
 	target, _ := uc.Create(context.Background(), usecases.CreateAIArtifactCommand{
 		ArtifactType:     domain.ArtifactOther,

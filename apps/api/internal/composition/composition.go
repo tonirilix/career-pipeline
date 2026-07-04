@@ -41,10 +41,10 @@ func NewResolver(database *sql.DB) *resolvers.Resolver {
 	completeFollowUpUC := usecases.NewCompleteFollowUp(transactor, clock, ids)
 	addNoteUC := usecases.NewAddNote(transactor, clock, ids)
 	listApplicationsUC := usecases.NewListApplications(appRepo, assembler)
-	getCandidateProfileUC := usecases.NewGetCandidateProfile(candidateProfileRepo)
+	getCandidateProfileUC := usecases.NewGetCandidateProfile(candidateProfileRepo, clock)
 	updateCandidateProfileUC := usecases.NewUpdateCandidateProfile(candidateProfileRepo, clock)
 	candidateMemoryUC := usecases.NewCandidateMemory(candidateMemoryRepo, clock, ids)
-	groundingContextUC := usecases.NewGetCandidateGroundingContext(candidateProfileRepo, candidateMemoryRepo)
+	groundingContextUC := usecases.NewGetCandidateGroundingContext(candidateProfileRepo, candidateMemoryRepo, clock)
 	aiArtifactsUC := usecases.NewAIArtifacts(aiArtifactRepo, clock, ids)
 
 	return &resolvers.Resolver{

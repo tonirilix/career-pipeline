@@ -55,6 +55,17 @@ func (r CandidateMemoryRecord) Current() bool {
 	return r.ArchivedAt == nil && r.SupersededBy == nil
 }
 
+func ValidateMemoryType(memoryType MemoryType) error {
+	switch memoryType {
+	case MemoryApprovedFact, MemorySkill, MemoryWeakArea, MemoryPreference,
+		MemoryInterviewStory, MemoryCompensation, MemoryRedFlag,
+		MemoryRecruiterContext, MemoryProcessLesson, MemoryOther:
+		return nil
+	default:
+		return ErrInvalidMemoryType
+	}
+}
+
 type CandidateGroundingContext struct {
 	Profile *CandidateProfile
 	Memory  []CandidateMemoryRecord
@@ -89,6 +100,25 @@ func ValidateArtifactStatus(status ArtifactStatus) error {
 		return ErrInvalidArtifactStatus
 	}
 }
+
+func ValidateArtifactType(artifactType ArtifactType) error {
+	switch artifactType {
+	case ArtifactFitAnalysis, ArtifactApplicationDraft, ArtifactRecruiterMessage,
+		ArtifactInterviewPrep, ArtifactOfferAnalysis, ArtifactDecisionNote, ArtifactOther:
+		return nil
+	default:
+		return ErrInvalidArtifactType
+	}
+}
+
+// OwnerReference.Type is intentionally an open string, not a closed enum, so
+// future owner kinds don't require a domain-level change. The known kinds
+// used across this codebase are named here so every caller agrees on the
+// exact literal instead of each picking its own casing.
+const (
+	OwnerTypeCandidateProfile = "CandidateProfile"
+	OwnerTypeApplication      = "Application"
+)
 
 type OwnerReference struct {
 	Type string

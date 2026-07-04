@@ -435,6 +435,47 @@ describe("Job application tracker shell", () => {
     );
   });
 
+  it("does not offer Superseded as a directly selectable artifact status, and marks an artifact superseded through the dedicated action", async () => {
+    const user = userEvent.setup();
+    const artifact = createArtifact({ id: "artifact-1", title: "Recruiter intro" });
+    const replacement = createArtifact({
+      id: "artifact-2",
+      title: "Recruiter intro v2"
+    });
+    const supersedeAIArtifact = vi.fn(async () => ({
+      ...artifact,
+      status: "Superseded" as const,
+      supersededBy: replacement.id
+    }));
+
+    renderApp(
+      createGateway(),
+      createCandidateContextGateway({
+        listAIArtifacts: async () => [artifact, replacement],
+        supersedeAIArtifact
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+    await screen.findByLabelText("Edited content for Recruiter intro");
+
+    expect(
+      within(screen.getByLabelText("Status for Recruiter intro")).queryByText(
+        "Superseded"
+      )
+    ).not.toBeInTheDocument();
+
+    await user.selectOptions(
+      screen.getByLabelText("Supersede Recruiter intro with"),
+      replacement.id
+    );
+    await user.click(screen.getAllByRole("button", { name: "Mark superseded" })[0]);
+
+    await waitFor(() =>
+      expect(supersedeAIArtifact).toHaveBeenCalledWith(artifact.id, replacement.id)
+    );
+  });
+
   it("keeps details forms hidden until explicit actions and lets users cancel them", async () => {
     const user = userEvent.setup();
     const application = createApplication({

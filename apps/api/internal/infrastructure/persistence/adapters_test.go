@@ -348,8 +348,8 @@ func TestPostgreSQLAIArtifactRepository_OwnerFilteringAndEditedContent(t *testin
 	repo := persistence.NewPostgreSQLAIArtifactRepository(db)
 	ctx := context.Background()
 	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
-	owner := domain.OwnerReference{Type: "application", ID: "app-1"}
-	otherOwner := domain.OwnerReference{Type: "application", ID: "app-2"}
+	owner := domain.OwnerReference{Type: domain.OwnerTypeApplication, ID: "app-1"}
+	otherOwner := domain.OwnerReference{Type: domain.OwnerTypeApplication, ID: "app-2"}
 	provider := "openai"
 	model := "gpt-test"
 
