@@ -3,6 +3,7 @@ package persistence_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"os"
 	"testing"
 	"time"
@@ -42,7 +43,7 @@ func openTestDB(t *testing.T) *sql.DB {
 
 func truncateTestDB(t *testing.T, db *sql.DB) {
 	t.Helper()
-	_, err := db.Exec(`TRUNCATE timeline_events, application_notes, follow_up_reminders, interviews, job_applications RESTART IDENTITY CASCADE`)
+	_, err := db.Exec(`TRUNCATE ai_artifacts, candidate_memory_records, candidate_profiles, timeline_events, application_notes, follow_up_reminders, interviews, job_applications RESTART IDENTITY CASCADE`)
 	if err != nil {
 		t.Fatalf("truncate test db: %v", err)
 	}
@@ -257,5 +258,154 @@ func TestPostgreSQLRepositories_RoundTripApplicationChildData(t *testing.T) {
 	}
 	if len(events) != 1 || events[0].Description != "Applied" {
 		t.Fatalf("timeline fields did not round-trip: %+v", events)
+	}
+}
+
+func TestPostgreSQLCandidateProfileRepository_SaveAndGetActive(t *testing.T) {
+	db := openTestDB(t)
+	repo := persistence.NewPostgreSQLCandidateProfileRepository(db)
+	ctx := context.Background()
+	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+	profile := &domain.CandidateProfile{
+		ID:                       domain.ActiveCandidateProfileID,
+		TargetRoles:              "Senior Frontend Engineer",
+		PreferredStack:           "React, TypeScript",
+		CompensationExpectations: "$100k USD",
+		LocationPreferences:      "Remote LATAM",
+		WorkConstraints:          "No weekend work",
+		CompanyPreferences:       "Product companies",
+		WritingTone:              "Warm and concise",
+		PositioningSummary:       "Frontend-leaning senior engineer",
+		CreatedAt:                now,
+		UpdatedAt:                now,
+	}
+	if _, err := repo.Save(ctx, profile); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	found, err := repo.GetActive(ctx)
+	if err != nil {
+		t.Fatalf("GetActive: %v", err)
+	}
+	if found.TargetRoles != profile.TargetRoles || found.WritingTone != profile.WritingTone {
+		t.Fatalf("profile fields did not round-trip: %+v", found)
+	}
+}
+
+func TestPostgreSQLCandidateMemoryRepository_MetadataAndSupersession(t *testing.T) {
+	db := openTestDB(t)
+	repo := persistence.NewPostgreSQLCandidateMemoryRepository(db)
+	ctx := context.Background()
+	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+	replacement, err := repo.Save(ctx, &domain.CandidateMemoryRecord{
+		ID:         "memory-2",
+		MemoryType: domain.MemoryPreference,
+		Title:      "Current preference",
+		Body:       "Prefer product companies.",
+		Approved:   true,
+		Metadata:   json.RawMessage(`{"confidence":"high"}`),
+		CreatedAt:  now,
+		UpdatedAt:  now,
+	})
+	if err != nil {
+		t.Fatalf("save replacement: %v", err)
+	}
+	original, err := repo.Save(ctx, &domain.CandidateMemoryRecord{
+		ID:         "memory-1",
+		MemoryType: domain.MemoryPreference,
+		Title:      "Old preference",
+		Body:       "Open to anything.",
+		Source:     "manual",
+		Approved:   true,
+		Sensitive:  true,
+		Metadata:   json.RawMessage(`{"source":"test"}`),
+		CreatedAt:  now.Add(-time.Hour),
+		UpdatedAt:  now.Add(-time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("save original: %v", err)
+	}
+	if _, err := repo.Supersede(ctx, original.ID, replacement.ID, now); err != nil {
+		t.Fatalf("Supersede: %v", err)
+	}
+
+	records, err := repo.ListApprovedCurrent(ctx)
+	if err != nil {
+		t.Fatalf("ListApprovedCurrent: %v", err)
+	}
+	if len(records) != 1 || records[0].ID != replacement.ID {
+		t.Fatalf("expected only replacement in approved current list, got %+v", records)
+	}
+	if string(replacement.Metadata) != `{"confidence":"high"}` {
+		t.Fatalf("metadata did not round-trip: %s", replacement.Metadata)
+	}
+}
+
+func TestPostgreSQLAIArtifactRepository_OwnerFilteringAndEditedContent(t *testing.T) {
+	db := openTestDB(t)
+	repo := persistence.NewPostgreSQLAIArtifactRepository(db)
+	ctx := context.Background()
+	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	owner := domain.OwnerReference{Type: "application", ID: "app-1"}
+	otherOwner := domain.OwnerReference{Type: "application", ID: "app-2"}
+	provider := "openai"
+	model := "gpt-test"
+
+	target, err := repo.Save(ctx, &domain.AIArtifact{
+		ID:               "artifact-1",
+		ArtifactType:     domain.ArtifactApplicationDraft,
+		Owner:            owner,
+		Title:            "Cover letter",
+		SourceInputs:     json.RawMessage(`[{"type":"candidate_profile","id":"default"}]`),
+		GeneratedContent: "Generated draft",
+		Status:           domain.ArtifactDraft,
+		Sensitive:        true,
+		Provenance: domain.ArtifactProvenance{
+			ProviderName:  &provider,
+			ModelName:     &model,
+			UsageMetadata: json.RawMessage(`{"totalTokens":12}`),
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	})
+	if err != nil {
+		t.Fatalf("save target: %v", err)
+	}
+	if _, err := repo.Save(ctx, &domain.AIArtifact{
+		ID:               "artifact-2",
+		ArtifactType:     domain.ArtifactOther,
+		Owner:            otherOwner,
+		Title:            "Other",
+		GeneratedContent: "Other content",
+		Status:           domain.ArtifactDraft,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}); err != nil {
+		t.Fatalf("save other: %v", err)
+	}
+
+	edited := "Edited draft"
+	updated, err := repo.UpdateEditedContent(ctx, target.ID, &edited, now.Add(time.Minute))
+	if err != nil {
+		t.Fatalf("UpdateEditedContent: %v", err)
+	}
+	if updated.GeneratedContent != "Generated draft" {
+		t.Fatalf("generated content was overwritten: %+v", updated)
+	}
+	if updated.UserEditedContent == nil || *updated.UserEditedContent != edited {
+		t.Fatalf("edited content not stored: %+v", updated)
+	}
+
+	artifacts, err := repo.ListByOwner(ctx, owner)
+	if err != nil {
+		t.Fatalf("ListByOwner: %v", err)
+	}
+	if len(artifacts) != 1 || artifacts[0].ID != target.ID {
+		t.Fatalf("expected only target artifact, got %+v", artifacts)
+	}
+	if !artifacts[0].Sensitive || artifacts[0].Provenance.ProviderName == nil || *artifacts[0].Provenance.ProviderName != provider {
+		t.Fatalf("provenance/sensitivity did not round-trip: %+v", artifacts[0])
 	}
 }

@@ -1,0 +1,5 @@
+mutation SupersedeAIArtifact($id: ID!, $supersededBy: ID!) {
+  supersedeAIArtifact(id: $id, supersededBy: $supersededBy) {
+    ...AIArtifactFields
+  }
+}

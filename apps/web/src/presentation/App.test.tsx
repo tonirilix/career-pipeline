@@ -1,9 +1,15 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
+import type {
+  AIArtifact,
+  CandidateMemoryRecord,
+  CandidateProfile
+} from "../domain/candidateContext";
 import type { JobApplication } from "../domain/jobOpportunity";
 import { createJobApplicationGraphqlGateway } from "../infrastructure/graphql/jobApplicationGraphqlGateway";
 import { createWebQueryClient } from "../infrastructure/query/queryClient";
@@ -79,6 +85,100 @@ function createGateway(
   };
 }
 
+function createCandidateProfile(
+  overrides: Partial<CandidateProfile> = {}
+): CandidateProfile {
+  return {
+    id: "default",
+    targetRoles: "Frontend Engineer",
+    preferredStack: "React, TypeScript",
+    compensationExpectations: "$160k+",
+    locationPreferences: "Remote",
+    workConstraints: "No relocation",
+    companyPreferences: "Product engineering teams",
+    writingTone: "Direct and warm",
+    positioningSummary: "Senior frontend engineer focused on product systems.",
+    createdAt: "2026-05-01T09:00:00.000Z",
+    updatedAt: "2026-05-01T09:00:00.000Z",
+    ...overrides
+  };
+}
+
+function createMemoryRecord(
+  overrides: Partial<CandidateMemoryRecord> &
+    Pick<CandidateMemoryRecord, "id" | "title">
+): CandidateMemoryRecord {
+  return {
+    id: overrides.id,
+    memoryType: overrides.memoryType ?? "Skill",
+    title: overrides.title,
+    body: overrides.body ?? "Led frontend platform work.",
+    source: overrides.source ?? "Profile import",
+    approved: overrides.approved ?? true,
+    sensitive: overrides.sensitive ?? false,
+    archivedAt: overrides.archivedAt ?? null,
+    supersededBy: overrides.supersededBy ?? null,
+    metadata: overrides.metadata ?? "{}",
+    createdAt: overrides.createdAt ?? "2026-05-01T09:00:00.000Z",
+    updatedAt: overrides.updatedAt ?? "2026-05-01T09:00:00.000Z"
+  };
+}
+
+function createArtifact(overrides: Partial<AIArtifact> = {}): AIArtifact {
+  return {
+    id: "artifact-1",
+    artifactType: "Recruiter message",
+    owner: { type: "CandidateProfile", id: "default" },
+    title: "Recruiter intro",
+    sourceInputs: "[]",
+    modelContent: "Generated draft",
+    userEditedContent: "Edited draft",
+    currentContent: "Edited draft",
+    status: "Draft",
+    sensitive: false,
+    supersededBy: null,
+    provenance: {
+      providerName: "fake",
+      modelName: "test-model",
+      promptId: "recruiter-v1",
+      usageMetadata: "{}",
+      rawProviderId: null
+    },
+    createdAt: "2026-05-01T09:00:00.000Z",
+    updatedAt: "2026-05-01T09:00:00.000Z",
+    ...overrides
+  };
+}
+
+function createCandidateContextGateway(
+  overrides: Partial<CandidateContextGateway> = {}
+): CandidateContextGateway {
+  async function unsupportedCommand(): Promise<never> {
+    throw new Error("This test gateway does not support that command.");
+  }
+
+  return {
+    getCandidateProfile: async () => createCandidateProfile(),
+    updateCandidateProfile: async (command) =>
+      createCandidateProfile({ ...command }),
+    listCandidateMemoryRecords: async () => [],
+    createCandidateMemoryRecord: unsupportedCommand,
+    updateCandidateMemoryRecord: unsupportedCommand,
+    archiveCandidateMemoryRecord: unsupportedCommand,
+    supersedeCandidateMemoryRecord: unsupportedCommand,
+    getCandidateGroundingContext: async () => ({
+      profile: createCandidateProfile(),
+      memory: []
+    }),
+    listAIArtifacts: async () => [],
+    createAIArtifact: unsupportedCommand,
+    editAIArtifact: unsupportedCommand,
+    updateAIArtifactStatus: unsupportedCommand,
+    supersedeAIArtifact: unsupportedCommand,
+    ...overrides
+  };
+}
+
 function getStageColumn(stage: string) {
   const board = screen.getByRole("region", { name: "Application pipeline" });
   return within(board).getByRole("region", { name: `${stage} applications` });
@@ -104,13 +204,17 @@ function getStatValue(label: string) {
   return within(statItem as HTMLElement).getByText(/^\d+$/);
 }
 
-function renderApp(gateway = createJobApplicationGraphqlGateway()) {
+function renderApp(
+  gateway = createJobApplicationGraphqlGateway(),
+  candidateContextGateway = createCandidateContextGateway()
+) {
   resetZustandPipelineControlsStore();
   const queryClient = createWebQueryClient();
 
   return render(
     <QueryClientProvider client={queryClient}>
       <App
+        candidateContextGateway={candidateContextGateway}
         gateway={gateway}
         usePipelineControls={useZustandPipelineControlsStore}
       />
@@ -211,6 +315,124 @@ describe("Job application tracker shell", () => {
     expect(
       within(detail).getByRole("list", { name: "Scheduled interviews" })
     ).toBeInTheDocument();
+  });
+
+  it("edits the candidate profile from the memory workspace", async () => {
+    const user = userEvent.setup();
+    const updateCandidateProfile = vi.fn(async (command) =>
+      createCandidateProfile(command)
+    );
+
+    renderApp(
+      createGateway(),
+      createCandidateContextGateway({
+        updateCandidateProfile
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+    const targetRoles = await screen.findByLabelText("Target roles");
+
+    await user.clear(targetRoles);
+    await user.type(targetRoles, "Staff Frontend Engineer");
+    await user.click(screen.getByRole("button", { name: "Save profile" }));
+
+    await waitFor(() =>
+      expect(updateCandidateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetRoles: "Staff Frontend Engineer",
+          preferredStack: "React, TypeScript"
+        })
+      )
+    );
+  });
+
+  it("shows memory approval and sensitivity and can mark memory as superseded", async () => {
+    const user = userEvent.setup();
+    const current = createMemoryRecord({
+      id: "memory-1",
+      title: "React leadership",
+      approved: true,
+      sensitive: true
+    });
+    const replacement = createMemoryRecord({
+      id: "memory-2",
+      title: "Frontend platform leadership"
+    });
+    const supersedeCandidateMemoryRecord = vi.fn(async () => ({
+      ...current,
+      supersededBy: replacement.id
+    }));
+
+    renderApp(
+      createGateway(),
+      createCandidateContextGateway({
+        listCandidateMemoryRecords: async () => [current, replacement],
+        supersedeCandidateMemoryRecord
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+
+    expect(
+      await screen.findByRole("heading", { name: "React leadership" })
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Approved")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Sensitive")[0]).toBeInTheDocument();
+
+    await user.selectOptions(
+      screen.getByLabelText("Supersede React leadership with"),
+      replacement.id
+    );
+    await user.click(screen.getAllByRole("button", { name: "Mark superseded" })[0]);
+
+    await waitFor(() =>
+      expect(supersedeCandidateMemoryRecord).toHaveBeenCalledWith(
+        current.id,
+        replacement.id
+      )
+    );
+  });
+
+  it("displays edited artifact content and saves further edits", async () => {
+    const user = userEvent.setup();
+    const artifact = createArtifact({
+      modelContent: "Generated recruiter draft",
+      userEditedContent: "Edited recruiter draft",
+      currentContent: "Edited recruiter draft"
+    });
+    const editAIArtifact = vi.fn(async (_id, userEditedContent) => ({
+      ...artifact,
+      userEditedContent,
+      currentContent: userEditedContent ?? artifact.modelContent
+    }));
+
+    renderApp(
+      createGateway(),
+      createCandidateContextGateway({
+        listAIArtifacts: async () => [artifact],
+        editAIArtifact
+      })
+    );
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+
+    const artifactContent = await screen.findByLabelText(
+      "Edited content for Recruiter intro"
+    );
+    expect(artifactContent).toHaveValue("Edited recruiter draft");
+    expect(screen.queryByText("Generated recruiter draft")).not.toBeInTheDocument();
+
+    await user.clear(artifactContent);
+    await user.type(artifactContent, "Final recruiter draft");
+    await user.click(screen.getByRole("button", { name: "Save artifact edit" }));
+
+    await waitFor(() =>
+      expect(editAIArtifact).toHaveBeenCalledWith(
+        artifact.id,
+        "Final recruiter draft"
+      )
+    );
   });
 
   it("keeps details forms hidden until explicit actions and lets users cancel them", async () => {

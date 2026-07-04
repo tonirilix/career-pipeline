@@ -37,10 +37,69 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AIArtifact struct {
+		ArtifactType      func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		CurrentContent    func(childComplexity int) int
+		GeneratedContent  func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Owner             func(childComplexity int) int
+		Provenance        func(childComplexity int) int
+		Sensitive         func(childComplexity int) int
+		SourceInputs      func(childComplexity int) int
+		Status            func(childComplexity int) int
+		SupersededBy      func(childComplexity int) int
+		Title             func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		UserEditedContent func(childComplexity int) int
+	}
+
 	ApplicationNote struct {
 		Body      func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
+	}
+
+	ArtifactProvenance struct {
+		ModelName     func(childComplexity int) int
+		PromptID      func(childComplexity int) int
+		ProviderName  func(childComplexity int) int
+		RawProviderID func(childComplexity int) int
+		UsageMetadata func(childComplexity int) int
+	}
+
+	CandidateGroundingContext struct {
+		Memory  func(childComplexity int) int
+		Profile func(childComplexity int) int
+	}
+
+	CandidateMemoryRecord struct {
+		Approved     func(childComplexity int) int
+		ArchivedAt   func(childComplexity int) int
+		Body         func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		MemoryType   func(childComplexity int) int
+		Metadata     func(childComplexity int) int
+		Sensitive    func(childComplexity int) int
+		Source       func(childComplexity int) int
+		SupersededBy func(childComplexity int) int
+		Title        func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
+	CandidateProfile struct {
+		CompanyPreferences       func(childComplexity int) int
+		CompensationExpectations func(childComplexity int) int
+		CreatedAt                func(childComplexity int) int
+		ID                       func(childComplexity int) int
+		LocationPreferences      func(childComplexity int) int
+		PositioningSummary       func(childComplexity int) int
+		PreferredStack           func(childComplexity int) int
+		TargetRoles              func(childComplexity int) int
+		UpdatedAt                func(childComplexity int) int
+		WorkConstraints          func(childComplexity int) int
+		WritingTone              func(childComplexity int) int
 	}
 
 	FollowUpReminder struct {
@@ -76,17 +135,35 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddApplicationNote       func(childComplexity int, input model.AddApplicationNoteInput) int
-		AdvanceApplicationStage  func(childComplexity int, input model.AdvanceApplicationStageInput) int
-		CompleteFollowUpReminder func(childComplexity int, input model.CompleteFollowUpReminderInput) int
-		CreateFollowUpReminder   func(childComplexity int, input model.CreateFollowUpReminderInput) int
-		CreateSavedOpportunity   func(childComplexity int, input model.CreateSavedOpportunityInput) int
-		RecordInterviewOutcome   func(childComplexity int, input model.RecordInterviewOutcomeInput) int
-		ScheduleInterview        func(childComplexity int, input model.ScheduleInterviewInput) int
+		AddApplicationNote             func(childComplexity int, input model.AddApplicationNoteInput) int
+		AdvanceApplicationStage        func(childComplexity int, input model.AdvanceApplicationStageInput) int
+		ArchiveCandidateMemoryRecord   func(childComplexity int, id string) int
+		CompleteFollowUpReminder       func(childComplexity int, input model.CompleteFollowUpReminderInput) int
+		CreateAIArtifact               func(childComplexity int, input model.CreateAIArtifactInput) int
+		CreateCandidateMemoryRecord    func(childComplexity int, input model.CreateCandidateMemoryRecordInput) int
+		CreateFollowUpReminder         func(childComplexity int, input model.CreateFollowUpReminderInput) int
+		CreateSavedOpportunity         func(childComplexity int, input model.CreateSavedOpportunityInput) int
+		EditAIArtifact                 func(childComplexity int, id string, userEditedContent *string) int
+		RecordInterviewOutcome         func(childComplexity int, input model.RecordInterviewOutcomeInput) int
+		ScheduleInterview              func(childComplexity int, input model.ScheduleInterviewInput) int
+		SupersedeAIArtifact            func(childComplexity int, id string, supersededBy string) int
+		SupersedeCandidateMemoryRecord func(childComplexity int, id string, supersededBy string) int
+		UpdateAIArtifactStatus         func(childComplexity int, id string, status string) int
+		UpdateCandidateMemoryRecord    func(childComplexity int, input model.UpdateCandidateMemoryRecordInput) int
+		UpdateCandidateProfile         func(childComplexity int, input model.UpdateCandidateProfileInput) int
+	}
+
+	OwnerReference struct {
+		ID   func(childComplexity int) int
+		Type func(childComplexity int) int
 	}
 
 	Query struct {
-		Applications func(childComplexity int) int
+		AiArtifacts               func(childComplexity int, ownerType string, ownerID string) int
+		Applications              func(childComplexity int) int
+		CandidateGroundingContext func(childComplexity int) int
+		CandidateMemoryRecords    func(childComplexity int) int
+		CandidateProfile          func(childComplexity int) int
 	}
 
 	TimelineEvent struct {
@@ -104,9 +181,22 @@ type MutationResolver interface {
 	CreateFollowUpReminder(ctx context.Context, input model.CreateFollowUpReminderInput) (*model.JobApplication, error)
 	CompleteFollowUpReminder(ctx context.Context, input model.CompleteFollowUpReminderInput) (*model.JobApplication, error)
 	AddApplicationNote(ctx context.Context, input model.AddApplicationNoteInput) (*model.JobApplication, error)
+	UpdateCandidateProfile(ctx context.Context, input model.UpdateCandidateProfileInput) (*model.CandidateProfile, error)
+	CreateCandidateMemoryRecord(ctx context.Context, input model.CreateCandidateMemoryRecordInput) (*model.CandidateMemoryRecord, error)
+	UpdateCandidateMemoryRecord(ctx context.Context, input model.UpdateCandidateMemoryRecordInput) (*model.CandidateMemoryRecord, error)
+	ArchiveCandidateMemoryRecord(ctx context.Context, id string) (*model.CandidateMemoryRecord, error)
+	SupersedeCandidateMemoryRecord(ctx context.Context, id string, supersededBy string) (*model.CandidateMemoryRecord, error)
+	CreateAIArtifact(ctx context.Context, input model.CreateAIArtifactInput) (*model.AIArtifact, error)
+	EditAIArtifact(ctx context.Context, id string, userEditedContent *string) (*model.AIArtifact, error)
+	UpdateAIArtifactStatus(ctx context.Context, id string, status string) (*model.AIArtifact, error)
+	SupersedeAIArtifact(ctx context.Context, id string, supersededBy string) (*model.AIArtifact, error)
 }
 type QueryResolver interface {
 	Applications(ctx context.Context) ([]*model.JobApplication, error)
+	CandidateProfile(ctx context.Context) (*model.CandidateProfile, error)
+	CandidateMemoryRecords(ctx context.Context) ([]*model.CandidateMemoryRecord, error)
+	CandidateGroundingContext(ctx context.Context) (*model.CandidateGroundingContext, error)
+	AiArtifacts(ctx context.Context, ownerType string, ownerID string) ([]*model.AIArtifact, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -122,6 +212,91 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AIArtifact.artifactType":
+		if e.ComplexityRoot.AIArtifact.ArtifactType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.ArtifactType(childComplexity), true
+	case "AIArtifact.createdAt":
+		if e.ComplexityRoot.AIArtifact.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.CreatedAt(childComplexity), true
+	case "AIArtifact.currentContent":
+		if e.ComplexityRoot.AIArtifact.CurrentContent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.CurrentContent(childComplexity), true
+	case "AIArtifact.generatedContent":
+		if e.ComplexityRoot.AIArtifact.GeneratedContent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.GeneratedContent(childComplexity), true
+	case "AIArtifact.id":
+		if e.ComplexityRoot.AIArtifact.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.ID(childComplexity), true
+	case "AIArtifact.owner":
+		if e.ComplexityRoot.AIArtifact.Owner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.Owner(childComplexity), true
+	case "AIArtifact.provenance":
+		if e.ComplexityRoot.AIArtifact.Provenance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.Provenance(childComplexity), true
+	case "AIArtifact.sensitive":
+		if e.ComplexityRoot.AIArtifact.Sensitive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.Sensitive(childComplexity), true
+	case "AIArtifact.sourceInputs":
+		if e.ComplexityRoot.AIArtifact.SourceInputs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.SourceInputs(childComplexity), true
+	case "AIArtifact.status":
+		if e.ComplexityRoot.AIArtifact.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.Status(childComplexity), true
+	case "AIArtifact.supersededBy":
+		if e.ComplexityRoot.AIArtifact.SupersededBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.SupersededBy(childComplexity), true
+	case "AIArtifact.title":
+		if e.ComplexityRoot.AIArtifact.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.Title(childComplexity), true
+	case "AIArtifact.updatedAt":
+		if e.ComplexityRoot.AIArtifact.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.UpdatedAt(childComplexity), true
+	case "AIArtifact.userEditedContent":
+		if e.ComplexityRoot.AIArtifact.UserEditedContent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIArtifact.UserEditedContent(childComplexity), true
 
 	case "ApplicationNote.body":
 		if e.ComplexityRoot.ApplicationNote.Body == nil {
@@ -141,6 +316,190 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ApplicationNote.ID(childComplexity), true
+
+	case "ArtifactProvenance.modelName":
+		if e.ComplexityRoot.ArtifactProvenance.ModelName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ArtifactProvenance.ModelName(childComplexity), true
+	case "ArtifactProvenance.promptId":
+		if e.ComplexityRoot.ArtifactProvenance.PromptID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ArtifactProvenance.PromptID(childComplexity), true
+	case "ArtifactProvenance.providerName":
+		if e.ComplexityRoot.ArtifactProvenance.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ArtifactProvenance.ProviderName(childComplexity), true
+	case "ArtifactProvenance.rawProviderId":
+		if e.ComplexityRoot.ArtifactProvenance.RawProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ArtifactProvenance.RawProviderID(childComplexity), true
+	case "ArtifactProvenance.usageMetadata":
+		if e.ComplexityRoot.ArtifactProvenance.UsageMetadata == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ArtifactProvenance.UsageMetadata(childComplexity), true
+
+	case "CandidateGroundingContext.memory":
+		if e.ComplexityRoot.CandidateGroundingContext.Memory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateGroundingContext.Memory(childComplexity), true
+	case "CandidateGroundingContext.profile":
+		if e.ComplexityRoot.CandidateGroundingContext.Profile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateGroundingContext.Profile(childComplexity), true
+
+	case "CandidateMemoryRecord.approved":
+		if e.ComplexityRoot.CandidateMemoryRecord.Approved == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.Approved(childComplexity), true
+	case "CandidateMemoryRecord.archivedAt":
+		if e.ComplexityRoot.CandidateMemoryRecord.ArchivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.ArchivedAt(childComplexity), true
+	case "CandidateMemoryRecord.body":
+		if e.ComplexityRoot.CandidateMemoryRecord.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.Body(childComplexity), true
+	case "CandidateMemoryRecord.createdAt":
+		if e.ComplexityRoot.CandidateMemoryRecord.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.CreatedAt(childComplexity), true
+	case "CandidateMemoryRecord.id":
+		if e.ComplexityRoot.CandidateMemoryRecord.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.ID(childComplexity), true
+	case "CandidateMemoryRecord.memoryType":
+		if e.ComplexityRoot.CandidateMemoryRecord.MemoryType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.MemoryType(childComplexity), true
+	case "CandidateMemoryRecord.metadata":
+		if e.ComplexityRoot.CandidateMemoryRecord.Metadata == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.Metadata(childComplexity), true
+	case "CandidateMemoryRecord.sensitive":
+		if e.ComplexityRoot.CandidateMemoryRecord.Sensitive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.Sensitive(childComplexity), true
+	case "CandidateMemoryRecord.source":
+		if e.ComplexityRoot.CandidateMemoryRecord.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.Source(childComplexity), true
+	case "CandidateMemoryRecord.supersededBy":
+		if e.ComplexityRoot.CandidateMemoryRecord.SupersededBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.SupersededBy(childComplexity), true
+	case "CandidateMemoryRecord.title":
+		if e.ComplexityRoot.CandidateMemoryRecord.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.Title(childComplexity), true
+	case "CandidateMemoryRecord.updatedAt":
+		if e.ComplexityRoot.CandidateMemoryRecord.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateMemoryRecord.UpdatedAt(childComplexity), true
+
+	case "CandidateProfile.companyPreferences":
+		if e.ComplexityRoot.CandidateProfile.CompanyPreferences == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.CompanyPreferences(childComplexity), true
+	case "CandidateProfile.compensationExpectations":
+		if e.ComplexityRoot.CandidateProfile.CompensationExpectations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.CompensationExpectations(childComplexity), true
+	case "CandidateProfile.createdAt":
+		if e.ComplexityRoot.CandidateProfile.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.CreatedAt(childComplexity), true
+	case "CandidateProfile.id":
+		if e.ComplexityRoot.CandidateProfile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.ID(childComplexity), true
+	case "CandidateProfile.locationPreferences":
+		if e.ComplexityRoot.CandidateProfile.LocationPreferences == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.LocationPreferences(childComplexity), true
+	case "CandidateProfile.positioningSummary":
+		if e.ComplexityRoot.CandidateProfile.PositioningSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.PositioningSummary(childComplexity), true
+	case "CandidateProfile.preferredStack":
+		if e.ComplexityRoot.CandidateProfile.PreferredStack == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.PreferredStack(childComplexity), true
+	case "CandidateProfile.targetRoles":
+		if e.ComplexityRoot.CandidateProfile.TargetRoles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.TargetRoles(childComplexity), true
+	case "CandidateProfile.updatedAt":
+		if e.ComplexityRoot.CandidateProfile.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.UpdatedAt(childComplexity), true
+	case "CandidateProfile.workConstraints":
+		if e.ComplexityRoot.CandidateProfile.WorkConstraints == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.WorkConstraints(childComplexity), true
+	case "CandidateProfile.writingTone":
+		if e.ComplexityRoot.CandidateProfile.WritingTone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CandidateProfile.WritingTone(childComplexity), true
 
 	case "FollowUpReminder.applicationId":
 		if e.ComplexityRoot.FollowUpReminder.ApplicationID == nil {
@@ -305,6 +664,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AdvanceApplicationStage(childComplexity, args["input"].(model.AdvanceApplicationStageInput)), true
+	case "Mutation.archiveCandidateMemoryRecord":
+		if e.ComplexityRoot.Mutation.ArchiveCandidateMemoryRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_archiveCandidateMemoryRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ArchiveCandidateMemoryRecord(childComplexity, args["id"].(string)), true
 	case "Mutation.completeFollowUpReminder":
 		if e.ComplexityRoot.Mutation.CompleteFollowUpReminder == nil {
 			break
@@ -316,6 +686,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CompleteFollowUpReminder(childComplexity, args["input"].(model.CompleteFollowUpReminderInput)), true
+	case "Mutation.createAIArtifact":
+		if e.ComplexityRoot.Mutation.CreateAIArtifact == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAIArtifact_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateAIArtifact(childComplexity, args["input"].(model.CreateAIArtifactInput)), true
+	case "Mutation.createCandidateMemoryRecord":
+		if e.ComplexityRoot.Mutation.CreateCandidateMemoryRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCandidateMemoryRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateCandidateMemoryRecord(childComplexity, args["input"].(model.CreateCandidateMemoryRecordInput)), true
 	case "Mutation.createFollowUpReminder":
 		if e.ComplexityRoot.Mutation.CreateFollowUpReminder == nil {
 			break
@@ -338,6 +730,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateSavedOpportunity(childComplexity, args["input"].(model.CreateSavedOpportunityInput)), true
+	case "Mutation.editAIArtifact":
+		if e.ComplexityRoot.Mutation.EditAIArtifact == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editAIArtifact_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.EditAIArtifact(childComplexity, args["id"].(string), args["userEditedContent"].(*string)), true
 	case "Mutation.recordInterviewOutcome":
 		if e.ComplexityRoot.Mutation.RecordInterviewOutcome == nil {
 			break
@@ -360,13 +763,110 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ScheduleInterview(childComplexity, args["input"].(model.ScheduleInterviewInput)), true
+	case "Mutation.supersedeAIArtifact":
+		if e.ComplexityRoot.Mutation.SupersedeAIArtifact == nil {
+			break
+		}
 
+		args, err := ec.field_Mutation_supersedeAIArtifact_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SupersedeAIArtifact(childComplexity, args["id"].(string), args["supersededBy"].(string)), true
+	case "Mutation.supersedeCandidateMemoryRecord":
+		if e.ComplexityRoot.Mutation.SupersedeCandidateMemoryRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_supersedeCandidateMemoryRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SupersedeCandidateMemoryRecord(childComplexity, args["id"].(string), args["supersededBy"].(string)), true
+	case "Mutation.updateAIArtifactStatus":
+		if e.ComplexityRoot.Mutation.UpdateAIArtifactStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAIArtifactStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAIArtifactStatus(childComplexity, args["id"].(string), args["status"].(string)), true
+	case "Mutation.updateCandidateMemoryRecord":
+		if e.ComplexityRoot.Mutation.UpdateCandidateMemoryRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCandidateMemoryRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateCandidateMemoryRecord(childComplexity, args["input"].(model.UpdateCandidateMemoryRecordInput)), true
+	case "Mutation.updateCandidateProfile":
+		if e.ComplexityRoot.Mutation.UpdateCandidateProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCandidateProfile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateCandidateProfile(childComplexity, args["input"].(model.UpdateCandidateProfileInput)), true
+
+	case "OwnerReference.id":
+		if e.ComplexityRoot.OwnerReference.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OwnerReference.ID(childComplexity), true
+	case "OwnerReference.type":
+		if e.ComplexityRoot.OwnerReference.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OwnerReference.Type(childComplexity), true
+
+	case "Query.aiArtifacts":
+		if e.ComplexityRoot.Query.AiArtifacts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiArtifacts_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiArtifacts(childComplexity, args["ownerType"].(string), args["ownerId"].(string)), true
 	case "Query.applications":
 		if e.ComplexityRoot.Query.Applications == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Query.Applications(childComplexity), true
+	case "Query.candidateGroundingContext":
+		if e.ComplexityRoot.Query.CandidateGroundingContext == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CandidateGroundingContext(childComplexity), true
+	case "Query.candidateMemoryRecords":
+		if e.ComplexityRoot.Query.CandidateMemoryRecords == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CandidateMemoryRecords(childComplexity), true
+	case "Query.candidateProfile":
+		if e.ComplexityRoot.Query.CandidateProfile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CandidateProfile(childComplexity), true
 
 	case "TimelineEvent.description":
 		if e.ComplexityRoot.TimelineEvent.Description == nil {
@@ -398,10 +898,14 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAddApplicationNoteInput,
 		ec.unmarshalInputAdvanceApplicationStageInput,
 		ec.unmarshalInputCompleteFollowUpReminderInput,
+		ec.unmarshalInputCreateAIArtifactInput,
+		ec.unmarshalInputCreateCandidateMemoryRecordInput,
 		ec.unmarshalInputCreateFollowUpReminderInput,
 		ec.unmarshalInputCreateSavedOpportunityInput,
 		ec.unmarshalInputRecordInterviewOutcomeInput,
 		ec.unmarshalInputScheduleInterviewInput,
+		ec.unmarshalInputUpdateCandidateMemoryRecordInput,
+		ec.unmarshalInputUpdateCandidateProfileInput,
 	)
 	first := true
 
@@ -496,6 +1000,40 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
 
+func (ec *executionContext) childFields_AIArtifact(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AIArtifact_id(ctx, field)
+	case "artifactType":
+		return ec.fieldContext_AIArtifact_artifactType(ctx, field)
+	case "owner":
+		return ec.fieldContext_AIArtifact_owner(ctx, field)
+	case "title":
+		return ec.fieldContext_AIArtifact_title(ctx, field)
+	case "sourceInputs":
+		return ec.fieldContext_AIArtifact_sourceInputs(ctx, field)
+	case "generatedContent":
+		return ec.fieldContext_AIArtifact_generatedContent(ctx, field)
+	case "userEditedContent":
+		return ec.fieldContext_AIArtifact_userEditedContent(ctx, field)
+	case "currentContent":
+		return ec.fieldContext_AIArtifact_currentContent(ctx, field)
+	case "status":
+		return ec.fieldContext_AIArtifact_status(ctx, field)
+	case "sensitive":
+		return ec.fieldContext_AIArtifact_sensitive(ctx, field)
+	case "supersededBy":
+		return ec.fieldContext_AIArtifact_supersededBy(ctx, field)
+	case "provenance":
+		return ec.fieldContext_AIArtifact_provenance(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AIArtifact_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AIArtifact_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIArtifact", field.Name)
+}
+
 func (ec *executionContext) childFields_ApplicationNote(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -506,6 +1044,90 @@ func (ec *executionContext) childFields_ApplicationNote(ctx context.Context, fie
 		return ec.fieldContext_ApplicationNote_createdAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ApplicationNote", field.Name)
+}
+
+func (ec *executionContext) childFields_ArtifactProvenance(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "providerName":
+		return ec.fieldContext_ArtifactProvenance_providerName(ctx, field)
+	case "modelName":
+		return ec.fieldContext_ArtifactProvenance_modelName(ctx, field)
+	case "promptId":
+		return ec.fieldContext_ArtifactProvenance_promptId(ctx, field)
+	case "usageMetadata":
+		return ec.fieldContext_ArtifactProvenance_usageMetadata(ctx, field)
+	case "rawProviderId":
+		return ec.fieldContext_ArtifactProvenance_rawProviderId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ArtifactProvenance", field.Name)
+}
+
+func (ec *executionContext) childFields_CandidateGroundingContext(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "profile":
+		return ec.fieldContext_CandidateGroundingContext_profile(ctx, field)
+	case "memory":
+		return ec.fieldContext_CandidateGroundingContext_memory(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CandidateGroundingContext", field.Name)
+}
+
+func (ec *executionContext) childFields_CandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CandidateMemoryRecord_id(ctx, field)
+	case "memoryType":
+		return ec.fieldContext_CandidateMemoryRecord_memoryType(ctx, field)
+	case "title":
+		return ec.fieldContext_CandidateMemoryRecord_title(ctx, field)
+	case "body":
+		return ec.fieldContext_CandidateMemoryRecord_body(ctx, field)
+	case "source":
+		return ec.fieldContext_CandidateMemoryRecord_source(ctx, field)
+	case "approved":
+		return ec.fieldContext_CandidateMemoryRecord_approved(ctx, field)
+	case "sensitive":
+		return ec.fieldContext_CandidateMemoryRecord_sensitive(ctx, field)
+	case "archivedAt":
+		return ec.fieldContext_CandidateMemoryRecord_archivedAt(ctx, field)
+	case "supersededBy":
+		return ec.fieldContext_CandidateMemoryRecord_supersededBy(ctx, field)
+	case "metadata":
+		return ec.fieldContext_CandidateMemoryRecord_metadata(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CandidateMemoryRecord_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CandidateMemoryRecord_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CandidateMemoryRecord", field.Name)
+}
+
+func (ec *executionContext) childFields_CandidateProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CandidateProfile_id(ctx, field)
+	case "targetRoles":
+		return ec.fieldContext_CandidateProfile_targetRoles(ctx, field)
+	case "preferredStack":
+		return ec.fieldContext_CandidateProfile_preferredStack(ctx, field)
+	case "compensationExpectations":
+		return ec.fieldContext_CandidateProfile_compensationExpectations(ctx, field)
+	case "locationPreferences":
+		return ec.fieldContext_CandidateProfile_locationPreferences(ctx, field)
+	case "workConstraints":
+		return ec.fieldContext_CandidateProfile_workConstraints(ctx, field)
+	case "companyPreferences":
+		return ec.fieldContext_CandidateProfile_companyPreferences(ctx, field)
+	case "writingTone":
+		return ec.fieldContext_CandidateProfile_writingTone(ctx, field)
+	case "positioningSummary":
+		return ec.fieldContext_CandidateProfile_positioningSummary(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CandidateProfile_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CandidateProfile_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CandidateProfile", field.Name)
 }
 
 func (ec *executionContext) childFields_FollowUpReminder(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -570,6 +1192,16 @@ func (ec *executionContext) childFields_JobApplication(ctx context.Context, fiel
 		return ec.fieldContext_JobApplication_notes(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type JobApplication", field.Name)
+}
+
+func (ec *executionContext) childFields_OwnerReference(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_OwnerReference_type(ctx, field)
+	case "id":
+		return ec.fieldContext_OwnerReference_id(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type OwnerReference", field.Name)
 }
 
 func (ec *executionContext) childFields_TimelineEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -728,12 +1360,54 @@ func (ec *executionContext) field_Mutation_advanceApplicationStage_args(ctx cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_archiveCandidateMemoryRecord_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_completeFollowUpReminder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (model.CompleteFollowUpReminderInput, error) {
 			return ec.unmarshalNCompleteFollowUpReminderInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCompleteFollowUpReminderInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createAIArtifact_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.CreateAIArtifactInput, error) {
+			return ec.unmarshalNCreateAIArtifactInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateAIArtifactInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createCandidateMemoryRecord_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.CreateCandidateMemoryRecordInput, error) {
+			return ec.unmarshalNCreateCandidateMemoryRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateCandidateMemoryRecordInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -770,6 +1444,28 @@ func (ec *executionContext) field_Mutation_createSavedOpportunity_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_editAIArtifact_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userEditedContent",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userEditedContent"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_recordInterviewOutcome_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -798,6 +1494,100 @@ func (ec *executionContext) field_Mutation_scheduleInterview_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_supersedeAIArtifact_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "supersededBy",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["supersededBy"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_supersedeCandidateMemoryRecord_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "supersededBy",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["supersededBy"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAIArtifactStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateCandidateMemoryRecord_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.UpdateCandidateMemoryRecordInput, error) {
+			return ec.unmarshalNUpdateCandidateMemoryRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpdateCandidateMemoryRecordInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateCandidateProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.UpdateCandidateProfileInput, error) {
+			return ec.unmarshalNUpdateCandidateProfileInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpdateCandidateProfileInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -809,6 +1599,28 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_aiArtifacts_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ownerType",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ownerType"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "ownerId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ownerId"] = arg1
 	return args, nil
 }
 
@@ -875,6 +1687,346 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AIArtifact_id(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_artifactType(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_artifactType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArtifactType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_artifactType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_owner(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_owner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Owner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.OwnerReference) graphql.Marshaler {
+			return ec.marshalNOwnerReference2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐOwnerReference(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIArtifact",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_OwnerReference(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIArtifact_title(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_sourceInputs(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_sourceInputs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceInputs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_sourceInputs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_generatedContent(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_generatedContent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GeneratedContent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_generatedContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_userEditedContent(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_userEditedContent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UserEditedContent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_userEditedContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_currentContent(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_currentContent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentContent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_currentContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_status(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_sensitive(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_sensitive(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sensitive, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_sensitive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_supersededBy(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_supersededBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SupersededBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_supersededBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_provenance(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_provenance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Provenance, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ArtifactProvenance) graphql.Marshaler {
+			return ec.marshalNArtifactProvenance2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐArtifactProvenance(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_provenance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIArtifact",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ArtifactProvenance(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AIArtifact_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AIArtifact_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.AIArtifact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIArtifact_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIArtifact_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIArtifact", field, false, false, errors.New("field of type String does not have child fields"))
+}
 
 func (ec *executionContext) _ApplicationNote_id(ctx context.Context, field graphql.CollectedField, obj *model.ApplicationNote) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -943,6 +2095,714 @@ func (ec *executionContext) _ApplicationNote_createdAt(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_ApplicationNote_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ApplicationNote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ArtifactProvenance_providerName(ctx context.Context, field graphql.CollectedField, obj *model.ArtifactProvenance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ArtifactProvenance_providerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ArtifactProvenance_providerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ArtifactProvenance", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ArtifactProvenance_modelName(ctx context.Context, field graphql.CollectedField, obj *model.ArtifactProvenance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ArtifactProvenance_modelName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ModelName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ArtifactProvenance_modelName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ArtifactProvenance", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ArtifactProvenance_promptId(ctx context.Context, field graphql.CollectedField, obj *model.ArtifactProvenance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ArtifactProvenance_promptId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PromptID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ArtifactProvenance_promptId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ArtifactProvenance", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ArtifactProvenance_usageMetadata(ctx context.Context, field graphql.CollectedField, obj *model.ArtifactProvenance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ArtifactProvenance_usageMetadata(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UsageMetadata, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ArtifactProvenance_usageMetadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ArtifactProvenance", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ArtifactProvenance_rawProviderId(ctx context.Context, field graphql.CollectedField, obj *model.ArtifactProvenance) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ArtifactProvenance_rawProviderId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RawProviderID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ArtifactProvenance_rawProviderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ArtifactProvenance", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateGroundingContext_profile(ctx context.Context, field graphql.CollectedField, obj *model.CandidateGroundingContext) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateGroundingContext_profile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Profile, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateProfile) graphql.Marshaler {
+			return ec.marshalNCandidateProfile2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateProfile(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateGroundingContext_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CandidateGroundingContext",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateProfile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CandidateGroundingContext_memory(ctx context.Context, field graphql.CollectedField, obj *model.CandidateGroundingContext) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateGroundingContext_memory(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Memory, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.CandidateMemoryRecord) graphql.Marshaler {
+			return ec.marshalNCandidateMemoryRecord2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecordᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateGroundingContext_memory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CandidateGroundingContext",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateMemoryRecord(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_id(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_memoryType(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_memoryType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_memoryType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_title(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_body(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_source(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_approved(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_approved(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Approved, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_approved(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_sensitive(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_sensitive(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sensitive, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_sensitive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_archivedAt(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_archivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArchivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_archivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_supersededBy(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_supersededBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SupersededBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_supersededBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_metadata(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_metadata(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metadata, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateMemoryRecord_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.CandidateMemoryRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateMemoryRecord_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateMemoryRecord_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateMemoryRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_id(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_targetRoles(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_targetRoles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetRoles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_targetRoles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_preferredStack(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_preferredStack(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreferredStack, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_preferredStack(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_compensationExpectations(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_compensationExpectations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompensationExpectations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_compensationExpectations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_locationPreferences(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_locationPreferences(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LocationPreferences, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_locationPreferences(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_workConstraints(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_workConstraints(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkConstraints, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_workConstraints(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_companyPreferences(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_companyPreferences(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompanyPreferences, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_companyPreferences(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_writingTone(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_writingTone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WritingTone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_writingTone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_positioningSummary(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_positioningSummary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PositioningSummary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_positioningSummary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CandidateProfile_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.CandidateProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CandidateProfile_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CandidateProfile_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CandidateProfile", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _FollowUpReminder_id(ctx context.Context, field graphql.CollectedField, obj *model.FollowUpReminder) (ret graphql.Marshaler) {
@@ -1818,6 +3678,448 @@ func (ec *executionContext) fieldContext_Mutation_addApplicationNote(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateCandidateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateCandidateProfile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateCandidateProfile(ctx, fc.Args["input"].(model.UpdateCandidateProfileInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateProfile) graphql.Marshaler {
+			return ec.marshalNCandidateProfile2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateProfile(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateCandidateProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateProfile(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateCandidateProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createCandidateMemoryRecord(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateCandidateMemoryRecord(ctx, fc.Args["input"].(model.CreateCandidateMemoryRecordInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateMemoryRecord) graphql.Marshaler {
+			return ec.marshalNCandidateMemoryRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateMemoryRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCandidateMemoryRecord_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateCandidateMemoryRecord(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateCandidateMemoryRecord(ctx, fc.Args["input"].(model.UpdateCandidateMemoryRecordInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateMemoryRecord) graphql.Marshaler {
+			return ec.marshalNCandidateMemoryRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateMemoryRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateCandidateMemoryRecord_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_archiveCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_archiveCandidateMemoryRecord(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ArchiveCandidateMemoryRecord(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateMemoryRecord) graphql.Marshaler {
+			return ec.marshalNCandidateMemoryRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_archiveCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateMemoryRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_archiveCandidateMemoryRecord_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_supersedeCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_supersedeCandidateMemoryRecord(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SupersedeCandidateMemoryRecord(ctx, fc.Args["id"].(string), fc.Args["supersededBy"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateMemoryRecord) graphql.Marshaler {
+			return ec.marshalNCandidateMemoryRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_supersedeCandidateMemoryRecord(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateMemoryRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_supersedeCandidateMemoryRecord_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createAIArtifact(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createAIArtifact(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateAIArtifact(ctx, fc.Args["input"].(model.CreateAIArtifactInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AIArtifact) graphql.Marshaler {
+			return ec.marshalNAIArtifact2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createAIArtifact(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIArtifact(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createAIArtifact_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_editAIArtifact(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_editAIArtifact(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().EditAIArtifact(ctx, fc.Args["id"].(string), fc.Args["userEditedContent"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AIArtifact) graphql.Marshaler {
+			return ec.marshalNAIArtifact2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_editAIArtifact(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIArtifact(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_editAIArtifact_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAIArtifactStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateAIArtifactStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateAIArtifactStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AIArtifact) graphql.Marshaler {
+			return ec.marshalNAIArtifact2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateAIArtifactStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIArtifact(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAIArtifactStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_supersedeAIArtifact(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_supersedeAIArtifact(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SupersedeAIArtifact(ctx, fc.Args["id"].(string), fc.Args["supersededBy"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.AIArtifact) graphql.Marshaler {
+			return ec.marshalNAIArtifact2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_supersedeAIArtifact(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIArtifact(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_supersedeAIArtifact_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OwnerReference_type(ctx context.Context, field graphql.CollectedField, obj *model.OwnerReference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OwnerReference_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OwnerReference_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OwnerReference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _OwnerReference_id(ctx context.Context, field graphql.CollectedField, obj *model.OwnerReference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OwnerReference_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OwnerReference_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OwnerReference", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _Query_applications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1846,6 +4148,146 @@ func (ec *executionContext) fieldContext_Query_applications(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_JobApplication(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_candidateProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_candidateProfile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().CandidateProfile(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateProfile) graphql.Marshaler {
+			return ec.marshalNCandidateProfile2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateProfile(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_candidateProfile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateProfile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_candidateMemoryRecords(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_candidateMemoryRecords(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().CandidateMemoryRecords(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.CandidateMemoryRecord) graphql.Marshaler {
+			return ec.marshalNCandidateMemoryRecord2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecordᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_candidateMemoryRecords(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateMemoryRecord(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_candidateGroundingContext(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_candidateGroundingContext(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().CandidateGroundingContext(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CandidateGroundingContext) graphql.Marshaler {
+			return ec.marshalNCandidateGroundingContext2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateGroundingContext(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_candidateGroundingContext(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CandidateGroundingContext(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_aiArtifacts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_aiArtifacts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().AiArtifacts(ctx, fc.Args["ownerType"].(string), fc.Args["ownerId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.AIArtifact) graphql.Marshaler {
+			return ec.marshalNAIArtifact2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifactᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_aiArtifacts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIArtifact(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_aiArtifacts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3165,6 +5607,199 @@ func (ec *executionContext) unmarshalInputCompleteFollowUpReminderInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateAIArtifactInput(ctx context.Context, obj any) (model.CreateAIArtifactInput, error) {
+	var it model.CreateAIArtifactInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"artifactType", "ownerType", "ownerId", "title", "sourceInputs", "generatedContent", "userEditedContent", "status", "sensitive", "providerName", "modelName", "promptId", "usageMetadata", "rawProviderId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "artifactType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("artifactType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ArtifactType = data
+		case "ownerType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerType = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "sourceInputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceInputs"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceInputs = data
+		case "generatedContent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("generatedContent"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GeneratedContent = data
+		case "userEditedContent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userEditedContent"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserEditedContent = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "sensitive":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sensitive"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Sensitive = data
+		case "providerName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProviderName = data
+		case "modelName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ModelName = data
+		case "promptId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PromptID = data
+		case "usageMetadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usageMetadata"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UsageMetadata = data
+		case "rawProviderId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rawProviderId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RawProviderID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateCandidateMemoryRecordInput(ctx context.Context, obj any) (model.CreateCandidateMemoryRecordInput, error) {
+	var it model.CreateCandidateMemoryRecordInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"memoryType", "title", "body", "source", "approved", "sensitive", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "memoryType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryType = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "body":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Body = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "approved":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approved"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Approved = data
+		case "sensitive":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sensitive"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Sensitive = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metadata = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateFollowUpReminderInput(ctx context.Context, obj any) (model.CreateFollowUpReminderInput, error) {
 	var it model.CreateFollowUpReminderInput
 	if obj == nil {
@@ -3376,6 +6011,164 @@ func (ec *executionContext) unmarshalInputScheduleInterviewInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateCandidateMemoryRecordInput(ctx context.Context, obj any) (model.UpdateCandidateMemoryRecordInput, error) {
+	var it model.UpdateCandidateMemoryRecordInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "memoryType", "title", "body", "source", "approved", "sensitive", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "memoryType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemoryType = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "body":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Body = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "approved":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("approved"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Approved = data
+		case "sensitive":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sensitive"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Sensitive = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metadata = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateCandidateProfileInput(ctx context.Context, obj any) (model.UpdateCandidateProfileInput, error) {
+	var it model.UpdateCandidateProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"targetRoles", "preferredStack", "compensationExpectations", "locationPreferences", "workConstraints", "companyPreferences", "writingTone", "positioningSummary"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "targetRoles":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetRoles"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TargetRoles = data
+		case "preferredStack":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredStack"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreferredStack = data
+		case "compensationExpectations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("compensationExpectations"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompensationExpectations = data
+		case "locationPreferences":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationPreferences"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationPreferences = data
+		case "workConstraints":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workConstraints"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkConstraints = data
+		case "companyPreferences":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyPreferences"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyPreferences = data
+		case "writingTone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("writingTone"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WritingTone = data
+		case "positioningSummary":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("positioningSummary"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PositioningSummary = data
+		}
+	}
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3383,6 +6176,104 @@ func (ec *executionContext) unmarshalInputScheduleInterviewInput(ctx context.Con
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var aIArtifactImplementors = []string{"AIArtifact"}
+
+func (ec *executionContext) _AIArtifact(ctx context.Context, sel ast.SelectionSet, obj *model.AIArtifact) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIArtifactImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIArtifact")
+		case "id":
+			out.Values[i] = ec._AIArtifact_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "artifactType":
+			out.Values[i] = ec._AIArtifact_artifactType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "owner":
+			out.Values[i] = ec._AIArtifact_owner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._AIArtifact_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceInputs":
+			out.Values[i] = ec._AIArtifact_sourceInputs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "generatedContent":
+			out.Values[i] = ec._AIArtifact_generatedContent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "userEditedContent":
+			out.Values[i] = ec._AIArtifact_userEditedContent(ctx, field, obj)
+		case "currentContent":
+			out.Values[i] = ec._AIArtifact_currentContent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._AIArtifact_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sensitive":
+			out.Values[i] = ec._AIArtifact_sensitive(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "supersededBy":
+			out.Values[i] = ec._AIArtifact_supersededBy(ctx, field, obj)
+		case "provenance":
+			out.Values[i] = ec._AIArtifact_provenance(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._AIArtifact_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AIArtifact_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var applicationNoteImplementors = []string{"ApplicationNote"}
 
@@ -3407,6 +6298,274 @@ func (ec *executionContext) _ApplicationNote(ctx context.Context, sel ast.Select
 			}
 		case "createdAt":
 			out.Values[i] = ec._ApplicationNote_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var artifactProvenanceImplementors = []string{"ArtifactProvenance"}
+
+func (ec *executionContext) _ArtifactProvenance(ctx context.Context, sel ast.SelectionSet, obj *model.ArtifactProvenance) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, artifactProvenanceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ArtifactProvenance")
+		case "providerName":
+			out.Values[i] = ec._ArtifactProvenance_providerName(ctx, field, obj)
+		case "modelName":
+			out.Values[i] = ec._ArtifactProvenance_modelName(ctx, field, obj)
+		case "promptId":
+			out.Values[i] = ec._ArtifactProvenance_promptId(ctx, field, obj)
+		case "usageMetadata":
+			out.Values[i] = ec._ArtifactProvenance_usageMetadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rawProviderId":
+			out.Values[i] = ec._ArtifactProvenance_rawProviderId(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var candidateGroundingContextImplementors = []string{"CandidateGroundingContext"}
+
+func (ec *executionContext) _CandidateGroundingContext(ctx context.Context, sel ast.SelectionSet, obj *model.CandidateGroundingContext) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, candidateGroundingContextImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CandidateGroundingContext")
+		case "profile":
+			out.Values[i] = ec._CandidateGroundingContext_profile(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memory":
+			out.Values[i] = ec._CandidateGroundingContext_memory(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var candidateMemoryRecordImplementors = []string{"CandidateMemoryRecord"}
+
+func (ec *executionContext) _CandidateMemoryRecord(ctx context.Context, sel ast.SelectionSet, obj *model.CandidateMemoryRecord) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, candidateMemoryRecordImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CandidateMemoryRecord")
+		case "id":
+			out.Values[i] = ec._CandidateMemoryRecord_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memoryType":
+			out.Values[i] = ec._CandidateMemoryRecord_memoryType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._CandidateMemoryRecord_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._CandidateMemoryRecord_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._CandidateMemoryRecord_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "approved":
+			out.Values[i] = ec._CandidateMemoryRecord_approved(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sensitive":
+			out.Values[i] = ec._CandidateMemoryRecord_sensitive(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "archivedAt":
+			out.Values[i] = ec._CandidateMemoryRecord_archivedAt(ctx, field, obj)
+		case "supersededBy":
+			out.Values[i] = ec._CandidateMemoryRecord_supersededBy(ctx, field, obj)
+		case "metadata":
+			out.Values[i] = ec._CandidateMemoryRecord_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._CandidateMemoryRecord_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CandidateMemoryRecord_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var candidateProfileImplementors = []string{"CandidateProfile"}
+
+func (ec *executionContext) _CandidateProfile(ctx context.Context, sel ast.SelectionSet, obj *model.CandidateProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, candidateProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CandidateProfile")
+		case "id":
+			out.Values[i] = ec._CandidateProfile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "targetRoles":
+			out.Values[i] = ec._CandidateProfile_targetRoles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "preferredStack":
+			out.Values[i] = ec._CandidateProfile_preferredStack(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "compensationExpectations":
+			out.Values[i] = ec._CandidateProfile_compensationExpectations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locationPreferences":
+			out.Values[i] = ec._CandidateProfile_locationPreferences(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workConstraints":
+			out.Values[i] = ec._CandidateProfile_workConstraints(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "companyPreferences":
+			out.Values[i] = ec._CandidateProfile_companyPreferences(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "writingTone":
+			out.Values[i] = ec._CandidateProfile_writingTone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "positioningSummary":
+			out.Values[i] = ec._CandidateProfile_positioningSummary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._CandidateProfile_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CandidateProfile_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3715,6 +6874,113 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateCandidateProfile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateCandidateProfile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createCandidateMemoryRecord":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCandidateMemoryRecord(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateCandidateMemoryRecord":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateCandidateMemoryRecord(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "archiveCandidateMemoryRecord":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_archiveCandidateMemoryRecord(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "supersedeCandidateMemoryRecord":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_supersedeCandidateMemoryRecord(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createAIArtifact":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createAIArtifact(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "editAIArtifact":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_editAIArtifact(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateAIArtifactStatus":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateAIArtifactStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "supersedeAIArtifact":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_supersedeAIArtifact(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var ownerReferenceImplementors = []string{"OwnerReference"}
+
+func (ec *executionContext) _OwnerReference(ctx context.Context, sel ast.SelectionSet, obj *model.OwnerReference) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ownerReferenceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OwnerReference")
+		case "type":
+			out.Values[i] = ec._OwnerReference_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._OwnerReference_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3767,6 +7033,94 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_applications(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "candidateProfile":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_candidateProfile(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "candidateMemoryRecords":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_candidateMemoryRecords(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "candidateGroundingContext":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_candidateGroundingContext(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "aiArtifacts":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_aiArtifacts(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4194,6 +7548,36 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAIArtifact2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx context.Context, sel ast.SelectionSet, v model.AIArtifact) graphql.Marshaler {
+	return ec._AIArtifact(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAIArtifact2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifactᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AIArtifact) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIArtifact2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAIArtifact2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAIArtifact(ctx context.Context, sel ast.SelectionSet, v *model.AIArtifact) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AIArtifact(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNAddApplicationNoteInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐAddApplicationNoteInput(ctx context.Context, v any) (model.AddApplicationNoteInput, error) {
 	res, err := ec.unmarshalInputAddApplicationNoteInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4230,6 +7614,16 @@ func (ec *executionContext) marshalNApplicationNote2ᚖgithubᚗcomᚋtonirilix�
 	return ec._ApplicationNote(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNArtifactProvenance2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐArtifactProvenance(ctx context.Context, sel ast.SelectionSet, v *model.ArtifactProvenance) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ArtifactProvenance(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4246,8 +7640,76 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCandidateGroundingContext2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateGroundingContext(ctx context.Context, sel ast.SelectionSet, v model.CandidateGroundingContext) graphql.Marshaler {
+	return ec._CandidateGroundingContext(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCandidateGroundingContext2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateGroundingContext(ctx context.Context, sel ast.SelectionSet, v *model.CandidateGroundingContext) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CandidateGroundingContext(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCandidateMemoryRecord2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx context.Context, sel ast.SelectionSet, v model.CandidateMemoryRecord) graphql.Marshaler {
+	return ec._CandidateMemoryRecord(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCandidateMemoryRecord2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CandidateMemoryRecord) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCandidateMemoryRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCandidateMemoryRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateMemoryRecord(ctx context.Context, sel ast.SelectionSet, v *model.CandidateMemoryRecord) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CandidateMemoryRecord(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCandidateProfile2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateProfile(ctx context.Context, sel ast.SelectionSet, v model.CandidateProfile) graphql.Marshaler {
+	return ec._CandidateProfile(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCandidateProfile2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCandidateProfile(ctx context.Context, sel ast.SelectionSet, v *model.CandidateProfile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CandidateProfile(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCompleteFollowUpReminderInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCompleteFollowUpReminderInput(ctx context.Context, v any) (model.CompleteFollowUpReminderInput, error) {
 	res, err := ec.unmarshalInputCompleteFollowUpReminderInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateAIArtifactInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateAIArtifactInput(ctx context.Context, v any) (model.CreateAIArtifactInput, error) {
+	res, err := ec.unmarshalInputCreateAIArtifactInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateCandidateMemoryRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐCreateCandidateMemoryRecordInput(ctx context.Context, v any) (model.CreateCandidateMemoryRecordInput, error) {
+	res, err := ec.unmarshalInputCreateCandidateMemoryRecordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -4359,6 +7821,16 @@ func (ec *executionContext) marshalNJobApplication2ᚖgithubᚗcomᚋtonirilix�
 	return ec._JobApplication(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOwnerReference2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐOwnerReference(ctx context.Context, sel ast.SelectionSet, v *model.OwnerReference) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OwnerReference(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRecordInterviewOutcomeInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRecordInterviewOutcomeInput(ctx context.Context, v any) (model.RecordInterviewOutcomeInput, error) {
 	res, err := ec.unmarshalInputRecordInterviewOutcomeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4409,6 +7881,16 @@ func (ec *executionContext) marshalNTimelineEvent2ᚖgithubᚗcomᚋtonirilixᚋ
 		return graphql.Null
 	}
 	return ec._TimelineEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateCandidateMemoryRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpdateCandidateMemoryRecordInput(ctx context.Context, v any) (model.UpdateCandidateMemoryRecordInput, error) {
+	res, err := ec.unmarshalInputUpdateCandidateMemoryRecordInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateCandidateProfileInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpdateCandidateProfileInput(ctx context.Context, v any) (model.UpdateCandidateProfileInput, error) {
+	res, err := ec.unmarshalInputUpdateCandidateProfileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -4579,6 +8061,24 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalID(*v)
 	return res
 }
 

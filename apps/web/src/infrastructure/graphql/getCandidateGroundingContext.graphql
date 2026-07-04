@@ -1,0 +1,10 @@
+query GetCandidateGroundingContext {
+  candidateGroundingContext {
+    profile {
+      ...CandidateProfileFields
+    }
+    memory {
+      ...CandidateMemoryRecordFields
+    }
+  }
+}

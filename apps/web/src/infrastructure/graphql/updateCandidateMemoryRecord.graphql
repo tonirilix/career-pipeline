@@ -1,0 +1,5 @@
+mutation UpdateCandidateMemoryRecord($input: UpdateCandidateMemoryRecordInput!) {
+  updateCandidateMemoryRecord(input: $input) {
+    ...CandidateMemoryRecordFields
+  }
+}

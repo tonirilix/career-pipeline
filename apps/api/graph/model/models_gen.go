@@ -9,6 +9,23 @@ import (
 	"strconv"
 )
 
+type AIArtifact struct {
+	ID                string              `json:"id"`
+	ArtifactType      string              `json:"artifactType"`
+	Owner             *OwnerReference     `json:"owner"`
+	Title             string              `json:"title"`
+	SourceInputs      string              `json:"sourceInputs"`
+	GeneratedContent  string              `json:"generatedContent"`
+	UserEditedContent *string             `json:"userEditedContent,omitempty"`
+	CurrentContent    string              `json:"currentContent"`
+	Status            string              `json:"status"`
+	Sensitive         bool                `json:"sensitive"`
+	SupersededBy      *string             `json:"supersededBy,omitempty"`
+	Provenance        *ArtifactProvenance `json:"provenance"`
+	CreatedAt         string              `json:"createdAt"`
+	UpdatedAt         string              `json:"updatedAt"`
+}
+
 type AddApplicationNoteInput struct {
 	ApplicationID string `json:"applicationId"`
 	Body          string `json:"body"`
@@ -25,9 +42,78 @@ type ApplicationNote struct {
 	CreatedAt string `json:"createdAt"`
 }
 
+type ArtifactProvenance struct {
+	ProviderName  *string `json:"providerName,omitempty"`
+	ModelName     *string `json:"modelName,omitempty"`
+	PromptID      *string `json:"promptId,omitempty"`
+	UsageMetadata string  `json:"usageMetadata"`
+	RawProviderID *string `json:"rawProviderId,omitempty"`
+}
+
+type CandidateGroundingContext struct {
+	Profile *CandidateProfile        `json:"profile"`
+	Memory  []*CandidateMemoryRecord `json:"memory"`
+}
+
+type CandidateMemoryRecord struct {
+	ID           string  `json:"id"`
+	MemoryType   string  `json:"memoryType"`
+	Title        string  `json:"title"`
+	Body         string  `json:"body"`
+	Source       string  `json:"source"`
+	Approved     bool    `json:"approved"`
+	Sensitive    bool    `json:"sensitive"`
+	ArchivedAt   *string `json:"archivedAt,omitempty"`
+	SupersededBy *string `json:"supersededBy,omitempty"`
+	Metadata     string  `json:"metadata"`
+	CreatedAt    string  `json:"createdAt"`
+	UpdatedAt    string  `json:"updatedAt"`
+}
+
+type CandidateProfile struct {
+	ID                       string `json:"id"`
+	TargetRoles              string `json:"targetRoles"`
+	PreferredStack           string `json:"preferredStack"`
+	CompensationExpectations string `json:"compensationExpectations"`
+	LocationPreferences      string `json:"locationPreferences"`
+	WorkConstraints          string `json:"workConstraints"`
+	CompanyPreferences       string `json:"companyPreferences"`
+	WritingTone              string `json:"writingTone"`
+	PositioningSummary       string `json:"positioningSummary"`
+	CreatedAt                string `json:"createdAt"`
+	UpdatedAt                string `json:"updatedAt"`
+}
+
 type CompleteFollowUpReminderInput struct {
 	ApplicationID string `json:"applicationId"`
 	ReminderID    string `json:"reminderId"`
+}
+
+type CreateAIArtifactInput struct {
+	ArtifactType      string  `json:"artifactType"`
+	OwnerType         string  `json:"ownerType"`
+	OwnerID           string  `json:"ownerId"`
+	Title             string  `json:"title"`
+	SourceInputs      string  `json:"sourceInputs"`
+	GeneratedContent  string  `json:"generatedContent"`
+	UserEditedContent *string `json:"userEditedContent,omitempty"`
+	Status            string  `json:"status"`
+	Sensitive         bool    `json:"sensitive"`
+	ProviderName      *string `json:"providerName,omitempty"`
+	ModelName         *string `json:"modelName,omitempty"`
+	PromptID          *string `json:"promptId,omitempty"`
+	UsageMetadata     string  `json:"usageMetadata"`
+	RawProviderID     *string `json:"rawProviderId,omitempty"`
+}
+
+type CreateCandidateMemoryRecordInput struct {
+	MemoryType string `json:"memoryType"`
+	Title      string `json:"title"`
+	Body       string `json:"body"`
+	Source     string `json:"source"`
+	Approved   bool   `json:"approved"`
+	Sensitive  bool   `json:"sensitive"`
+	Metadata   string `json:"metadata"`
 }
 
 type CreateFollowUpReminderInput struct {
@@ -81,6 +167,11 @@ type JobApplication struct {
 type Mutation struct {
 }
 
+type OwnerReference struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
+}
+
 type Query struct {
 }
 
@@ -101,6 +192,28 @@ type TimelineEvent struct {
 	ID          string `json:"id"`
 	OccurredAt  string `json:"occurredAt"`
 	Description string `json:"description"`
+}
+
+type UpdateCandidateMemoryRecordInput struct {
+	ID         string `json:"id"`
+	MemoryType string `json:"memoryType"`
+	Title      string `json:"title"`
+	Body       string `json:"body"`
+	Source     string `json:"source"`
+	Approved   bool   `json:"approved"`
+	Sensitive  bool   `json:"sensitive"`
+	Metadata   string `json:"metadata"`
+}
+
+type UpdateCandidateProfileInput struct {
+	TargetRoles              string `json:"targetRoles"`
+	PreferredStack           string `json:"preferredStack"`
+	CompensationExpectations string `json:"compensationExpectations"`
+	LocationPreferences      string `json:"locationPreferences"`
+	WorkConstraints          string `json:"workConstraints"`
+	CompanyPreferences       string `json:"companyPreferences"`
+	WritingTone              string `json:"writingTone"`
+	PositioningSummary       string `json:"positioningSummary"`
 }
 
 type ApplicationStage string

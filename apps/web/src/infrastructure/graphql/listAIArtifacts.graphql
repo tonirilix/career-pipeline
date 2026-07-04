@@ -1,0 +1,5 @@
+query ListAIArtifacts($ownerType: String!, $ownerId: ID!) {
+  aiArtifacts(ownerType: $ownerType, ownerId: $ownerId) {
+    ...AIArtifactFields
+  }
+}

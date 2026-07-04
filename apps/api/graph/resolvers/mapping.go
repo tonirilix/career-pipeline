@@ -61,3 +61,99 @@ func mapApplication(app *domain.JobApplication) *model.JobApplication {
 	}
 	return out
 }
+
+func mapCandidateProfile(profile *domain.CandidateProfile) *model.CandidateProfile {
+	return &model.CandidateProfile{
+		ID:                       profile.ID,
+		TargetRoles:              profile.TargetRoles,
+		PreferredStack:           profile.PreferredStack,
+		CompensationExpectations: profile.CompensationExpectations,
+		LocationPreferences:      profile.LocationPreferences,
+		WorkConstraints:          profile.WorkConstraints,
+		CompanyPreferences:       profile.CompanyPreferences,
+		WritingTone:              profile.WritingTone,
+		PositioningSummary:       profile.PositioningSummary,
+		CreatedAt:                profile.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:                profile.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func mapCandidateMemoryRecord(record *domain.CandidateMemoryRecord) *model.CandidateMemoryRecord {
+	out := &model.CandidateMemoryRecord{
+		ID:         record.ID,
+		MemoryType: string(record.MemoryType),
+		Title:      record.Title,
+		Body:       record.Body,
+		Source:     record.Source,
+		Approved:   record.Approved,
+		Sensitive:  record.Sensitive,
+		Metadata:   string(record.Metadata),
+		CreatedAt:  record.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:  record.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+	if record.ArchivedAt != nil {
+		s := record.ArchivedAt.UTC().Format(time.RFC3339)
+		out.ArchivedAt = &s
+	}
+	if record.SupersededBy != nil {
+		out.SupersededBy = record.SupersededBy
+	}
+	return out
+}
+
+func mapCandidateMemoryRecords(records []*domain.CandidateMemoryRecord) []*model.CandidateMemoryRecord {
+	out := make([]*model.CandidateMemoryRecord, len(records))
+	for i, record := range records {
+		out[i] = mapCandidateMemoryRecord(record)
+	}
+	return out
+}
+
+func mapCandidateGroundingContext(context *domain.CandidateGroundingContext) *model.CandidateGroundingContext {
+	memory := make([]*model.CandidateMemoryRecord, len(context.Memory))
+	for i := range context.Memory {
+		memory[i] = mapCandidateMemoryRecord(&context.Memory[i])
+	}
+	return &model.CandidateGroundingContext{
+		Profile: mapCandidateProfile(context.Profile),
+		Memory:  memory,
+	}
+}
+
+func mapAIArtifact(artifact *domain.AIArtifact) *model.AIArtifact {
+	out := &model.AIArtifact{
+		ID:               artifact.ID,
+		ArtifactType:     string(artifact.ArtifactType),
+		Owner:            &model.OwnerReference{Type: artifact.Owner.Type, ID: artifact.Owner.ID},
+		Title:            artifact.Title,
+		SourceInputs:     string(artifact.SourceInputs),
+		GeneratedContent: artifact.GeneratedContent,
+		CurrentContent:   artifact.CurrentContent(),
+		Status:           string(artifact.Status),
+		Sensitive:        artifact.Sensitive,
+		Provenance: &model.ArtifactProvenance{
+			ProviderName:  artifact.Provenance.ProviderName,
+			ModelName:     artifact.Provenance.ModelName,
+			PromptID:      artifact.Provenance.PromptID,
+			UsageMetadata: string(artifact.Provenance.UsageMetadata),
+			RawProviderID: artifact.Provenance.RawProviderID,
+		},
+		CreatedAt: artifact.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: artifact.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+	if artifact.UserEditedContent != nil {
+		out.UserEditedContent = artifact.UserEditedContent
+	}
+	if artifact.SupersededBy != nil {
+		out.SupersededBy = artifact.SupersededBy
+	}
+	return out
+}
+
+func mapAIArtifacts(artifacts []*domain.AIArtifact) []*model.AIArtifact {
+	out := make([]*model.AIArtifact, len(artifacts))
+	for i, artifact := range artifacts {
+		out[i] = mapAIArtifact(artifact)
+	}
+	return out
+}

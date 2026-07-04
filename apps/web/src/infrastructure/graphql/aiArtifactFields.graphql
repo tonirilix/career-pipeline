@@ -1,0 +1,25 @@
+fragment AIArtifactFields on AIArtifact {
+  id
+  artifactType
+  owner {
+    type
+    id
+  }
+  title
+  sourceInputs
+  generatedContent
+  userEditedContent
+  currentContent
+  status
+  sensitive
+  supersededBy
+  provenance {
+    providerName
+    modelName
+    promptId
+    usageMetadata
+    rawProviderId
+  }
+  createdAt
+  updatedAt
+}

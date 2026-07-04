@@ -26,6 +26,14 @@ func mapDomainError(err error) error {
 		return errors.New("role title is required")
 	case errors.Is(err, domain.ErrDueDateInPast):
 		return errors.New("follow-up due date must be after the latest interaction")
+	case errors.Is(err, domain.ErrCandidateProfileNotFound):
+		return errors.New("candidate profile could not be found")
+	case errors.Is(err, domain.ErrMemoryRecordNotFound):
+		return errors.New("candidate memory record could not be found")
+	case errors.Is(err, domain.ErrAIArtifactNotFound):
+		return errors.New("AI artifact could not be found")
+	case errors.Is(err, domain.ErrInvalidArtifactStatus):
+		return errors.New("AI artifact status is invalid")
 	default:
 		return err
 	}

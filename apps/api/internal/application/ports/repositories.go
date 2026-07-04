@@ -47,3 +47,27 @@ type TimelineRepository interface {
 	Save(ctx context.Context, applicationID string, event *domain.TimelineEvent) error
 	ListByApplication(ctx context.Context, applicationID string) ([]*domain.TimelineEvent, error)
 }
+
+type CandidateProfileRepository interface {
+	GetActive(ctx context.Context) (*domain.CandidateProfile, error)
+	Save(ctx context.Context, profile *domain.CandidateProfile) (*domain.CandidateProfile, error)
+}
+
+type CandidateMemoryRepository interface {
+	Save(ctx context.Context, record *domain.CandidateMemoryRecord) (*domain.CandidateMemoryRecord, error)
+	FindByID(ctx context.Context, id string) (*domain.CandidateMemoryRecord, error)
+	List(ctx context.Context) ([]*domain.CandidateMemoryRecord, error)
+	ListApprovedCurrent(ctx context.Context) ([]*domain.CandidateMemoryRecord, error)
+	Update(ctx context.Context, record *domain.CandidateMemoryRecord) (*domain.CandidateMemoryRecord, error)
+	Archive(ctx context.Context, id string, archivedAt time.Time) (*domain.CandidateMemoryRecord, error)
+	Supersede(ctx context.Context, id string, supersededBy string, updatedAt time.Time) (*domain.CandidateMemoryRecord, error)
+}
+
+type AIArtifactRepository interface {
+	Save(ctx context.Context, artifact *domain.AIArtifact) (*domain.AIArtifact, error)
+	FindByID(ctx context.Context, id string) (*domain.AIArtifact, error)
+	ListByOwner(ctx context.Context, owner domain.OwnerReference) ([]*domain.AIArtifact, error)
+	UpdateEditedContent(ctx context.Context, id string, editedContent *string, updatedAt time.Time) (*domain.AIArtifact, error)
+	UpdateStatus(ctx context.Context, id string, status domain.ArtifactStatus, updatedAt time.Time) (*domain.AIArtifact, error)
+	Supersede(ctx context.Context, id string, supersededBy string, updatedAt time.Time) (*domain.AIArtifact, error)
+}

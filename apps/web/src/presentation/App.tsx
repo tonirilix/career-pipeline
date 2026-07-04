@@ -1,10 +1,11 @@
 import { type FormEvent, useState } from "react";
+import { Briefcase, Database, Plus } from "lucide-react";
 
+import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
 import type { UsePipelineControls } from "./ports/pipelineControls";
-import {
-  ApplicationDetails
-} from "./components/ApplicationDetails";
+import { ApplicationDetails } from "./components/ApplicationDetails";
+import { CandidateMemoryWorkspace } from "./components/CandidateMemoryWorkspace";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
@@ -18,13 +19,21 @@ import { SlideOver } from "./components/ui/slide-over";
 import { usePipelineWorkspace } from "./pipelineWorkspace";
 
 type AppProps = {
+  candidateContextGateway: CandidateContextGateway;
   gateway: JobApplicationGateway;
   usePipelineControls: UsePipelineControls;
 };
 
-export function App({ gateway, usePipelineControls }: AppProps) {
+type Workspace = "pipeline" | "memory";
+
+export function App({
+  candidateContextGateway,
+  gateway,
+  usePipelineControls
+}: AppProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeWorkspace, setActiveWorkspace] = useState<Workspace>("pipeline");
   const workspace = usePipelineWorkspace(gateway, usePipelineControls);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -50,8 +59,29 @@ export function App({ gateway, usePipelineControls }: AppProps) {
             variant="outline"
             className="w-full bg-transparent hover:bg-muted rounded-none"
           >
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Add opportunity
           </Button>
+          <nav className="mt-3 grid grid-cols-2 gap-2" aria-label="Workspace navigation">
+            <Button
+              type="button"
+              variant={activeWorkspace === "pipeline" ? "default" : "outline"}
+              onClick={() => setActiveWorkspace("pipeline")}
+              className="rounded-none"
+            >
+              <Briefcase className="h-4 w-4" aria-hidden="true" />
+              Pipeline
+            </Button>
+            <Button
+              type="button"
+              variant={activeWorkspace === "memory" ? "default" : "outline"}
+              onClick={() => setActiveWorkspace("memory")}
+              className="rounded-none"
+            >
+              <Database className="h-4 w-4" aria-hidden="true" />
+              Memory
+            </Button>
+          </nav>
         </div>
 
         <StatsBar
@@ -94,36 +124,42 @@ export function App({ gateway, usePipelineControls }: AppProps) {
         </div>
         <div className="flex-1 overflow-auto px-4 py-5 md:px-6 md:py-6">
           <div className="mx-auto w-full max-w-[1180px]">
-            {workspace.commandError ? (
-              <ErrorNotice
-                className="mb-5"
-                message={workspace.commandError.message}
-                title={workspace.commandError.title}
-              />
-            ) : null}
+            {activeWorkspace === "pipeline" ? (
+              <>
+                {workspace.commandError ? (
+                  <ErrorNotice
+                    className="mb-5"
+                    message={workspace.commandError.message}
+                    title={workspace.commandError.title}
+                  />
+                ) : null}
 
-            <FunnelChart
-              stageCounts={workspace.stageCounts}
-              activeStage={workspace.stageFilter}
-              onStageClick={workspace.setStageFilter}
-            />
+                <FunnelChart
+                  stageCounts={workspace.stageCounts}
+                  activeStage={workspace.stageFilter}
+                  onStageClick={workspace.setStageFilter}
+                />
 
-            <div className="mt-6" />
+                <div className="mt-6" />
 
-            {workspace.isLoadingApplications ? (
-              <div
-                role="status"
-                className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
-              >
-                Loading applications...
-              </div>
+                {workspace.isLoadingApplications ? (
+                  <div
+                    role="status"
+                    className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+                  >
+                    Loading applications...
+                  </div>
+                ) : (
+                  <PipelineBoard
+                    applications={workspace.visibleApplications}
+                    changingStageApplicationIds={workspace.changingStageApplicationIds}
+                    onStageChange={workspace.changeStage}
+                    onViewDetails={workspace.viewDetails}
+                  />
+                )}
+              </>
             ) : (
-              <PipelineBoard
-                applications={workspace.visibleApplications}
-                changingStageApplicationIds={workspace.changingStageApplicationIds}
-                onStageChange={workspace.changeStage}
-                onViewDetails={workspace.viewDetails}
-              />
+              <CandidateMemoryWorkspace gateway={candidateContextGateway} />
             )}
           </div>
         </div>

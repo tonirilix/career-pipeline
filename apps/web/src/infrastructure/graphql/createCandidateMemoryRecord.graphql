@@ -1,0 +1,5 @@
+mutation CreateCandidateMemoryRecord($input: CreateCandidateMemoryRecordInput!) {
+  createCandidateMemoryRecord(input: $input) {
+    ...CandidateMemoryRecordFields
+  }
+}
