@@ -1,0 +1,5 @@
+mutation UpdateAIArtifactStatus($id: ID!, $status: String!) {
+  updateAIArtifactStatus(id: $id, status: $status) {
+    ...AIArtifactFields
+  }
+}

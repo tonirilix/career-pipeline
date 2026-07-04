@@ -1,0 +1,14 @@
+fragment CandidateMemoryRecordFields on CandidateMemoryRecord {
+  id
+  memoryType
+  title
+  body
+  source
+  approved
+  sensitive
+  archivedAt
+  supersededBy
+  metadata
+  createdAt
+  updatedAt
+}

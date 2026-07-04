@@ -5,14 +5,66 @@
 package db
 
 import (
+	"database/sql"
+	"encoding/json"
 	"time"
 )
+
+type AiArtifact struct {
+	ID                string
+	ArtifactType      string
+	OwnerType         string
+	OwnerID           string
+	Title             string
+	SourceInputs      json.RawMessage
+	GeneratedContent  string
+	UserEditedContent sql.NullString
+	Status            string
+	Sensitive         bool
+	SupersededBy      sql.NullString
+	ProviderName      sql.NullString
+	ModelName         sql.NullString
+	PromptID          sql.NullString
+	UsageMetadata     json.RawMessage
+	RawProviderID     sql.NullString
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
 
 type ApplicationNote struct {
 	ID            string
 	ApplicationID string
 	Body          string
 	CreatedAt     time.Time
+}
+
+type CandidateMemoryRecord struct {
+	ID           string
+	MemoryType   string
+	Title        string
+	Body         string
+	Source       string
+	Approved     bool
+	Sensitive    bool
+	ArchivedAt   *time.Time
+	SupersededBy sql.NullString
+	Metadata     json.RawMessage
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type CandidateProfile struct {
+	ID                       string
+	TargetRoles              string
+	PreferredStack           string
+	CompensationExpectations string
+	LocationPreferences      string
+	WorkConstraints          string
+	CompanyPreferences       string
+	WritingTone              string
+	PositioningSummary       string
+	CreatedAt                time.Time
+	UpdatedAt                time.Time
 }
 
 type FollowUpReminder struct {

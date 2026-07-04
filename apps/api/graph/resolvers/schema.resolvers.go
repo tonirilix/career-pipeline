@@ -12,6 +12,7 @@ import (
 	"github.com/tonirilix/career-pipeline/apps/api/graph/model"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/ports"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 // CreateSavedOpportunity is the resolver for the createSavedOpportunity field.
@@ -127,6 +128,153 @@ func (r *mutationResolver) AddApplicationNote(ctx context.Context, input model.A
 	return mapApplication(app), nil
 }
 
+// UpdateCandidateProfile is the resolver for the updateCandidateProfile field.
+func (r *mutationResolver) UpdateCandidateProfile(ctx context.Context, input model.UpdateCandidateProfileInput) (*model.CandidateProfile, error) {
+	profile, err := r.UpdateCandidateProfileUC.Execute(ctx, usecases.UpdateCandidateProfileCommand{
+		TargetRoles:              input.TargetRoles,
+		PreferredStack:           input.PreferredStack,
+		CompensationExpectations: input.CompensationExpectations,
+		LocationPreferences:      input.LocationPreferences,
+		WorkConstraints:          input.WorkConstraints,
+		CompanyPreferences:       input.CompanyPreferences,
+		WritingTone:              input.WritingTone,
+		PositioningSummary:       input.PositioningSummary,
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateProfile(profile), nil
+}
+
+// CreateCandidateMemoryRecord is the resolver for the createCandidateMemoryRecord field.
+func (r *mutationResolver) CreateCandidateMemoryRecord(ctx context.Context, input model.CreateCandidateMemoryRecordInput) (*model.CandidateMemoryRecord, error) {
+	metadata, err := mapJSONInput(input.Metadata, `{}`)
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.CandidateMemoryUC.Create(ctx, usecases.CreateMemoryRecordCommand{
+		MemoryType: domain.MemoryType(input.MemoryType),
+		Title:      input.Title,
+		Body:       input.Body,
+		Source:     input.Source,
+		Approved:   input.Approved,
+		Sensitive:  input.Sensitive,
+		Metadata:   metadata,
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateMemoryRecord(record), nil
+}
+
+// UpdateCandidateMemoryRecord is the resolver for the updateCandidateMemoryRecord field.
+func (r *mutationResolver) UpdateCandidateMemoryRecord(ctx context.Context, input model.UpdateCandidateMemoryRecordInput) (*model.CandidateMemoryRecord, error) {
+	metadata, err := mapJSONInput(input.Metadata, `{}`)
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.CandidateMemoryUC.Update(ctx, usecases.UpdateMemoryRecordCommand{
+		ID:         input.ID,
+		MemoryType: domain.MemoryType(input.MemoryType),
+		Title:      input.Title,
+		Body:       input.Body,
+		Source:     input.Source,
+		Approved:   input.Approved,
+		Sensitive:  input.Sensitive,
+		Metadata:   metadata,
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateMemoryRecord(record), nil
+}
+
+// ArchiveCandidateMemoryRecord is the resolver for the archiveCandidateMemoryRecord field.
+func (r *mutationResolver) ArchiveCandidateMemoryRecord(ctx context.Context, id string) (*model.CandidateMemoryRecord, error) {
+	record, err := r.CandidateMemoryUC.Archive(ctx, id)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateMemoryRecord(record), nil
+}
+
+// SupersedeCandidateMemoryRecord is the resolver for the supersedeCandidateMemoryRecord field.
+func (r *mutationResolver) SupersedeCandidateMemoryRecord(ctx context.Context, id string, supersededBy string) (*model.CandidateMemoryRecord, error) {
+	record, err := r.CandidateMemoryUC.Supersede(ctx, id, supersededBy)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateMemoryRecord(record), nil
+}
+
+// CreateAIArtifact is the resolver for the createAIArtifact field.
+func (r *mutationResolver) CreateAIArtifact(ctx context.Context, input model.CreateAIArtifactInput) (*model.AIArtifact, error) {
+	status, err := mapArtifactStatusInput(input.Status)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	sourceInputs, err := mapJSONInput(input.SourceInputs, `[]`)
+	if err != nil {
+		return nil, err
+	}
+	usageMetadata, err := mapJSONInput(input.UsageMetadata, `{}`)
+	if err != nil {
+		return nil, err
+	}
+	artifact, err := r.AIArtifactsUC.Create(ctx, usecases.CreateAIArtifactCommand{
+		ArtifactType:      domain.ArtifactType(input.ArtifactType),
+		Owner:             domain.OwnerReference{Type: input.OwnerType, ID: input.OwnerID},
+		Title:             input.Title,
+		SourceInputs:      sourceInputs,
+		GeneratedContent:  input.GeneratedContent,
+		UserEditedContent: input.UserEditedContent,
+		Status:            status,
+		Sensitive:         input.Sensitive,
+		Provenance: domain.ArtifactProvenance{
+			ProviderName:  input.ProviderName,
+			ModelName:     input.ModelName,
+			PromptID:      input.PromptID,
+			UsageMetadata: usageMetadata,
+			RawProviderID: input.RawProviderID,
+		},
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapAIArtifact(artifact), nil
+}
+
+// EditAIArtifact is the resolver for the editAIArtifact field.
+func (r *mutationResolver) EditAIArtifact(ctx context.Context, id string, userEditedContent *string) (*model.AIArtifact, error) {
+	artifact, err := r.AIArtifactsUC.Edit(ctx, id, userEditedContent)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapAIArtifact(artifact), nil
+}
+
+// UpdateAIArtifactStatus is the resolver for the updateAIArtifactStatus field.
+func (r *mutationResolver) UpdateAIArtifactStatus(ctx context.Context, id string, status string) (*model.AIArtifact, error) {
+	mappedStatus, err := mapArtifactStatusInput(status)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	artifact, err := r.AIArtifactsUC.UpdateStatus(ctx, id, mappedStatus)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapAIArtifact(artifact), nil
+}
+
+// SupersedeAIArtifact is the resolver for the supersedeAIArtifact field.
+func (r *mutationResolver) SupersedeAIArtifact(ctx context.Context, id string, supersededBy string) (*model.AIArtifact, error) {
+	artifact, err := r.AIArtifactsUC.Supersede(ctx, id, supersededBy)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapAIArtifact(artifact), nil
+}
+
 // Applications is the resolver for the applications field.
 func (r *queryResolver) Applications(ctx context.Context) ([]*model.JobApplication, error) {
 	apps, err := r.ListApplicationsUC.Execute(ctx, ports.ListApplicationsFilter{})
@@ -138,6 +286,42 @@ func (r *queryResolver) Applications(ctx context.Context) ([]*model.JobApplicati
 		out[i] = mapApplication(app)
 	}
 	return out, nil
+}
+
+// CandidateProfile is the resolver for the candidateProfile field.
+func (r *queryResolver) CandidateProfile(ctx context.Context) (*model.CandidateProfile, error) {
+	profile, err := r.GetCandidateProfileUC.Execute(ctx)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateProfile(profile), nil
+}
+
+// CandidateMemoryRecords is the resolver for the candidateMemoryRecords field.
+func (r *queryResolver) CandidateMemoryRecords(ctx context.Context) ([]*model.CandidateMemoryRecord, error) {
+	records, err := r.CandidateMemoryUC.List(ctx)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateMemoryRecords(records), nil
+}
+
+// CandidateGroundingContext is the resolver for the candidateGroundingContext field.
+func (r *queryResolver) CandidateGroundingContext(ctx context.Context) (*model.CandidateGroundingContext, error) {
+	grounding, err := r.GroundingContextUC.Execute(ctx)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapCandidateGroundingContext(grounding), nil
+}
+
+// AiArtifacts is the resolver for the aiArtifacts field.
+func (r *queryResolver) AiArtifacts(ctx context.Context, ownerType string, ownerID string) ([]*model.AIArtifact, error) {
+	artifacts, err := r.AIArtifactsUC.ListByOwner(ctx, domain.OwnerReference{Type: ownerType, ID: ownerID})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapAIArtifacts(artifacts), nil
 }
 
 // Mutation returns graph.MutationResolver implementation.

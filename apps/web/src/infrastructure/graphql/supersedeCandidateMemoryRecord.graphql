@@ -1,0 +1,5 @@
+mutation SupersedeCandidateMemoryRecord($id: ID!, $supersededBy: ID!) {
+  supersedeCandidateMemoryRecord(id: $id, supersededBy: $supersededBy) {
+    ...CandidateMemoryRecordFields
+  }
+}

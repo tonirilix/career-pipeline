@@ -1,6 +1,7 @@
 package resolvers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
@@ -93,4 +94,23 @@ func mapInterviewOutcomeInput(value string) (domain.InterviewOutcome, error) {
 	default:
 		return "", fmt.Errorf("unsupported interview outcome %q", value)
 	}
+}
+
+func mapArtifactStatusInput(value string) (domain.ArtifactStatus, error) {
+	status := domain.ArtifactStatus(value)
+	if err := domain.ValidateArtifactStatus(status); err != nil {
+		return "", err
+	}
+	return status, nil
+}
+
+func mapJSONInput(value string, fallback string) (json.RawMessage, error) {
+	if value == "" {
+		value = fallback
+	}
+	raw := json.RawMessage(value)
+	if !json.Valid(raw) {
+		return nil, fmt.Errorf("invalid JSON value")
+	}
+	return raw, nil
 }

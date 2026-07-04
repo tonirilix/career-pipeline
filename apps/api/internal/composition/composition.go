@@ -24,6 +24,9 @@ func NewResolver(database *sql.DB) *resolvers.Resolver {
 	followUpRepo := persistence.NewPostgreSQLFollowUpRepository(database)
 	noteRepo := persistence.NewPostgreSQLNoteRepository(database)
 	timelineRepo := persistence.NewPostgreSQLTimelineRepository(database)
+	candidateProfileRepo := persistence.NewPostgreSQLCandidateProfileRepository(database)
+	candidateMemoryRepo := persistence.NewPostgreSQLCandidateMemoryRepository(database)
+	aiArtifactRepo := persistence.NewPostgreSQLAIArtifactRepository(database)
 	assembler := usecases.NewFullApplicationAssembler(followUpRepo, timelineRepo, interviewRepo, noteRepo)
 	transactor := persistence.NewPostgreSQLTransactor(database)
 
@@ -38,15 +41,25 @@ func NewResolver(database *sql.DB) *resolvers.Resolver {
 	completeFollowUpUC := usecases.NewCompleteFollowUp(transactor, clock, ids)
 	addNoteUC := usecases.NewAddNote(transactor, clock, ids)
 	listApplicationsUC := usecases.NewListApplications(appRepo, assembler)
+	getCandidateProfileUC := usecases.NewGetCandidateProfile(candidateProfileRepo, clock)
+	updateCandidateProfileUC := usecases.NewUpdateCandidateProfile(candidateProfileRepo, clock)
+	candidateMemoryUC := usecases.NewCandidateMemory(candidateMemoryRepo, clock, ids)
+	groundingContextUC := usecases.NewGetCandidateGroundingContext(candidateProfileRepo, candidateMemoryRepo, clock)
+	aiArtifactsUC := usecases.NewAIArtifacts(aiArtifactRepo, clock, ids)
 
 	return &resolvers.Resolver{
-		CreateApplicationUC: createAppUC,
-		AdvanceStageUC:      advanceStageUC,
-		ScheduleInterviewUC: scheduleInterviewUC,
-		RecordOutcomeUC:     recordOutcomeUC,
-		AddFollowUpUC:       addFollowUpUC,
-		CompleteFollowUpUC:  completeFollowUpUC,
-		AddNoteUC:           addNoteUC,
-		ListApplicationsUC:  listApplicationsUC,
+		CreateApplicationUC:      createAppUC,
+		AdvanceStageUC:           advanceStageUC,
+		ScheduleInterviewUC:      scheduleInterviewUC,
+		RecordOutcomeUC:          recordOutcomeUC,
+		AddFollowUpUC:            addFollowUpUC,
+		CompleteFollowUpUC:       completeFollowUpUC,
+		AddNoteUC:                addNoteUC,
+		ListApplicationsUC:       listApplicationsUC,
+		GetCandidateProfileUC:    getCandidateProfileUC,
+		UpdateCandidateProfileUC: updateCandidateProfileUC,
+		CandidateMemoryUC:        candidateMemoryUC,
+		GroundingContextUC:       groundingContextUC,
+		AIArtifactsUC:            aiArtifactsUC,
 	}
 }

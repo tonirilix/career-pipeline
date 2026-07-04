@@ -5,12 +5,17 @@ import (
 )
 
 type Resolver struct {
-	CreateApplicationUC *usecases.CreateApplication
-	AdvanceStageUC      *usecases.AdvanceStage
-	ScheduleInterviewUC *usecases.ScheduleInterview
-	RecordOutcomeUC     *usecases.RecordInterviewOutcome
-	AddFollowUpUC       *usecases.AddFollowUp
-	CompleteFollowUpUC  *usecases.CompleteFollowUp
-	AddNoteUC           *usecases.AddNote
-	ListApplicationsUC  *usecases.ListApplications
+	CreateApplicationUC      *usecases.CreateApplication
+	AdvanceStageUC           *usecases.AdvanceStage
+	ScheduleInterviewUC      *usecases.ScheduleInterview
+	RecordOutcomeUC          *usecases.RecordInterviewOutcome
+	AddFollowUpUC            *usecases.AddFollowUp
+	CompleteFollowUpUC       *usecases.CompleteFollowUp
+	AddNoteUC                *usecases.AddNote
+	ListApplicationsUC       *usecases.ListApplications
+	GetCandidateProfileUC    *usecases.GetCandidateProfile
+	UpdateCandidateProfileUC *usecases.UpdateCandidateProfile
+	CandidateMemoryUC        *usecases.CandidateMemory
+	GroundingContextUC       *usecases.GetCandidateGroundingContext
+	AIArtifactsUC            *usecases.AIArtifacts
 }

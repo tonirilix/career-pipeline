@@ -85,6 +85,19 @@ func TestGraphQLValueMapping(t *testing.T) {
 			t.Fatalf("interview outcome %q: expected %q, got %q (err: %v)", input, want, got, err)
 		}
 	}
+
+	artifactStatusCases := map[string]domain.ArtifactStatus{
+		"Draft":      domain.ArtifactDraft,
+		"Approved":   domain.ArtifactApproved,
+		"Rejected":   domain.ArtifactRejected,
+		"Superseded": domain.ArtifactSuperseded,
+	}
+	for input, want := range artifactStatusCases {
+		got, err := mapArtifactStatusInput(input)
+		if err != nil || got != want {
+			t.Fatalf("artifact status %q: expected %q, got %q (err: %v)", input, want, got, err)
+		}
+	}
 }
 
 func TestGraphQLValueMappingRejectsUnsupportedValues(t *testing.T) {
@@ -102,5 +115,30 @@ func TestGraphQLValueMappingRejectsUnsupportedValues(t *testing.T) {
 	}
 	if _, err := mapInterviewOutcomeInput("Maybe"); err == nil {
 		t.Fatal("expected unsupported interview outcome to error")
+	}
+	if _, err := mapArtifactStatusInput("Published"); err == nil {
+		t.Fatal("expected unsupported artifact status to error")
+	}
+}
+
+func TestMapJSONInput(t *testing.T) {
+	got, err := mapJSONInput("", `{"fallback":true}`)
+	if err != nil {
+		t.Fatalf("expected fallback JSON to parse: %v", err)
+	}
+	if string(got) != `{"fallback":true}` {
+		t.Fatalf("expected fallback JSON, got %s", got)
+	}
+
+	got, err = mapJSONInput(`["memory-1"]`, `[]`)
+	if err != nil {
+		t.Fatalf("expected input JSON to parse: %v", err)
+	}
+	if string(got) != `["memory-1"]` {
+		t.Fatalf("expected input JSON, got %s", got)
+	}
+
+	if _, err := mapJSONInput(`{`, `{}`); err == nil {
+		t.Fatal("expected invalid JSON to error")
 	}
 }

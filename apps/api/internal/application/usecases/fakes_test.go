@@ -23,6 +23,20 @@ func (g *fakeIDs) New() string {
 	return fmt.Sprintf("id-%d", g.n)
 }
 
+type fakeAIProvider struct {
+	response ports.GenerateTextResponse
+	requests []ports.GenerateTextRequest
+	err      error
+}
+
+func (p *fakeAIProvider) GenerateText(_ context.Context, request ports.GenerateTextRequest) (ports.GenerateTextResponse, error) {
+	p.requests = append(p.requests, request)
+	if p.err != nil {
+		return ports.GenerateTextResponse{}, p.err
+	}
+	return p.response, nil
+}
+
 // fakeAppRepo is an in-memory JobApplicationRepository.
 type fakeAppRepo struct {
 	apps map[string]*domain.JobApplication

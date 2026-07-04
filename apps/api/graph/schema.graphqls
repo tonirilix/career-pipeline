@@ -70,6 +70,70 @@ type ApplicationNote {
   createdAt: String!
 }
 
+type CandidateProfile {
+  id: ID!
+  targetRoles: String!
+  preferredStack: String!
+  compensationExpectations: String!
+  locationPreferences: String!
+  workConstraints: String!
+  companyPreferences: String!
+  writingTone: String!
+  positioningSummary: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type CandidateMemoryRecord {
+  id: ID!
+  memoryType: String!
+  title: String!
+  body: String!
+  source: String!
+  approved: Boolean!
+  sensitive: Boolean!
+  archivedAt: String
+  supersededBy: ID
+  metadata: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type CandidateGroundingContext {
+  profile: CandidateProfile!
+  memory: [CandidateMemoryRecord!]!
+}
+
+type OwnerReference {
+  type: String!
+  id: ID!
+}
+
+type ArtifactProvenance {
+  providerName: String
+  modelName: String
+  promptId: String
+  usageMetadata: String!
+  rawProviderId: String
+}
+
+type AIArtifact {
+  id: ID!
+  artifactType: String!
+  owner: OwnerReference!
+  title: String!
+  sourceInputs: String!
+  generatedContent: String!
+  userEditedContent: String
+  currentContent: String!
+  status: String!
+  sensitive: Boolean!
+  supersededBy: ID
+  provenance: ArtifactProvenance!
+  createdAt: String!
+  updatedAt: String!
+}
+
 type JobApplication {
   id: ID!
   company: String!
@@ -130,8 +194,61 @@ input AddApplicationNoteInput {
   body: String!
 }
 
+input UpdateCandidateProfileInput {
+  targetRoles: String!
+  preferredStack: String!
+  compensationExpectations: String!
+  locationPreferences: String!
+  workConstraints: String!
+  companyPreferences: String!
+  writingTone: String!
+  positioningSummary: String!
+}
+
+input CreateCandidateMemoryRecordInput {
+  memoryType: String!
+  title: String!
+  body: String!
+  source: String!
+  approved: Boolean!
+  sensitive: Boolean!
+  metadata: String!
+}
+
+input UpdateCandidateMemoryRecordInput {
+  id: ID!
+  memoryType: String!
+  title: String!
+  body: String!
+  source: String!
+  approved: Boolean!
+  sensitive: Boolean!
+  metadata: String!
+}
+
+input CreateAIArtifactInput {
+  artifactType: String!
+  ownerType: String!
+  ownerId: ID!
+  title: String!
+  sourceInputs: String!
+  generatedContent: String!
+  userEditedContent: String
+  status: String!
+  sensitive: Boolean!
+  providerName: String
+  modelName: String
+  promptId: String
+  usageMetadata: String!
+  rawProviderId: String
+}
+
 type Query {
   applications: [JobApplication!]!
+  candidateProfile: CandidateProfile!
+  candidateMemoryRecords: [CandidateMemoryRecord!]!
+  candidateGroundingContext: CandidateGroundingContext!
+  aiArtifacts(ownerType: String!, ownerId: ID!): [AIArtifact!]!
 }
 
 type Mutation {
@@ -142,4 +259,13 @@ type Mutation {
   createFollowUpReminder(input: CreateFollowUpReminderInput!): JobApplication!
   completeFollowUpReminder(input: CompleteFollowUpReminderInput!): JobApplication!
   addApplicationNote(input: AddApplicationNoteInput!): JobApplication!
+  updateCandidateProfile(input: UpdateCandidateProfileInput!): CandidateProfile!
+  createCandidateMemoryRecord(input: CreateCandidateMemoryRecordInput!): CandidateMemoryRecord!
+  updateCandidateMemoryRecord(input: UpdateCandidateMemoryRecordInput!): CandidateMemoryRecord!
+  archiveCandidateMemoryRecord(id: ID!): CandidateMemoryRecord!
+  supersedeCandidateMemoryRecord(id: ID!, supersededBy: ID!): CandidateMemoryRecord!
+  createAIArtifact(input: CreateAIArtifactInput!): AIArtifact!
+  editAIArtifact(id: ID!, userEditedContent: String): AIArtifact!
+  updateAIArtifactStatus(id: ID!, status: String!): AIArtifact!
+  supersedeAIArtifact(id: ID!, supersededBy: ID!): AIArtifact!
 }

@@ -1,0 +1,13 @@
+fragment CandidateProfileFields on CandidateProfile {
+  id
+  targetRoles
+  preferredStack
+  compensationExpectations
+  locationPreferences
+  workConstraints
+  companyPreferences
+  writingTone
+  positioningSummary
+  createdAt
+  updatedAt
+}

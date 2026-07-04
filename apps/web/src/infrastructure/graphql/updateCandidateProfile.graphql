@@ -1,0 +1,5 @@
+mutation UpdateCandidateProfile($input: UpdateCandidateProfileInput!) {
+  updateCandidateProfile(input: $input) {
+    ...CandidateProfileFields
+  }
+}

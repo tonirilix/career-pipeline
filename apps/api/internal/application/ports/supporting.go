@@ -24,3 +24,41 @@ type Repositories struct {
 type Transactor interface {
 	WithTransaction(ctx context.Context, fn func(ctx context.Context, repos Repositories) error) error
 }
+
+type AIContextReference struct {
+	Type string
+	ID   string
+}
+
+type GenerationParameters struct {
+	Model       string
+	Temperature *float64
+	MaxTokens   *int
+}
+
+type GenerateTextRequest struct {
+	OperationName      string
+	SystemInstructions string
+	UserInstructions   string
+	ContextReferences  []AIContextReference
+	Parameters         GenerationParameters
+}
+
+type AIUsageMetadata struct {
+	InputTokens  int
+	OutputTokens int
+	TotalTokens  int
+}
+
+type GenerateTextResponse struct {
+	Content       string
+	ProviderName  string
+	ModelName     string
+	FinishReason  string
+	Usage         AIUsageMetadata
+	RawProviderID string
+}
+
+type AIProvider interface {
+	GenerateText(ctx context.Context, request GenerateTextRequest) (GenerateTextResponse, error)
+}

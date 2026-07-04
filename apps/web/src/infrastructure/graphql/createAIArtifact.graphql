@@ -1,0 +1,5 @@
+mutation CreateAIArtifact($input: CreateAIArtifactInput!) {
+  createAIArtifact(input: $input) {
+    ...AIArtifactFields
+  }
+}

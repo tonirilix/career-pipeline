@@ -1,0 +1,5 @@
+mutation EditAIArtifact($id: ID!, $userEditedContent: String) {
+  editAIArtifact(id: $id, userEditedContent: $userEditedContent) {
+    ...AIArtifactFields
+  }
+}

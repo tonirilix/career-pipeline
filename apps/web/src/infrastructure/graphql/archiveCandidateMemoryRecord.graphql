@@ -1,0 +1,5 @@
+mutation ArchiveCandidateMemoryRecord($id: ID!) {
+  archiveCandidateMemoryRecord(id: $id) {
+    ...CandidateMemoryRecordFields
+  }
+}

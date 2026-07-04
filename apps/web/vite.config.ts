@@ -10,6 +10,21 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src")
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-nivo": ["@nivo/core", "@nivo/funnel"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-radix": [
+            "@radix-ui/react-label",
+            "@radix-ui/react-select",
+            "@radix-ui/react-slot"
+          ]
+        }
+      }
+    }
+  },
   server: {
     watch: {
       // Polling ensures file changes are detected through Docker volume mounts
