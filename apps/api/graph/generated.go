@@ -110,6 +110,13 @@ type ComplexityRoot struct {
 		Note          func(childComplexity int) int
 	}
 
+	ImportedRoleSummary struct {
+		Company    func(childComplexity int) int
+		PostingURL func(childComplexity int) int
+		RoleID     func(childComplexity int) int
+		Title      func(childComplexity int) int
+	}
+
 	Interview struct {
 		ID          func(childComplexity int) int
 		Notes       func(childComplexity int) int
@@ -142,20 +149,34 @@ type ComplexityRoot struct {
 		CreateAIArtifact               func(childComplexity int, input model.CreateAIArtifactInput) int
 		CreateCandidateMemoryRecord    func(childComplexity int, input model.CreateCandidateMemoryRecordInput) int
 		CreateFollowUpReminder         func(childComplexity int, input model.CreateFollowUpReminderInput) int
+		CreateRoleFromPaste            func(childComplexity int, input model.RoleRecordInput) int
+		CreateRoleFromURL              func(childComplexity int, input model.RoleRecordInput) int
+		CreateRoleSearchTopic          func(childComplexity int, input model.UpsertRoleSearchTopicInput) int
 		CreateSavedOpportunity         func(childComplexity int, input model.CreateSavedOpportunityInput) int
 		EditAIArtifact                 func(childComplexity int, id string, userEditedContent *string) int
+		PromoteRole                    func(childComplexity int, id string) int
 		RecordInterviewOutcome         func(childComplexity int, input model.RecordInterviewOutcomeInput) int
+		RunRoleSearch                  func(childComplexity int, topicID string, maxRoles *int) int
 		ScheduleInterview              func(childComplexity int, input model.ScheduleInterviewInput) int
 		SupersedeAIArtifact            func(childComplexity int, id string, supersededBy string) int
 		SupersedeCandidateMemoryRecord func(childComplexity int, id string, supersededBy string) int
 		UpdateAIArtifactStatus         func(childComplexity int, id string, status string) int
 		UpdateCandidateMemoryRecord    func(childComplexity int, input model.UpdateCandidateMemoryRecordInput) int
 		UpdateCandidateProfile         func(childComplexity int, input model.UpdateCandidateProfileInput) int
+		UpdateRoleDecision             func(childComplexity int, id string, status string, rejectionReason *string) int
+		UpdateRoleFreshness            func(childComplexity int, id string, status string, checkedAt *string) int
+		UpdateRoleRecord               func(childComplexity int, id string, input model.RoleRecordInput) int
+		UpdateRoleSearchTopic          func(childComplexity int, input model.UpsertRoleSearchTopicInput) int
 	}
 
 	OwnerReference struct {
 		ID   func(childComplexity int) int
 		Type func(childComplexity int) int
+	}
+
+	PromoteRoleResult struct {
+		Application func(childComplexity int) int
+		Role        func(childComplexity int) int
 	}
 
 	Query struct {
@@ -164,6 +185,68 @@ type ComplexityRoot struct {
 		CandidateGroundingContext func(childComplexity int) int
 		CandidateMemoryRecords    func(childComplexity int) int
 		CandidateProfile          func(childComplexity int) int
+		RoleRecord                func(childComplexity int, id string) int
+		RoleRecords               func(childComplexity int, filter *model.RoleRecordsFilterInput) int
+		RoleSearchTopics          func(childComplexity int) int
+	}
+
+	RoleRecord struct {
+		Company               func(childComplexity int) int
+		CompanyType           func(childComplexity int) int
+		Compensation          func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		DecisionStatus        func(childComplexity int) int
+		Description           func(childComplexity int) int
+		EmploymentType        func(childComplexity int) int
+		FreshnessCheckedAt    func(childComplexity int) int
+		FreshnessStatus       func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Location              func(childComplexity int) int
+		Metadata              func(childComplexity int) int
+		PostingURL            func(childComplexity int) int
+		PromotedApplicationID func(childComplexity int) int
+		ProviderSource        func(childComplexity int) int
+		RawSourceText         func(childComplexity int) int
+		RejectionReason       func(childComplexity int) int
+		RemoteEligibility     func(childComplexity int) int
+		SearchTopicID         func(childComplexity int) int
+		Seniority             func(childComplexity int) int
+		Source                func(childComplexity int) int
+		SourceKind            func(childComplexity int) int
+		Stack                 func(childComplexity int) int
+		Title                 func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+	}
+
+	RoleSearchRunResult struct {
+		Imported      func(childComplexity int) int
+		ImportedCount func(childComplexity int) int
+		Skipped       func(childComplexity int) int
+		SkippedCount  func(childComplexity int) int
+		TopicID       func(childComplexity int) int
+	}
+
+	RoleSearchTopic struct {
+		CompanyType      func(childComplexity int) int
+		Compensation     func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		EmploymentType   func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Location         func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Notes            func(childComplexity int) int
+		PreferredStack   func(childComplexity int) int
+		RemotePreference func(childComplexity int) int
+		Seniority        func(childComplexity int) int
+		TargetTitles     func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+	}
+
+	SkippedRoleSummary struct {
+		Company    func(childComplexity int) int
+		PostingURL func(childComplexity int) int
+		Reason     func(childComplexity int) int
+		Title      func(childComplexity int) int
 	}
 
 	TimelineEvent struct {
@@ -190,6 +273,15 @@ type MutationResolver interface {
 	EditAIArtifact(ctx context.Context, id string, userEditedContent *string) (*model.AIArtifact, error)
 	UpdateAIArtifactStatus(ctx context.Context, id string, status string) (*model.AIArtifact, error)
 	SupersedeAIArtifact(ctx context.Context, id string, supersededBy string) (*model.AIArtifact, error)
+	CreateRoleSearchTopic(ctx context.Context, input model.UpsertRoleSearchTopicInput) (*model.RoleSearchTopic, error)
+	UpdateRoleSearchTopic(ctx context.Context, input model.UpsertRoleSearchTopicInput) (*model.RoleSearchTopic, error)
+	RunRoleSearch(ctx context.Context, topicID string, maxRoles *int) (*model.RoleSearchRunResult, error)
+	CreateRoleFromURL(ctx context.Context, input model.RoleRecordInput) (*model.RoleRecord, error)
+	CreateRoleFromPaste(ctx context.Context, input model.RoleRecordInput) (*model.RoleRecord, error)
+	UpdateRoleRecord(ctx context.Context, id string, input model.RoleRecordInput) (*model.RoleRecord, error)
+	UpdateRoleDecision(ctx context.Context, id string, status string, rejectionReason *string) (*model.RoleRecord, error)
+	UpdateRoleFreshness(ctx context.Context, id string, status string, checkedAt *string) (*model.RoleRecord, error)
+	PromoteRole(ctx context.Context, id string) (*model.PromoteRoleResult, error)
 }
 type QueryResolver interface {
 	Applications(ctx context.Context) ([]*model.JobApplication, error)
@@ -197,6 +289,9 @@ type QueryResolver interface {
 	CandidateMemoryRecords(ctx context.Context) ([]*model.CandidateMemoryRecord, error)
 	CandidateGroundingContext(ctx context.Context) (*model.CandidateGroundingContext, error)
 	AiArtifacts(ctx context.Context, ownerType string, ownerID string) ([]*model.AIArtifact, error)
+	RoleSearchTopics(ctx context.Context) ([]*model.RoleSearchTopic, error)
+	RoleRecords(ctx context.Context, filter *model.RoleRecordsFilterInput) ([]*model.RoleRecord, error)
+	RoleRecord(ctx context.Context, id string) (*model.RoleRecord, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -532,6 +627,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.FollowUpReminder.Note(childComplexity), true
 
+	case "ImportedRoleSummary.company":
+		if e.ComplexityRoot.ImportedRoleSummary.Company == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImportedRoleSummary.Company(childComplexity), true
+	case "ImportedRoleSummary.postingUrl":
+		if e.ComplexityRoot.ImportedRoleSummary.PostingURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImportedRoleSummary.PostingURL(childComplexity), true
+	case "ImportedRoleSummary.roleId":
+		if e.ComplexityRoot.ImportedRoleSummary.RoleID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImportedRoleSummary.RoleID(childComplexity), true
+	case "ImportedRoleSummary.title":
+		if e.ComplexityRoot.ImportedRoleSummary.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ImportedRoleSummary.Title(childComplexity), true
+
 	case "Interview.id":
 		if e.ComplexityRoot.Interview.ID == nil {
 			break
@@ -719,6 +839,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFollowUpReminder(childComplexity, args["input"].(model.CreateFollowUpReminderInput)), true
+	case "Mutation.createRoleFromPaste":
+		if e.ComplexityRoot.Mutation.CreateRoleFromPaste == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createRoleFromPaste_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateRoleFromPaste(childComplexity, args["input"].(model.RoleRecordInput)), true
+	case "Mutation.createRoleFromUrl":
+		if e.ComplexityRoot.Mutation.CreateRoleFromURL == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createRoleFromUrl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateRoleFromURL(childComplexity, args["input"].(model.RoleRecordInput)), true
+	case "Mutation.createRoleSearchTopic":
+		if e.ComplexityRoot.Mutation.CreateRoleSearchTopic == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createRoleSearchTopic_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateRoleSearchTopic(childComplexity, args["input"].(model.UpsertRoleSearchTopicInput)), true
 	case "Mutation.createSavedOpportunity":
 		if e.ComplexityRoot.Mutation.CreateSavedOpportunity == nil {
 			break
@@ -741,6 +894,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.EditAIArtifact(childComplexity, args["id"].(string), args["userEditedContent"].(*string)), true
+	case "Mutation.promoteRole":
+		if e.ComplexityRoot.Mutation.PromoteRole == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_promoteRole_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.PromoteRole(childComplexity, args["id"].(string)), true
 	case "Mutation.recordInterviewOutcome":
 		if e.ComplexityRoot.Mutation.RecordInterviewOutcome == nil {
 			break
@@ -752,6 +916,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecordInterviewOutcome(childComplexity, args["input"].(model.RecordInterviewOutcomeInput)), true
+	case "Mutation.runRoleSearch":
+		if e.ComplexityRoot.Mutation.RunRoleSearch == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_runRoleSearch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RunRoleSearch(childComplexity, args["topicId"].(string), args["maxRoles"].(*int)), true
 	case "Mutation.scheduleInterview":
 		if e.ComplexityRoot.Mutation.ScheduleInterview == nil {
 			break
@@ -818,6 +993,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateCandidateProfile(childComplexity, args["input"].(model.UpdateCandidateProfileInput)), true
+	case "Mutation.updateRoleDecision":
+		if e.ComplexityRoot.Mutation.UpdateRoleDecision == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateRoleDecision_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateRoleDecision(childComplexity, args["id"].(string), args["status"].(string), args["rejectionReason"].(*string)), true
+	case "Mutation.updateRoleFreshness":
+		if e.ComplexityRoot.Mutation.UpdateRoleFreshness == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateRoleFreshness_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateRoleFreshness(childComplexity, args["id"].(string), args["status"].(string), args["checkedAt"].(*string)), true
+	case "Mutation.updateRoleRecord":
+		if e.ComplexityRoot.Mutation.UpdateRoleRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateRoleRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateRoleRecord(childComplexity, args["id"].(string), args["input"].(model.RoleRecordInput)), true
+	case "Mutation.updateRoleSearchTopic":
+		if e.ComplexityRoot.Mutation.UpdateRoleSearchTopic == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateRoleSearchTopic_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateRoleSearchTopic(childComplexity, args["input"].(model.UpsertRoleSearchTopicInput)), true
 
 	case "OwnerReference.id":
 		if e.ComplexityRoot.OwnerReference.ID == nil {
@@ -831,6 +1050,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.OwnerReference.Type(childComplexity), true
+
+	case "PromoteRoleResult.application":
+		if e.ComplexityRoot.PromoteRoleResult.Application == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PromoteRoleResult.Application(childComplexity), true
+	case "PromoteRoleResult.role":
+		if e.ComplexityRoot.PromoteRoleResult.Role == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PromoteRoleResult.Role(childComplexity), true
 
 	case "Query.aiArtifacts":
 		if e.ComplexityRoot.Query.AiArtifacts == nil {
@@ -868,6 +1100,321 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.CandidateProfile(childComplexity), true
 
+	case "Query.roleRecord":
+		if e.ComplexityRoot.Query.RoleRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Query_roleRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RoleRecord(childComplexity, args["id"].(string)), true
+	case "Query.roleRecords":
+		if e.ComplexityRoot.Query.RoleRecords == nil {
+			break
+		}
+
+		args, err := ec.field_Query_roleRecords_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RoleRecords(childComplexity, args["filter"].(*model.RoleRecordsFilterInput)), true
+	case "Query.roleSearchTopics":
+		if e.ComplexityRoot.Query.RoleSearchTopics == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.RoleSearchTopics(childComplexity), true
+
+	case "RoleRecord.company":
+		if e.ComplexityRoot.RoleRecord.Company == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Company(childComplexity), true
+	case "RoleRecord.companyType":
+		if e.ComplexityRoot.RoleRecord.CompanyType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.CompanyType(childComplexity), true
+	case "RoleRecord.compensation":
+		if e.ComplexityRoot.RoleRecord.Compensation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Compensation(childComplexity), true
+	case "RoleRecord.createdAt":
+		if e.ComplexityRoot.RoleRecord.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.CreatedAt(childComplexity), true
+	case "RoleRecord.decisionStatus":
+		if e.ComplexityRoot.RoleRecord.DecisionStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.DecisionStatus(childComplexity), true
+	case "RoleRecord.description":
+		if e.ComplexityRoot.RoleRecord.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Description(childComplexity), true
+	case "RoleRecord.employmentType":
+		if e.ComplexityRoot.RoleRecord.EmploymentType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.EmploymentType(childComplexity), true
+	case "RoleRecord.freshnessCheckedAt":
+		if e.ComplexityRoot.RoleRecord.FreshnessCheckedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.FreshnessCheckedAt(childComplexity), true
+	case "RoleRecord.freshnessStatus":
+		if e.ComplexityRoot.RoleRecord.FreshnessStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.FreshnessStatus(childComplexity), true
+	case "RoleRecord.id":
+		if e.ComplexityRoot.RoleRecord.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.ID(childComplexity), true
+	case "RoleRecord.location":
+		if e.ComplexityRoot.RoleRecord.Location == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Location(childComplexity), true
+	case "RoleRecord.metadata":
+		if e.ComplexityRoot.RoleRecord.Metadata == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Metadata(childComplexity), true
+	case "RoleRecord.postingUrl":
+		if e.ComplexityRoot.RoleRecord.PostingURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.PostingURL(childComplexity), true
+	case "RoleRecord.promotedApplicationId":
+		if e.ComplexityRoot.RoleRecord.PromotedApplicationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.PromotedApplicationID(childComplexity), true
+	case "RoleRecord.providerSource":
+		if e.ComplexityRoot.RoleRecord.ProviderSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.ProviderSource(childComplexity), true
+	case "RoleRecord.rawSourceText":
+		if e.ComplexityRoot.RoleRecord.RawSourceText == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.RawSourceText(childComplexity), true
+	case "RoleRecord.rejectionReason":
+		if e.ComplexityRoot.RoleRecord.RejectionReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.RejectionReason(childComplexity), true
+	case "RoleRecord.remoteEligibility":
+		if e.ComplexityRoot.RoleRecord.RemoteEligibility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.RemoteEligibility(childComplexity), true
+	case "RoleRecord.searchTopicId":
+		if e.ComplexityRoot.RoleRecord.SearchTopicID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.SearchTopicID(childComplexity), true
+	case "RoleRecord.seniority":
+		if e.ComplexityRoot.RoleRecord.Seniority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Seniority(childComplexity), true
+	case "RoleRecord.source":
+		if e.ComplexityRoot.RoleRecord.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Source(childComplexity), true
+	case "RoleRecord.sourceKind":
+		if e.ComplexityRoot.RoleRecord.SourceKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.SourceKind(childComplexity), true
+	case "RoleRecord.stack":
+		if e.ComplexityRoot.RoleRecord.Stack == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Stack(childComplexity), true
+	case "RoleRecord.title":
+		if e.ComplexityRoot.RoleRecord.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.Title(childComplexity), true
+	case "RoleRecord.updatedAt":
+		if e.ComplexityRoot.RoleRecord.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleRecord.UpdatedAt(childComplexity), true
+
+	case "RoleSearchRunResult.imported":
+		if e.ComplexityRoot.RoleSearchRunResult.Imported == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchRunResult.Imported(childComplexity), true
+	case "RoleSearchRunResult.importedCount":
+		if e.ComplexityRoot.RoleSearchRunResult.ImportedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchRunResult.ImportedCount(childComplexity), true
+	case "RoleSearchRunResult.skipped":
+		if e.ComplexityRoot.RoleSearchRunResult.Skipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchRunResult.Skipped(childComplexity), true
+	case "RoleSearchRunResult.skippedCount":
+		if e.ComplexityRoot.RoleSearchRunResult.SkippedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchRunResult.SkippedCount(childComplexity), true
+	case "RoleSearchRunResult.topicId":
+		if e.ComplexityRoot.RoleSearchRunResult.TopicID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchRunResult.TopicID(childComplexity), true
+
+	case "RoleSearchTopic.companyType":
+		if e.ComplexityRoot.RoleSearchTopic.CompanyType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.CompanyType(childComplexity), true
+	case "RoleSearchTopic.compensation":
+		if e.ComplexityRoot.RoleSearchTopic.Compensation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.Compensation(childComplexity), true
+	case "RoleSearchTopic.createdAt":
+		if e.ComplexityRoot.RoleSearchTopic.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.CreatedAt(childComplexity), true
+	case "RoleSearchTopic.employmentType":
+		if e.ComplexityRoot.RoleSearchTopic.EmploymentType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.EmploymentType(childComplexity), true
+	case "RoleSearchTopic.id":
+		if e.ComplexityRoot.RoleSearchTopic.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.ID(childComplexity), true
+	case "RoleSearchTopic.location":
+		if e.ComplexityRoot.RoleSearchTopic.Location == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.Location(childComplexity), true
+	case "RoleSearchTopic.name":
+		if e.ComplexityRoot.RoleSearchTopic.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.Name(childComplexity), true
+	case "RoleSearchTopic.notes":
+		if e.ComplexityRoot.RoleSearchTopic.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.Notes(childComplexity), true
+	case "RoleSearchTopic.preferredStack":
+		if e.ComplexityRoot.RoleSearchTopic.PreferredStack == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.PreferredStack(childComplexity), true
+	case "RoleSearchTopic.remotePreference":
+		if e.ComplexityRoot.RoleSearchTopic.RemotePreference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.RemotePreference(childComplexity), true
+	case "RoleSearchTopic.seniority":
+		if e.ComplexityRoot.RoleSearchTopic.Seniority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.Seniority(childComplexity), true
+	case "RoleSearchTopic.targetTitles":
+		if e.ComplexityRoot.RoleSearchTopic.TargetTitles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.TargetTitles(childComplexity), true
+	case "RoleSearchTopic.updatedAt":
+		if e.ComplexityRoot.RoleSearchTopic.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoleSearchTopic.UpdatedAt(childComplexity), true
+
+	case "SkippedRoleSummary.company":
+		if e.ComplexityRoot.SkippedRoleSummary.Company == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SkippedRoleSummary.Company(childComplexity), true
+	case "SkippedRoleSummary.postingUrl":
+		if e.ComplexityRoot.SkippedRoleSummary.PostingURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SkippedRoleSummary.PostingURL(childComplexity), true
+	case "SkippedRoleSummary.reason":
+		if e.ComplexityRoot.SkippedRoleSummary.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SkippedRoleSummary.Reason(childComplexity), true
+	case "SkippedRoleSummary.title":
+		if e.ComplexityRoot.SkippedRoleSummary.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SkippedRoleSummary.Title(childComplexity), true
+
 	case "TimelineEvent.description":
 		if e.ComplexityRoot.TimelineEvent.Description == nil {
 			break
@@ -903,9 +1450,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateFollowUpReminderInput,
 		ec.unmarshalInputCreateSavedOpportunityInput,
 		ec.unmarshalInputRecordInterviewOutcomeInput,
+		ec.unmarshalInputRoleRecordInput,
+		ec.unmarshalInputRoleRecordsFilterInput,
 		ec.unmarshalInputScheduleInterviewInput,
 		ec.unmarshalInputUpdateCandidateMemoryRecordInput,
 		ec.unmarshalInputUpdateCandidateProfileInput,
+		ec.unmarshalInputUpsertRoleSearchTopicInput,
 	)
 	first := true
 
@@ -1146,6 +1696,20 @@ func (ec *executionContext) childFields_FollowUpReminder(ctx context.Context, fi
 	return nil, fmt.Errorf("no field named %q was found under type FollowUpReminder", field.Name)
 }
 
+func (ec *executionContext) childFields_ImportedRoleSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "roleId":
+		return ec.fieldContext_ImportedRoleSummary_roleId(ctx, field)
+	case "company":
+		return ec.fieldContext_ImportedRoleSummary_company(ctx, field)
+	case "title":
+		return ec.fieldContext_ImportedRoleSummary_title(ctx, field)
+	case "postingUrl":
+		return ec.fieldContext_ImportedRoleSummary_postingUrl(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ImportedRoleSummary", field.Name)
+}
+
 func (ec *executionContext) childFields_Interview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -1202,6 +1766,134 @@ func (ec *executionContext) childFields_OwnerReference(ctx context.Context, fiel
 		return ec.fieldContext_OwnerReference_id(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type OwnerReference", field.Name)
+}
+
+func (ec *executionContext) childFields_PromoteRoleResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "role":
+		return ec.fieldContext_PromoteRoleResult_role(ctx, field)
+	case "application":
+		return ec.fieldContext_PromoteRoleResult_application(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PromoteRoleResult", field.Name)
+}
+
+func (ec *executionContext) childFields_RoleRecord(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RoleRecord_id(ctx, field)
+	case "searchTopicId":
+		return ec.fieldContext_RoleRecord_searchTopicId(ctx, field)
+	case "company":
+		return ec.fieldContext_RoleRecord_company(ctx, field)
+	case "title":
+		return ec.fieldContext_RoleRecord_title(ctx, field)
+	case "postingUrl":
+		return ec.fieldContext_RoleRecord_postingUrl(ctx, field)
+	case "source":
+		return ec.fieldContext_RoleRecord_source(ctx, field)
+	case "sourceKind":
+		return ec.fieldContext_RoleRecord_sourceKind(ctx, field)
+	case "providerSource":
+		return ec.fieldContext_RoleRecord_providerSource(ctx, field)
+	case "description":
+		return ec.fieldContext_RoleRecord_description(ctx, field)
+	case "rawSourceText":
+		return ec.fieldContext_RoleRecord_rawSourceText(ctx, field)
+	case "location":
+		return ec.fieldContext_RoleRecord_location(ctx, field)
+	case "remoteEligibility":
+		return ec.fieldContext_RoleRecord_remoteEligibility(ctx, field)
+	case "employmentType":
+		return ec.fieldContext_RoleRecord_employmentType(ctx, field)
+	case "seniority":
+		return ec.fieldContext_RoleRecord_seniority(ctx, field)
+	case "compensation":
+		return ec.fieldContext_RoleRecord_compensation(ctx, field)
+	case "stack":
+		return ec.fieldContext_RoleRecord_stack(ctx, field)
+	case "companyType":
+		return ec.fieldContext_RoleRecord_companyType(ctx, field)
+	case "freshnessStatus":
+		return ec.fieldContext_RoleRecord_freshnessStatus(ctx, field)
+	case "freshnessCheckedAt":
+		return ec.fieldContext_RoleRecord_freshnessCheckedAt(ctx, field)
+	case "decisionStatus":
+		return ec.fieldContext_RoleRecord_decisionStatus(ctx, field)
+	case "rejectionReason":
+		return ec.fieldContext_RoleRecord_rejectionReason(ctx, field)
+	case "promotedApplicationId":
+		return ec.fieldContext_RoleRecord_promotedApplicationId(ctx, field)
+	case "metadata":
+		return ec.fieldContext_RoleRecord_metadata(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RoleRecord_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RoleRecord_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoleRecord", field.Name)
+}
+
+func (ec *executionContext) childFields_RoleSearchRunResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "topicId":
+		return ec.fieldContext_RoleSearchRunResult_topicId(ctx, field)
+	case "importedCount":
+		return ec.fieldContext_RoleSearchRunResult_importedCount(ctx, field)
+	case "skippedCount":
+		return ec.fieldContext_RoleSearchRunResult_skippedCount(ctx, field)
+	case "imported":
+		return ec.fieldContext_RoleSearchRunResult_imported(ctx, field)
+	case "skipped":
+		return ec.fieldContext_RoleSearchRunResult_skipped(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoleSearchRunResult", field.Name)
+}
+
+func (ec *executionContext) childFields_RoleSearchTopic(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RoleSearchTopic_id(ctx, field)
+	case "name":
+		return ec.fieldContext_RoleSearchTopic_name(ctx, field)
+	case "targetTitles":
+		return ec.fieldContext_RoleSearchTopic_targetTitles(ctx, field)
+	case "preferredStack":
+		return ec.fieldContext_RoleSearchTopic_preferredStack(ctx, field)
+	case "location":
+		return ec.fieldContext_RoleSearchTopic_location(ctx, field)
+	case "remotePreference":
+		return ec.fieldContext_RoleSearchTopic_remotePreference(ctx, field)
+	case "employmentType":
+		return ec.fieldContext_RoleSearchTopic_employmentType(ctx, field)
+	case "companyType":
+		return ec.fieldContext_RoleSearchTopic_companyType(ctx, field)
+	case "compensation":
+		return ec.fieldContext_RoleSearchTopic_compensation(ctx, field)
+	case "seniority":
+		return ec.fieldContext_RoleSearchTopic_seniority(ctx, field)
+	case "notes":
+		return ec.fieldContext_RoleSearchTopic_notes(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RoleSearchTopic_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RoleSearchTopic_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoleSearchTopic", field.Name)
+}
+
+func (ec *executionContext) childFields_SkippedRoleSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "company":
+		return ec.fieldContext_SkippedRoleSummary_company(ctx, field)
+	case "title":
+		return ec.fieldContext_SkippedRoleSummary_title(ctx, field)
+	case "postingUrl":
+		return ec.fieldContext_SkippedRoleSummary_postingUrl(ctx, field)
+	case "reason":
+		return ec.fieldContext_SkippedRoleSummary_reason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SkippedRoleSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_TimelineEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1430,6 +2122,48 @@ func (ec *executionContext) field_Mutation_createFollowUpReminder_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createRoleFromPaste_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.RoleRecordInput, error) {
+			return ec.unmarshalNRoleRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createRoleFromUrl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.RoleRecordInput, error) {
+			return ec.unmarshalNRoleRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createRoleSearchTopic_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.UpsertRoleSearchTopicInput, error) {
+			return ec.unmarshalNUpsertRoleSearchTopicInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpsertRoleSearchTopicInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createSavedOpportunity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1466,6 +2200,20 @@ func (ec *executionContext) field_Mutation_editAIArtifact_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_promoteRole_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_recordInterviewOutcome_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1477,6 +2225,28 @@ func (ec *executionContext) field_Mutation_recordInterviewOutcome_args(ctx conte
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_runRoleSearch_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "topicId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["topicId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "maxRoles",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["maxRoles"] = arg1
 	return args, nil
 }
 
@@ -1588,6 +2358,102 @@ func (ec *executionContext) field_Mutation_updateCandidateProfile_args(ctx conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateRoleDecision_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "rejectionReason",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["rejectionReason"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateRoleFreshness_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "checkedAt",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["checkedAt"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateRoleRecord_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.RoleRecordInput, error) {
+			return ec.unmarshalNRoleRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateRoleSearchTopic_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.UpsertRoleSearchTopicInput, error) {
+			return ec.unmarshalNUpsertRoleSearchTopicInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpsertRoleSearchTopicInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1621,6 +2487,34 @@ func (ec *executionContext) field_Query_aiArtifacts_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["ownerId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_roleRecord_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_roleRecords_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "filter",
+		func(ctx context.Context, v any) (*model.RoleRecordsFilterInput, error) {
+			return ec.unmarshalORoleRecordsFilterInput2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordsFilterInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg0
 	return args, nil
 }
 
@@ -2920,6 +3814,98 @@ func (ec *executionContext) fieldContext_FollowUpReminder_completedAt(_ context.
 	return graphql.NewScalarFieldContext("FollowUpReminder", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _ImportedRoleSummary_roleId(ctx context.Context, field graphql.CollectedField, obj *model.ImportedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImportedRoleSummary_roleId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoleID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImportedRoleSummary_roleId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImportedRoleSummary", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ImportedRoleSummary_company(ctx context.Context, field graphql.CollectedField, obj *model.ImportedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImportedRoleSummary_company(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Company, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImportedRoleSummary_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImportedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ImportedRoleSummary_title(ctx context.Context, field graphql.CollectedField, obj *model.ImportedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImportedRoleSummary_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImportedRoleSummary_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImportedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ImportedRoleSummary_postingUrl(ctx context.Context, field graphql.CollectedField, obj *model.ImportedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ImportedRoleSummary_postingUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PostingURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ImportedRoleSummary_postingUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ImportedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _Interview_id(ctx context.Context, field graphql.CollectedField, obj *model.Interview) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4074,6 +5060,402 @@ func (ec *executionContext) fieldContext_Mutation_supersedeAIArtifact(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createRoleSearchTopic(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createRoleSearchTopic(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateRoleSearchTopic(ctx, fc.Args["input"].(model.UpsertRoleSearchTopicInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleSearchTopic) graphql.Marshaler {
+			return ec.marshalNRoleSearchTopic2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopic(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createRoleSearchTopic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleSearchTopic(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createRoleSearchTopic_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateRoleSearchTopic(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateRoleSearchTopic(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateRoleSearchTopic(ctx, fc.Args["input"].(model.UpsertRoleSearchTopicInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleSearchTopic) graphql.Marshaler {
+			return ec.marshalNRoleSearchTopic2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopic(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateRoleSearchTopic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleSearchTopic(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateRoleSearchTopic_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_runRoleSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_runRoleSearch(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RunRoleSearch(ctx, fc.Args["topicId"].(string), fc.Args["maxRoles"].(*int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleSearchRunResult) graphql.Marshaler {
+			return ec.marshalNRoleSearchRunResult2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchRunResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_runRoleSearch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleSearchRunResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_runRoleSearch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createRoleFromUrl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createRoleFromUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateRoleFromURL(ctx, fc.Args["input"].(model.RoleRecordInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createRoleFromUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createRoleFromUrl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createRoleFromPaste(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createRoleFromPaste(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateRoleFromPaste(ctx, fc.Args["input"].(model.RoleRecordInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createRoleFromPaste(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createRoleFromPaste_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateRoleRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateRoleRecord(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateRoleRecord(ctx, fc.Args["id"].(string), fc.Args["input"].(model.RoleRecordInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateRoleRecord(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateRoleRecord_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateRoleDecision(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateRoleDecision(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateRoleDecision(ctx, fc.Args["id"].(string), fc.Args["status"].(string), fc.Args["rejectionReason"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateRoleDecision(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateRoleDecision_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateRoleFreshness(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateRoleFreshness(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateRoleFreshness(ctx, fc.Args["id"].(string), fc.Args["status"].(string), fc.Args["checkedAt"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateRoleFreshness(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateRoleFreshness_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_promoteRole(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_promoteRole(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().PromoteRole(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.PromoteRoleResult) graphql.Marshaler {
+			return ec.marshalNPromoteRoleResult2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐPromoteRoleResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_promoteRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PromoteRoleResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_promoteRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OwnerReference_type(ctx context.Context, field graphql.CollectedField, obj *model.OwnerReference) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4118,6 +5500,70 @@ func (ec *executionContext) _OwnerReference_id(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_OwnerReference_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("OwnerReference", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _PromoteRoleResult_role(ctx context.Context, field graphql.CollectedField, obj *model.PromoteRoleResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PromoteRoleResult_role(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PromoteRoleResult_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PromoteRoleResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PromoteRoleResult_application(ctx context.Context, field graphql.CollectedField, obj *model.PromoteRoleResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PromoteRoleResult_application(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Application, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.JobApplication) graphql.Marshaler {
+			return ec.marshalNJobApplication2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐJobApplication(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PromoteRoleResult_application(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PromoteRoleResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JobApplication(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _Query_applications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4292,6 +5738,126 @@ func (ec *executionContext) fieldContext_Query_aiArtifacts(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_roleSearchTopics(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_roleSearchTopics(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().RoleSearchTopics(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.RoleSearchTopic) graphql.Marshaler {
+			return ec.marshalNRoleSearchTopic2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopicᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_roleSearchTopics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleSearchTopic(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_roleRecords(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_roleRecords(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RoleRecords(ctx, fc.Args["filter"].(*model.RoleRecordsFilterInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_roleRecords(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_roleRecords_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_roleRecord(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_roleRecord(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RoleRecord(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+			return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_roleRecord(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoleRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_roleRecord_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4366,6 +5932,1105 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _RoleRecord_id(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_searchTopicId(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_searchTopicId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SearchTopicID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_searchTopicId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_company(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_company(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Company, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_title(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_postingUrl(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_postingUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PostingURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_postingUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_source(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_sourceKind(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_sourceKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_sourceKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_providerSource(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_providerSource(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderSource, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_providerSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_description(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_rawSourceText(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_rawSourceText(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RawSourceText, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_rawSourceText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_location(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_location(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Location, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_remoteEligibility(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_remoteEligibility(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemoteEligibility, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_remoteEligibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_employmentType(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_employmentType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EmploymentType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_employmentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_seniority(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_seniority(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Seniority, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_seniority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_compensation(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_compensation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Compensation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_compensation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_stack(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_stack(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Stack, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_stack(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_companyType(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_companyType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompanyType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_companyType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_freshnessStatus(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_freshnessStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreshnessStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_freshnessStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_freshnessCheckedAt(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_freshnessCheckedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreshnessCheckedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_freshnessCheckedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_decisionStatus(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_decisionStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DecisionStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_decisionStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_rejectionReason(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_rejectionReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RejectionReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_rejectionReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_promotedApplicationId(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_promotedApplicationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PromotedApplicationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_promotedApplicationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_metadata(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_metadata(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Metadata, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_metadata(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleRecord_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.RoleRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleRecord_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleRecord_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleRecord", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchRunResult_topicId(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchRunResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchRunResult_topicId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TopicID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchRunResult_topicId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchRunResult", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchRunResult_importedCount(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchRunResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchRunResult_importedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ImportedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchRunResult_importedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchRunResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchRunResult_skippedCount(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchRunResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchRunResult_skippedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SkippedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchRunResult_skippedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchRunResult", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchRunResult_imported(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchRunResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchRunResult_imported(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Imported, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.ImportedRoleSummary) graphql.Marshaler {
+			return ec.marshalNImportedRoleSummary2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐImportedRoleSummaryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchRunResult_imported(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoleSearchRunResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ImportedRoleSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoleSearchRunResult_skipped(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchRunResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchRunResult_skipped(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Skipped, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.SkippedRoleSummary) graphql.Marshaler {
+			return ec.marshalNSkippedRoleSummary2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐSkippedRoleSummaryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchRunResult_skipped(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoleSearchRunResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SkippedRoleSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoleSearchTopic_id(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_name(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_targetTitles(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_targetTitles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetTitles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_targetTitles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_preferredStack(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_preferredStack(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreferredStack, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_preferredStack(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_location(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_location(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Location, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_remotePreference(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_remotePreference(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemotePreference, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_remotePreference(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_employmentType(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_employmentType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EmploymentType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_employmentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_companyType(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_companyType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompanyType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_companyType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_compensation(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_compensation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Compensation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_compensation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_seniority(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_seniority(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Seniority, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_seniority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_notes(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_notes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_notes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoleSearchTopic_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.RoleSearchTopic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoleSearchTopic_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoleSearchTopic_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoleSearchTopic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SkippedRoleSummary_company(ctx context.Context, field graphql.CollectedField, obj *model.SkippedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SkippedRoleSummary_company(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Company, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SkippedRoleSummary_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SkippedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SkippedRoleSummary_title(ctx context.Context, field graphql.CollectedField, obj *model.SkippedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SkippedRoleSummary_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SkippedRoleSummary_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SkippedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SkippedRoleSummary_postingUrl(ctx context.Context, field graphql.CollectedField, obj *model.SkippedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SkippedRoleSummary_postingUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PostingURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SkippedRoleSummary_postingUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SkippedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SkippedRoleSummary_reason(ctx context.Context, field graphql.CollectedField, obj *model.SkippedRoleSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SkippedRoleSummary_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SkippedRoleSummary_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SkippedRoleSummary", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _TimelineEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.TimelineEvent) (ret graphql.Marshaler) {
@@ -5960,6 +8625,206 @@ func (ec *executionContext) unmarshalInputRecordInterviewOutcomeInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRoleRecordInput(ctx context.Context, obj any) (model.RoleRecordInput, error) {
+	var it model.RoleRecordInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"searchTopicId", "company", "title", "postingUrl", "source", "sourceKind", "providerSource", "description", "rawSourceText", "location", "remoteEligibility", "employmentType", "seniority", "compensation", "stack", "companyType", "freshnessStatus", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "searchTopicId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("searchTopicId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SearchTopicID = data
+		case "company":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("company"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Company = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "postingUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postingUrl"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostingURL = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "sourceKind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceKind"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceKind = data
+		case "providerSource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerSource"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProviderSource = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "rawSourceText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rawSourceText"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RawSourceText = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "remoteEligibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remoteEligibility"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemoteEligibility = data
+		case "employmentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("employmentType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmploymentType = data
+		case "seniority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("seniority"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Seniority = data
+		case "compensation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("compensation"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Compensation = data
+		case "stack":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stack"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Stack = data
+		case "companyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyType = data
+		case "freshnessStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freshnessStatus"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreshnessStatus = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metadata = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRoleRecordsFilterInput(ctx context.Context, obj any) (model.RoleRecordsFilterInput, error) {
+	var it model.RoleRecordsFilterInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"decisionStatus", "freshnessStatus", "sourceKind", "searchTerm"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "decisionStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decisionStatus"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DecisionStatus = data
+		case "freshnessStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freshnessStatus"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreshnessStatus = data
+		case "sourceKind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceKind"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceKind = data
+		case "searchTerm":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("searchTerm"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SearchTerm = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputScheduleInterviewInput(ctx context.Context, obj any) (model.ScheduleInterviewInput, error) {
 	var it model.ScheduleInterviewInput
 	if obj == nil {
@@ -6164,6 +9029,106 @@ func (ec *executionContext) unmarshalInputUpdateCandidateProfileInput(ctx contex
 				return it, err
 			}
 			it.PositioningSummary = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpsertRoleSearchTopicInput(ctx context.Context, obj any) (model.UpsertRoleSearchTopicInput, error) {
+	var it model.UpsertRoleSearchTopicInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "targetTitles", "preferredStack", "location", "remotePreference", "employmentType", "companyType", "compensation", "seniority", "notes"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "targetTitles":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetTitles"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TargetTitles = data
+		case "preferredStack":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preferredStack"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreferredStack = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "remotePreference":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remotePreference"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RemotePreference = data
+		case "employmentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("employmentType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmploymentType = data
+		case "companyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyType"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyType = data
+		case "compensation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("compensation"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Compensation = data
+		case "seniority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("seniority"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Seniority = data
+		case "notes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Notes = data
 		}
 	}
 	return it, nil
@@ -6648,6 +9613,60 @@ func (ec *executionContext) _FollowUpReminder(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var importedRoleSummaryImplementors = []string{"ImportedRoleSummary"}
+
+func (ec *executionContext) _ImportedRoleSummary(ctx context.Context, sel ast.SelectionSet, obj *model.ImportedRoleSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, importedRoleSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ImportedRoleSummary")
+		case "roleId":
+			out.Values[i] = ec._ImportedRoleSummary_roleId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "company":
+			out.Values[i] = ec._ImportedRoleSummary_company(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._ImportedRoleSummary_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "postingUrl":
+			out.Values[i] = ec._ImportedRoleSummary_postingUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var interviewImplementors = []string{"Interview"}
 
 func (ec *executionContext) _Interview(ctx context.Context, sel ast.SelectionSet, obj *model.Interview) graphql.Marshaler {
@@ -6937,6 +9956,69 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createRoleSearchTopic":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createRoleSearchTopic(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateRoleSearchTopic":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateRoleSearchTopic(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "runRoleSearch":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_runRoleSearch(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createRoleFromUrl":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createRoleFromUrl(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createRoleFromPaste":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createRoleFromPaste(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateRoleRecord":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateRoleRecord(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateRoleDecision":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateRoleDecision(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateRoleFreshness":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateRoleFreshness(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "promoteRole":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_promoteRole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6978,6 +10060,50 @@ func (ec *executionContext) _OwnerReference(ctx context.Context, sel ast.Selecti
 			}
 		case "id":
 			out.Values[i] = ec._OwnerReference_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var promoteRoleResultImplementors = []string{"PromoteRoleResult"}
+
+func (ec *executionContext) _PromoteRoleResult(ctx context.Context, sel ast.SelectionSet, obj *model.PromoteRoleResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, promoteRoleResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PromoteRoleResult")
+		case "role":
+			out.Values[i] = ec._PromoteRoleResult_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "application":
+			out.Values[i] = ec._PromoteRoleResult_application(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7133,6 +10259,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "roleSearchTopics":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_roleSearchTopics(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "roleRecords":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_roleRecords(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "roleRecord":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_roleRecord(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -7141,6 +10333,368 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var roleRecordImplementors = []string{"RoleRecord"}
+
+func (ec *executionContext) _RoleRecord(ctx context.Context, sel ast.SelectionSet, obj *model.RoleRecord) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roleRecordImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoleRecord")
+		case "id":
+			out.Values[i] = ec._RoleRecord_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "searchTopicId":
+			out.Values[i] = ec._RoleRecord_searchTopicId(ctx, field, obj)
+		case "company":
+			out.Values[i] = ec._RoleRecord_company(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._RoleRecord_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "postingUrl":
+			out.Values[i] = ec._RoleRecord_postingUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._RoleRecord_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceKind":
+			out.Values[i] = ec._RoleRecord_sourceKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "providerSource":
+			out.Values[i] = ec._RoleRecord_providerSource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._RoleRecord_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rawSourceText":
+			out.Values[i] = ec._RoleRecord_rawSourceText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "location":
+			out.Values[i] = ec._RoleRecord_location(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remoteEligibility":
+			out.Values[i] = ec._RoleRecord_remoteEligibility(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "employmentType":
+			out.Values[i] = ec._RoleRecord_employmentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "seniority":
+			out.Values[i] = ec._RoleRecord_seniority(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "compensation":
+			out.Values[i] = ec._RoleRecord_compensation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stack":
+			out.Values[i] = ec._RoleRecord_stack(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "companyType":
+			out.Values[i] = ec._RoleRecord_companyType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freshnessStatus":
+			out.Values[i] = ec._RoleRecord_freshnessStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "freshnessCheckedAt":
+			out.Values[i] = ec._RoleRecord_freshnessCheckedAt(ctx, field, obj)
+		case "decisionStatus":
+			out.Values[i] = ec._RoleRecord_decisionStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rejectionReason":
+			out.Values[i] = ec._RoleRecord_rejectionReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "promotedApplicationId":
+			out.Values[i] = ec._RoleRecord_promotedApplicationId(ctx, field, obj)
+		case "metadata":
+			out.Values[i] = ec._RoleRecord_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RoleRecord_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RoleRecord_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var roleSearchRunResultImplementors = []string{"RoleSearchRunResult"}
+
+func (ec *executionContext) _RoleSearchRunResult(ctx context.Context, sel ast.SelectionSet, obj *model.RoleSearchRunResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roleSearchRunResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoleSearchRunResult")
+		case "topicId":
+			out.Values[i] = ec._RoleSearchRunResult_topicId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "importedCount":
+			out.Values[i] = ec._RoleSearchRunResult_importedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "skippedCount":
+			out.Values[i] = ec._RoleSearchRunResult_skippedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "imported":
+			out.Values[i] = ec._RoleSearchRunResult_imported(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "skipped":
+			out.Values[i] = ec._RoleSearchRunResult_skipped(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var roleSearchTopicImplementors = []string{"RoleSearchTopic"}
+
+func (ec *executionContext) _RoleSearchTopic(ctx context.Context, sel ast.SelectionSet, obj *model.RoleSearchTopic) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roleSearchTopicImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoleSearchTopic")
+		case "id":
+			out.Values[i] = ec._RoleSearchTopic_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._RoleSearchTopic_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "targetTitles":
+			out.Values[i] = ec._RoleSearchTopic_targetTitles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "preferredStack":
+			out.Values[i] = ec._RoleSearchTopic_preferredStack(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "location":
+			out.Values[i] = ec._RoleSearchTopic_location(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remotePreference":
+			out.Values[i] = ec._RoleSearchTopic_remotePreference(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "employmentType":
+			out.Values[i] = ec._RoleSearchTopic_employmentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "companyType":
+			out.Values[i] = ec._RoleSearchTopic_companyType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "compensation":
+			out.Values[i] = ec._RoleSearchTopic_compensation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "seniority":
+			out.Values[i] = ec._RoleSearchTopic_seniority(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notes":
+			out.Values[i] = ec._RoleSearchTopic_notes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RoleSearchTopic_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RoleSearchTopic_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var skippedRoleSummaryImplementors = []string{"SkippedRoleSummary"}
+
+func (ec *executionContext) _SkippedRoleSummary(ctx context.Context, sel ast.SelectionSet, obj *model.SkippedRoleSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, skippedRoleSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SkippedRoleSummary")
+		case "company":
+			out.Values[i] = ec._SkippedRoleSummary_company(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._SkippedRoleSummary_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "postingUrl":
+			out.Values[i] = ec._SkippedRoleSummary_postingUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._SkippedRoleSummary_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7765,6 +11319,48 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) marshalNImportedRoleSummary2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐImportedRoleSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ImportedRoleSummary) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNImportedRoleSummary2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐImportedRoleSummary(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNImportedRoleSummary2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐImportedRoleSummary(ctx context.Context, sel ast.SelectionSet, v *model.ImportedRoleSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ImportedRoleSummary(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNInterview2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐInterviewᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Interview) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -7831,14 +11427,133 @@ func (ec *executionContext) marshalNOwnerReference2ᚖgithubᚗcomᚋtonirilix�
 	return ec._OwnerReference(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPromoteRoleResult2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐPromoteRoleResult(ctx context.Context, sel ast.SelectionSet, v model.PromoteRoleResult) graphql.Marshaler {
+	return ec._PromoteRoleResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPromoteRoleResult2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐPromoteRoleResult(ctx context.Context, sel ast.SelectionSet, v *model.PromoteRoleResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PromoteRoleResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRecordInterviewOutcomeInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRecordInterviewOutcomeInput(ctx context.Context, v any) (model.RecordInterviewOutcomeInput, error) {
 	res, err := ec.unmarshalInputRecordInterviewOutcomeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNRoleRecord2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx context.Context, sel ast.SelectionSet, v model.RoleRecord) graphql.Marshaler {
+	return ec._RoleRecord(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRoleRecord2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RoleRecord) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRoleRecord2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecord(ctx context.Context, sel ast.SelectionSet, v *model.RoleRecord) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoleRecord(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRoleRecordInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordInput(ctx context.Context, v any) (model.RoleRecordInput, error) {
+	res, err := ec.unmarshalInputRoleRecordInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRoleSearchRunResult2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchRunResult(ctx context.Context, sel ast.SelectionSet, v model.RoleSearchRunResult) graphql.Marshaler {
+	return ec._RoleSearchRunResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRoleSearchRunResult2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchRunResult(ctx context.Context, sel ast.SelectionSet, v *model.RoleSearchRunResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoleSearchRunResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRoleSearchTopic2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopic(ctx context.Context, sel ast.SelectionSet, v model.RoleSearchTopic) graphql.Marshaler {
+	return ec._RoleSearchTopic(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRoleSearchTopic2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopicᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RoleSearchTopic) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRoleSearchTopic2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopic(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRoleSearchTopic2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleSearchTopic(ctx context.Context, sel ast.SelectionSet, v *model.RoleSearchTopic) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoleSearchTopic(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNScheduleInterviewInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐScheduleInterviewInput(ctx context.Context, v any) (model.ScheduleInterviewInput, error) {
 	res, err := ec.unmarshalInputScheduleInterviewInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSkippedRoleSummary2ᚕᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐSkippedRoleSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SkippedRoleSummary) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSkippedRoleSummary2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐSkippedRoleSummary(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSkippedRoleSummary2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐSkippedRoleSummary(ctx context.Context, sel ast.SelectionSet, v *model.SkippedRoleSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SkippedRoleSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -7890,6 +11605,11 @@ func (ec *executionContext) unmarshalNUpdateCandidateMemoryRecordInput2githubᚗ
 
 func (ec *executionContext) unmarshalNUpdateCandidateProfileInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpdateCandidateProfileInput(ctx context.Context, v any) (model.UpdateCandidateProfileInput, error) {
 	res, err := ec.unmarshalInputUpdateCandidateProfileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpsertRoleSearchTopicInput2githubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐUpsertRoleSearchTopicInput(ctx context.Context, v any) (model.UpsertRoleSearchTopicInput, error) {
+	res, err := ec.unmarshalInputUpsertRoleSearchTopicInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8080,6 +11800,32 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	_ = ctx
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalORoleRecordsFilterInput2ᚖgithubᚗcomᚋtonirilixᚋcareerᚑpipelineᚋappsᚋapiᚋgraphᚋmodelᚐRoleRecordsFilterInput(ctx context.Context, v any) (*model.RoleRecordsFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputRoleRecordsFilterInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {

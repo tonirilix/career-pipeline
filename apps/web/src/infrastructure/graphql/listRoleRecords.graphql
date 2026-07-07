@@ -1,0 +1,5 @@
+query ListRoleRecords($filter: RoleRecordsFilterInput) {
+  roleRecords(filter: $filter) {
+    ...RoleRecordFields
+  }
+}

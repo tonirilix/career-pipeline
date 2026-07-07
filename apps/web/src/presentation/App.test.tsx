@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
+import type { RoleDiscoveryGateway } from "../application/ports/roleDiscoveryGateway";
 import type {
   AIArtifact,
   CandidateMemoryRecord,
@@ -179,6 +180,27 @@ function createCandidateContextGateway(
   };
 }
 
+function createRoleDiscoveryGateway(): RoleDiscoveryGateway {
+  async function unsupportedCommand(): Promise<never> {
+    throw new Error("This test gateway does not support role discovery commands.");
+  }
+
+  return {
+    listTopics: async () => [],
+    createTopic: unsupportedCommand,
+    updateTopic: unsupportedCommand,
+    runSearch: unsupportedCommand,
+    listRoles: async () => [],
+    getRole: unsupportedCommand,
+    createRoleFromUrl: unsupportedCommand,
+    createRoleFromPaste: unsupportedCommand,
+    updateRole: unsupportedCommand,
+    updateRoleDecision: unsupportedCommand,
+    updateRoleFreshness: unsupportedCommand,
+    promoteRole: unsupportedCommand
+  };
+}
+
 function getStageColumn(stage: string) {
   const board = screen.getByRole("region", { name: "Application pipeline" });
   return within(board).getByRole("region", { name: `${stage} applications` });
@@ -206,7 +228,8 @@ function getStatValue(label: string) {
 
 function renderApp(
   gateway = createJobApplicationGraphqlGateway(),
-  candidateContextGateway = createCandidateContextGateway()
+  candidateContextGateway = createCandidateContextGateway(),
+  roleDiscoveryGateway = createRoleDiscoveryGateway()
 ) {
   resetZustandPipelineControlsStore();
   const queryClient = createWebQueryClient();
@@ -216,6 +239,7 @@ function renderApp(
       <App
         candidateContextGateway={candidateContextGateway}
         gateway={gateway}
+        roleDiscoveryGateway={roleDiscoveryGateway}
         usePipelineControls={useZustandPipelineControlsStore}
       />
     </QueryClientProvider>

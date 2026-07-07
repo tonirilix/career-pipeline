@@ -1,0 +1,5 @@
+query GetRoleRecord($id: ID!) {
+  roleRecord(id: $id) {
+    ...RoleRecordFields
+  }
+}

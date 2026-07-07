@@ -1,8 +1,9 @@
 import { type FormEvent, lazy, Suspense, useState } from "react";
-import { Briefcase, Database, Plus } from "lucide-react";
+import { Briefcase, Database, Plus, Search } from "lucide-react";
 
 import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
+import type { RoleDiscoveryGateway } from "../application/ports/roleDiscoveryGateway";
 import type { UsePipelineControls } from "./ports/pipelineControls";
 import { ApplicationDetails } from "./components/ApplicationDetails";
 import { FollowUpWork } from "./components/FollowUpWork";
@@ -23,17 +24,25 @@ const CandidateMemoryWorkspace = lazy(() =>
   }))
 );
 
+const RoleDiscoveryWorkspace = lazy(() =>
+  import("./components/RoleDiscoveryWorkspace").then((module) => ({
+    default: module.RoleDiscoveryWorkspace
+  }))
+);
+
 type AppProps = {
   candidateContextGateway: CandidateContextGateway;
   gateway: JobApplicationGateway;
+  roleDiscoveryGateway: RoleDiscoveryGateway;
   usePipelineControls: UsePipelineControls;
 };
 
-type Workspace = "pipeline" | "memory";
+type Workspace = "pipeline" | "memory" | "roles";
 
 export function App({
   candidateContextGateway,
   gateway,
+  roleDiscoveryGateway,
   usePipelineControls
 }: AppProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -67,7 +76,7 @@ export function App({
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add opportunity
           </Button>
-          <nav className="mt-3 grid grid-cols-2 gap-2" aria-label="Workspace navigation">
+          <nav className="mt-3 grid grid-cols-3 gap-2" aria-label="Workspace navigation">
             <Button
               type="button"
               variant={activeWorkspace === "pipeline" ? "default" : "outline"}
@@ -85,6 +94,15 @@ export function App({
             >
               <Database className="h-4 w-4" aria-hidden="true" />
               Memory
+            </Button>
+            <Button
+              type="button"
+              variant={activeWorkspace === "roles" ? "default" : "outline"}
+              onClick={() => setActiveWorkspace("roles")}
+              className="rounded-none"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+              Roles
             </Button>
           </nav>
         </div>
@@ -163,9 +181,13 @@ export function App({
                   />
                 )}
               </>
-            ) : (
+            ) : activeWorkspace === "memory" ? (
               <Suspense fallback={null}>
                 <CandidateMemoryWorkspace gateway={candidateContextGateway} />
+              </Suspense>
+            ) : (
+              <Suspense fallback={null}>
+                <RoleDiscoveryWorkspace gateway={roleDiscoveryGateway} />
               </Suspense>
             )}
           </div>

@@ -5,6 +5,7 @@ import "./index.css";
 
 import { createCandidateContextGraphqlGateway } from "./infrastructure/graphql/candidateContextGraphqlGateway";
 import { createJobApplicationGraphqlGateway } from "./infrastructure/graphql/jobApplicationGraphqlGateway";
+import { createRoleDiscoveryGraphqlGateway } from "./infrastructure/graphql/roleDiscoveryGraphqlGateway";
 import { createWebQueryClient } from "./infrastructure/query/queryClient";
 import { useZustandPipelineControlsStore } from "./infrastructure/zustand/pipelineControlsStore";
 import { App } from "./presentation/App";
@@ -28,6 +29,7 @@ async function enableMockBackend() {
 void enableMockBackend().then(() => {
   const gateway = createJobApplicationGraphqlGateway();
   const candidateContextGateway = createCandidateContextGraphqlGateway();
+  const roleDiscoveryGateway = createRoleDiscoveryGraphqlGateway();
   const queryClient = createWebQueryClient();
 
   createRoot(rootElement).render(
@@ -36,6 +38,7 @@ void enableMockBackend().then(() => {
         <App
           candidateContextGateway={candidateContextGateway}
           gateway={gateway}
+          roleDiscoveryGateway={roleDiscoveryGateway}
           usePipelineControls={useZustandPipelineControlsStore}
         />
       </QueryClientProvider>

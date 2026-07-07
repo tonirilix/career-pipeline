@@ -151,3 +151,92 @@ func mapAIArtifacts(artifacts []*domain.AIArtifact) []*model.AIArtifact {
 	}
 	return out
 }
+
+func mapRoleSearchTopic(topic *domain.RoleSearchTopic) *model.RoleSearchTopic {
+	return &model.RoleSearchTopic{
+		ID:               topic.ID,
+		Name:             topic.Name,
+		TargetTitles:     topic.TargetTitles,
+		PreferredStack:   topic.PreferredStack,
+		Location:         topic.Location,
+		RemotePreference: topic.RemotePreference,
+		EmploymentType:   string(topic.EmploymentType),
+		CompanyType:      string(topic.CompanyType),
+		Compensation:     topic.Compensation,
+		Seniority:        string(topic.Seniority),
+		Notes:            topic.Notes,
+		CreatedAt:        topic.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:        topic.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func mapRoleSearchTopics(topics []*domain.RoleSearchTopic) []*model.RoleSearchTopic {
+	out := make([]*model.RoleSearchTopic, len(topics))
+	for i, topic := range topics {
+		out[i] = mapRoleSearchTopic(topic)
+	}
+	return out
+}
+
+func mapRoleRecord(role *domain.RoleRecord) *model.RoleRecord {
+	out := &model.RoleRecord{
+		ID:                    role.ID,
+		SearchTopicID:         role.SearchTopicID,
+		Company:               role.Company,
+		Title:                 role.Title,
+		PostingURL:            role.PostingURL,
+		Source:                role.Source,
+		SourceKind:            string(role.SourceKind),
+		ProviderSource:        role.ProviderSource,
+		Description:           role.Description,
+		RawSourceText:         role.RawSourceText,
+		Location:              role.Location,
+		RemoteEligibility:     string(role.RemoteEligibility),
+		EmploymentType:        string(role.EmploymentType),
+		Seniority:             string(role.Seniority),
+		Compensation:          role.Compensation,
+		Stack:                 role.Stack,
+		CompanyType:           string(role.CompanyType),
+		FreshnessStatus:       string(role.FreshnessStatus),
+		DecisionStatus:        string(role.DecisionStatus),
+		RejectionReason:       string(role.RejectionReason),
+		PromotedApplicationID: role.PromotedApplicationID,
+		Metadata:              string(role.Metadata),
+		CreatedAt:             role.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:             role.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+	if role.FreshnessCheckedAt != nil {
+		s := role.FreshnessCheckedAt.UTC().Format(time.RFC3339)
+		out.FreshnessCheckedAt = &s
+	}
+	return out
+}
+
+func mapRoleRecords(roles []*domain.RoleRecord) []*model.RoleRecord {
+	out := make([]*model.RoleRecord, len(roles))
+	for i, role := range roles {
+		out[i] = mapRoleRecord(role)
+	}
+	return out
+}
+
+func mapRoleSearchRunResult(result *domain.RoleSearchRunResult) *model.RoleSearchRunResult {
+	out := &model.RoleSearchRunResult{
+		TopicID:       result.TopicID,
+		ImportedCount: result.ImportedCount,
+		SkippedCount:  result.SkippedCount,
+		Imported:      make([]*model.ImportedRoleSummary, len(result.Imported)),
+		Skipped:       make([]*model.SkippedRoleSummary, len(result.Skipped)),
+	}
+	for i, imported := range result.Imported {
+		out.Imported[i] = &model.ImportedRoleSummary{
+			RoleID: imported.RoleID, Company: imported.Company, Title: imported.Title, PostingURL: imported.PostingURL,
+		}
+	}
+	for i, skipped := range result.Skipped {
+		out.Skipped[i] = &model.SkippedRoleSummary{
+			Company: skipped.Company, Title: skipped.Title, PostingURL: skipped.PostingURL, Reason: skipped.Reason,
+		}
+	}
+	return out
+}

@@ -3,6 +3,8 @@ package ports
 import (
 	"context"
 	"time"
+
+	"github.com/tonirilix/career-pipeline/apps/api/internal/domain"
 )
 
 type Clock interface {
@@ -61,4 +63,8 @@ type GenerateTextResponse struct {
 
 type AIProvider interface {
 	GenerateText(ctx context.Context, request GenerateTextRequest) (GenerateTextResponse, error)
+}
+
+type RoleSearchProvider interface {
+	Search(ctx context.Context, request domain.RoleSearchRequest) ([]domain.RoleSearchProviderResult, error)
 }

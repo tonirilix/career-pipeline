@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -43,9 +44,124 @@ func openTestDB(t *testing.T) *sql.DB {
 
 func truncateTestDB(t *testing.T, db *sql.DB) {
 	t.Helper()
-	_, err := db.Exec(`TRUNCATE ai_artifacts, candidate_memory_records, candidate_profiles, timeline_events, application_notes, follow_up_reminders, interviews, job_applications RESTART IDENTITY CASCADE`)
+	_, err := db.Exec(`TRUNCATE role_records, role_search_topics, ai_artifacts, candidate_memory_records, candidate_profiles, timeline_events, application_notes, follow_up_reminders, interviews, job_applications RESTART IDENTITY CASCADE`)
 	if err != nil {
 		t.Fatalf("truncate test db: %v", err)
+	}
+}
+
+func TestPostgreSQLRoleDiscoveryRepositories_RoundTripRoleData(t *testing.T) {
+	db := openTestDB(t)
+	topicRepo := persistence.NewPostgreSQLRoleSearchTopicRepository(db)
+	roleRepo := persistence.NewPostgreSQLRoleRecordRepository(db)
+	appRepo := persistence.NewPostgreSQLJobApplicationRepository(db)
+	ctx := context.Background()
+	now := time.Date(2026, 7, 4, 9, 0, 0, 0, time.UTC)
+
+	topic, err := topicRepo.Save(ctx, &domain.RoleSearchTopic{
+		ID:               "topic-1",
+		Name:             "Senior product roles",
+		TargetTitles:     "Senior Software Engineer",
+		PreferredStack:   "Go, React",
+		Location:         "Remote",
+		RemotePreference: "Remote",
+		EmploymentType:   domain.EmploymentFullTime,
+		CompanyType:      domain.RoleCompanyProduct,
+		Compensation:     "$150k+",
+		Seniority:        domain.RoleSenioritySenior,
+		Notes:            "Avoid consultancies.",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	})
+	if err != nil {
+		t.Fatalf("save topic: %v", err)
+	}
+	if topic.Name != "Senior product roles" {
+		t.Fatalf("topic did not round-trip: %#v", topic)
+	}
+
+	checkedAt := now.Add(time.Hour)
+	role, err := roleRepo.Save(ctx, &domain.RoleRecord{
+		ID:                 "role-1",
+		SearchTopicID:      &topic.ID,
+		Company:            "Acme",
+		Title:              "Senior Software Engineer",
+		PostingURL:         "https://jobs.example/acme",
+		Source:             string(domain.SourceCompanySite),
+		SourceKind:         domain.RoleSourceSearchResult,
+		ProviderSource:     "fake search",
+		Description:        "Normalized description",
+		RawSourceText:      "Raw source text",
+		Location:           "Remote",
+		RemoteEligibility:  domain.RoleRemoteRemote,
+		EmploymentType:     domain.EmploymentFullTime,
+		Seniority:          domain.RoleSenioritySenior,
+		Compensation:       "$150k+",
+		Stack:              "Go, React",
+		CompanyType:        domain.RoleCompanyProduct,
+		FreshnessStatus:    domain.RoleFreshnessUnknown,
+		FreshnessCheckedAt: nil,
+		DecisionStatus:     domain.RoleDecisionNew,
+		RejectionReason:    domain.RoleRejectionNone,
+		Metadata:           json.RawMessage(`{"score":1}`),
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	})
+	if err != nil {
+		t.Fatalf("save role: %v", err)
+	}
+	if role.SearchTopicID == nil || *role.SearchTopicID != topic.ID || role.RawSourceText != "Raw source text" {
+		t.Fatalf("role did not preserve topic/raw source: %#v", role)
+	}
+
+	if _, err := roleRepo.Save(ctx, &domain.RoleRecord{
+		ID:              "role-duplicate",
+		Company:         "Acme",
+		Title:           "Senior Software Engineer",
+		PostingURL:      "https://jobs.example/acme",
+		SourceKind:      domain.RoleSourceManualURL,
+		EmploymentType:  domain.EmploymentFullTime,
+		FreshnessStatus: domain.RoleFreshnessUnknown,
+		DecisionStatus:  domain.RoleDecisionNew,
+		Metadata:        json.RawMessage(`{}`),
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}); !errors.Is(err, domain.ErrDuplicateActiveRoleURL) {
+		t.Fatalf("expected duplicate active URL error, got %v", err)
+	}
+
+	decision, err := roleRepo.UpdateDecision(ctx, role.ID, domain.RoleDecisionRejected, domain.RoleRejectionWrongStack, now.Add(2*time.Hour))
+	if err != nil {
+		t.Fatalf("update decision: %v", err)
+	}
+	if decision.DecisionStatus != domain.RoleDecisionRejected || decision.RejectionReason != domain.RoleRejectionWrongStack {
+		t.Fatalf("decision did not update: %#v", decision)
+	}
+
+	fresh, err := roleRepo.UpdateFreshness(ctx, role.ID, domain.RoleFreshnessLive, &checkedAt, now.Add(3*time.Hour))
+	if err != nil {
+		t.Fatalf("update freshness: %v", err)
+	}
+	if fresh.FreshnessStatus != domain.RoleFreshnessLive || fresh.FreshnessCheckedAt == nil {
+		t.Fatalf("freshness did not update: %#v", fresh)
+	}
+
+	if err := appRepo.Save(ctx, &domain.JobApplication{
+		ID:             "app-1",
+		Company:        "Acme",
+		RoleTitle:      "Senior Software Engineer",
+		EmploymentType: domain.EmploymentFullTime,
+		Stage:          domain.StageSaved,
+		CreatedAt:      now,
+	}); err != nil {
+		t.Fatalf("save application: %v", err)
+	}
+	promoted, err := roleRepo.LinkPromotedApplication(ctx, role.ID, "app-1", now.Add(4*time.Hour))
+	if err != nil {
+		t.Fatalf("link promoted application: %v", err)
+	}
+	if promoted.PromotedApplicationID == nil || *promoted.PromotedApplicationID != "app-1" || promoted.DecisionStatus != domain.RoleDecisionPromoted {
+		t.Fatalf("promotion link did not update: %#v", promoted)
 	}
 }
 

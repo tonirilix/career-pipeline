@@ -1,0 +1,13 @@
+mutation UpdateRoleDecision(
+  $id: ID!
+  $status: String!
+  $rejectionReason: String
+) {
+  updateRoleDecision(
+    id: $id
+    status: $status
+    rejectionReason: $rejectionReason
+  ) {
+    ...RoleRecordFields
+  }
+}

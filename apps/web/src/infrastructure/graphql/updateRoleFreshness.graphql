@@ -1,0 +1,5 @@
+mutation UpdateRoleFreshness($id: ID!, $status: String!, $checkedAt: String) {
+  updateRoleFreshness(id: $id, status: $status, checkedAt: $checkedAt) {
+    ...RoleRecordFields
+  }
+}

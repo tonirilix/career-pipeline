@@ -8,6 +8,7 @@ import (
 	"github.com/tonirilix/career-pipeline/apps/api/graph/resolvers"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/application/usecases"
 	"github.com/tonirilix/career-pipeline/apps/api/internal/infrastructure/persistence"
+	rolesearch "github.com/tonirilix/career-pipeline/apps/api/internal/infrastructure/role_search"
 )
 
 type wallClock struct{}
@@ -27,8 +28,11 @@ func NewResolver(database *sql.DB) *resolvers.Resolver {
 	candidateProfileRepo := persistence.NewPostgreSQLCandidateProfileRepository(database)
 	candidateMemoryRepo := persistence.NewPostgreSQLCandidateMemoryRepository(database)
 	aiArtifactRepo := persistence.NewPostgreSQLAIArtifactRepository(database)
+	roleSearchTopicRepo := persistence.NewPostgreSQLRoleSearchTopicRepository(database)
+	roleRecordRepo := persistence.NewPostgreSQLRoleRecordRepository(database)
 	assembler := usecases.NewFullApplicationAssembler(followUpRepo, timelineRepo, interviewRepo, noteRepo)
 	transactor := persistence.NewPostgreSQLTransactor(database)
+	roleSearchProvider := rolesearch.NewStaticProvider()
 
 	clock := &wallClock{}
 	ids := &uuidGenerator{}
@@ -46,6 +50,8 @@ func NewResolver(database *sql.DB) *resolvers.Resolver {
 	candidateMemoryUC := usecases.NewCandidateMemory(candidateMemoryRepo, clock, ids)
 	groundingContextUC := usecases.NewGetCandidateGroundingContext(candidateProfileRepo, candidateMemoryRepo, clock)
 	aiArtifactsUC := usecases.NewAIArtifacts(aiArtifactRepo, clock, ids)
+	roleSearchTopicsUC := usecases.NewRoleSearchTopics(roleSearchTopicRepo, clock, ids)
+	roleRecordsUC := usecases.NewRoleRecords(roleRecordRepo, roleSearchTopicRepo, roleSearchProvider, createAppUC, clock, ids)
 
 	return &resolvers.Resolver{
 		CreateApplicationUC:      createAppUC,
@@ -61,5 +67,7 @@ func NewResolver(database *sql.DB) *resolvers.Resolver {
 		CandidateMemoryUC:        candidateMemoryUC,
 		GroundingContextUC:       groundingContextUC,
 		AIArtifactsUC:            aiArtifactsUC,
+		RoleSearchTopicsUC:       roleSearchTopicsUC,
+		RoleRecordsUC:            roleRecordsUC,
 	}
 }
