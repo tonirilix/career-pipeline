@@ -134,6 +134,77 @@ type AIArtifact {
   updatedAt: String!
 }
 
+type RoleSearchTopic {
+  id: ID!
+  name: String!
+  targetTitles: String!
+  preferredStack: String!
+  location: String!
+  remotePreference: String!
+  employmentType: String!
+  companyType: String!
+  compensation: String!
+  seniority: String!
+  notes: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type RoleRecord {
+  id: ID!
+  searchTopicId: ID
+  company: String!
+  title: String!
+  postingUrl: String!
+  source: String!
+  sourceKind: String!
+  providerSource: String!
+  description: String!
+  rawSourceText: String!
+  location: String!
+  remoteEligibility: String!
+  employmentType: String!
+  seniority: String!
+  compensation: String!
+  stack: String!
+  companyType: String!
+  freshnessStatus: String!
+  freshnessCheckedAt: String
+  decisionStatus: String!
+  rejectionReason: String!
+  promotedApplicationId: ID
+  metadata: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ImportedRoleSummary {
+  roleId: ID!
+  company: String!
+  title: String!
+  postingUrl: String!
+}
+
+type SkippedRoleSummary {
+  company: String!
+  title: String!
+  postingUrl: String!
+  reason: String!
+}
+
+type RoleSearchRunResult {
+  topicId: ID!
+  importedCount: Int!
+  skippedCount: Int!
+  imported: [ImportedRoleSummary!]!
+  skipped: [SkippedRoleSummary!]!
+}
+
+type PromoteRoleResult {
+  role: RoleRecord!
+  application: JobApplication!
+}
+
 type JobApplication {
   id: ID!
   company: String!
@@ -243,12 +314,57 @@ input CreateAIArtifactInput {
   rawProviderId: String
 }
 
+input UpsertRoleSearchTopicInput {
+  id: ID
+  name: String!
+  targetTitles: String!
+  preferredStack: String!
+  location: String!
+  remotePreference: String!
+  employmentType: String!
+  companyType: String!
+  compensation: String!
+  seniority: String!
+  notes: String!
+}
+
+input RoleRecordInput {
+  searchTopicId: ID
+  company: String!
+  title: String!
+  postingUrl: String!
+  source: String!
+  sourceKind: String
+  providerSource: String
+  description: String!
+  rawSourceText: String
+  location: String!
+  remoteEligibility: String!
+  employmentType: String!
+  seniority: String!
+  compensation: String!
+  stack: String!
+  companyType: String!
+  freshnessStatus: String
+  metadata: String!
+}
+
+input RoleRecordsFilterInput {
+  decisionStatus: String
+  freshnessStatus: String
+  sourceKind: String
+  searchTerm: String
+}
+
 type Query {
   applications: [JobApplication!]!
   candidateProfile: CandidateProfile!
   candidateMemoryRecords: [CandidateMemoryRecord!]!
   candidateGroundingContext: CandidateGroundingContext!
   aiArtifacts(ownerType: String!, ownerId: ID!): [AIArtifact!]!
+  roleSearchTopics: [RoleSearchTopic!]!
+  roleRecords(filter: RoleRecordsFilterInput): [RoleRecord!]!
+  roleRecord(id: ID!): RoleRecord!
 }
 
 type Mutation {
@@ -268,4 +384,13 @@ type Mutation {
   editAIArtifact(id: ID!, userEditedContent: String): AIArtifact!
   updateAIArtifactStatus(id: ID!, status: String!): AIArtifact!
   supersedeAIArtifact(id: ID!, supersededBy: ID!): AIArtifact!
+  createRoleSearchTopic(input: UpsertRoleSearchTopicInput!): RoleSearchTopic!
+  updateRoleSearchTopic(input: UpsertRoleSearchTopicInput!): RoleSearchTopic!
+  runRoleSearch(topicId: ID!, maxRoles: Int): RoleSearchRunResult!
+  createRoleFromUrl(input: RoleRecordInput!): RoleRecord!
+  createRoleFromPaste(input: RoleRecordInput!): RoleRecord!
+  updateRoleRecord(id: ID!, input: RoleRecordInput!): RoleRecord!
+  updateRoleDecision(id: ID!, status: String!, rejectionReason: String): RoleRecord!
+  updateRoleFreshness(id: ID!, status: String!, checkedAt: String): RoleRecord!
+  promoteRole(id: ID!): PromoteRoleResult!
 }

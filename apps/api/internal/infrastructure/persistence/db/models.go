@@ -99,6 +99,50 @@ type JobApplication struct {
 	CreatedAt      time.Time
 }
 
+type RoleRecord struct {
+	ID                    string
+	SearchTopicID         sql.NullString
+	Company               string
+	Title                 string
+	PostingUrl            string
+	Source                string
+	SourceKind            string
+	ProviderSource        string
+	Description           string
+	RawSourceText         string
+	Location              string
+	RemoteEligibility     string
+	EmploymentType        string
+	Seniority             string
+	Compensation          string
+	Stack                 string
+	CompanyType           string
+	FreshnessStatus       string
+	FreshnessCheckedAt    *time.Time
+	DecisionStatus        string
+	RejectionReason       string
+	PromotedApplicationID sql.NullString
+	Metadata              json.RawMessage
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+}
+
+type RoleSearchTopic struct {
+	ID               string
+	Name             string
+	TargetTitles     string
+	PreferredStack   string
+	Location         string
+	RemotePreference string
+	EmploymentType   string
+	CompanyType      string
+	Compensation     string
+	Seniority        string
+	Notes            string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
 type TimelineEvent struct {
 	ID            string
 	ApplicationID string

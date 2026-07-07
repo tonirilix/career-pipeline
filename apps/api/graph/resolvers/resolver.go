@@ -18,4 +18,6 @@ type Resolver struct {
 	CandidateMemoryUC        *usecases.CandidateMemory
 	GroundingContextUC       *usecases.GetCandidateGroundingContext
 	AIArtifactsUC            *usecases.AIArtifacts
+	RoleSearchTopicsUC       *usecases.RoleSearchTopics
+	RoleRecordsUC            *usecases.RoleRecords
 }

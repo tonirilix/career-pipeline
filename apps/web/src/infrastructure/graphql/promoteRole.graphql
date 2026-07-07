@@ -1,0 +1,10 @@
+mutation PromoteRole($id: ID!) {
+  promoteRole(id: $id) {
+    role {
+      ...RoleRecordFields
+    }
+    application {
+      id
+    }
+  }
+}

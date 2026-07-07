@@ -1,0 +1,5 @@
+mutation UpdateRoleSearchTopic($input: UpsertRoleSearchTopicInput!) {
+  updateRoleSearchTopic(input: $input) {
+    ...RoleSearchTopicFields
+  }
+}

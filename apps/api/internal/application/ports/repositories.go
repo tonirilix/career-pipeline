@@ -71,3 +71,28 @@ type AIArtifactRepository interface {
 	UpdateStatus(ctx context.Context, id string, status domain.ArtifactStatus, updatedAt time.Time) (*domain.AIArtifact, error)
 	Supersede(ctx context.Context, id string, supersededBy string, updatedAt time.Time) (*domain.AIArtifact, error)
 }
+
+type ListRoleRecordsFilter struct {
+	DecisionStatus  *domain.RoleDecisionStatus
+	FreshnessStatus *domain.RoleFreshnessStatus
+	SourceKind      *domain.RoleSourceKind
+	SearchTerm      string
+}
+
+type RoleSearchTopicRepository interface {
+	Save(ctx context.Context, topic *domain.RoleSearchTopic) (*domain.RoleSearchTopic, error)
+	FindByID(ctx context.Context, id string) (*domain.RoleSearchTopic, error)
+	List(ctx context.Context) ([]*domain.RoleSearchTopic, error)
+	Update(ctx context.Context, topic *domain.RoleSearchTopic) (*domain.RoleSearchTopic, error)
+}
+
+type RoleRecordRepository interface {
+	Save(ctx context.Context, role *domain.RoleRecord) (*domain.RoleRecord, error)
+	FindByID(ctx context.Context, id string) (*domain.RoleRecord, error)
+	List(ctx context.Context, filter ListRoleRecordsFilter) ([]*domain.RoleRecord, error)
+	Update(ctx context.Context, role *domain.RoleRecord) (*domain.RoleRecord, error)
+	FindActiveByPostingURL(ctx context.Context, postingURL string) (*domain.RoleRecord, error)
+	UpdateDecision(ctx context.Context, id string, status domain.RoleDecisionStatus, reason domain.RoleRejectionReason, updatedAt time.Time) (*domain.RoleRecord, error)
+	UpdateFreshness(ctx context.Context, id string, status domain.RoleFreshnessStatus, checkedAt *time.Time, updatedAt time.Time) (*domain.RoleRecord, error)
+	LinkPromotedApplication(ctx context.Context, id string, applicationID string, updatedAt time.Time) (*domain.RoleRecord, error)
+}

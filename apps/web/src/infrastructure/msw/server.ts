@@ -8,10 +8,19 @@ import {
   jobApplicationHandlers,
   resetJobApplicationMockData
 } from "./jobApplicationHandlers";
+import {
+  resetRoleDiscoveryMockData,
+  roleDiscoveryHandlers
+} from "./roleDiscoveryHandlers";
 
 export const server = setupServer(
   ...jobApplicationHandlers,
-  ...candidateContextHandlers
+  ...candidateContextHandlers,
+  ...roleDiscoveryHandlers
 );
 
-export { resetCandidateContextMockData, resetJobApplicationMockData };
+export {
+  resetCandidateContextMockData,
+  resetJobApplicationMockData,
+  resetRoleDiscoveryMockData
+};

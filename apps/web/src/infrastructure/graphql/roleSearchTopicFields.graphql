@@ -1,0 +1,15 @@
+fragment RoleSearchTopicFields on RoleSearchTopic {
+  id
+  name
+  targetTitles
+  preferredStack
+  location
+  remotePreference
+  employmentType
+  companyType
+  compensation
+  seniority
+  notes
+  createdAt
+  updatedAt
+}

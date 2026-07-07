@@ -1,0 +1,5 @@
+mutation CreateRoleFromUrl($input: RoleRecordInput!) {
+  createRoleFromUrl(input: $input) {
+    ...RoleRecordFields
+  }
+}

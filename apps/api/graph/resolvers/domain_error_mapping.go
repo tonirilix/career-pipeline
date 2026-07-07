@@ -42,6 +42,20 @@ func mapDomainError(err error) error {
 		return errors.New("use supersede to mark an AI artifact as superseded")
 	case errors.Is(err, domain.ErrMemoryRecordNotCurrent):
 		return errors.New("archived or superseded memory records cannot be edited")
+	case errors.Is(err, domain.ErrRoleSearchTopicNotFound):
+		return errors.New("role search topic could not be found")
+	case errors.Is(err, domain.ErrRoleRecordNotFound):
+		return errors.New("role record could not be found")
+	case errors.Is(err, domain.ErrDuplicateActiveRoleURL):
+		return errors.New("an active role already exists for that posting URL")
+	case errors.Is(err, domain.ErrInvalidRoleDecisionStatus):
+		return errors.New("role decision status is invalid")
+	case errors.Is(err, domain.ErrInvalidRoleFreshnessStatus):
+		return errors.New("role freshness status is invalid")
+	case errors.Is(err, domain.ErrRoleAlreadyPromoted):
+		return errors.New("role is already promoted")
+	case errors.Is(err, domain.ErrRoleSearchProviderFailed):
+		return errors.New("role search provider failed")
 	default:
 		return err
 	}

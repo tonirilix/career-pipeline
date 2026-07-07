@@ -1,0 +1,27 @@
+fragment RoleRecordFields on RoleRecord {
+  id
+  searchTopicId
+  company
+  title
+  postingUrl
+  source
+  sourceKind
+  providerSource
+  description
+  rawSourceText
+  location
+  remoteEligibility
+  employmentType
+  seniority
+  compensation
+  stack
+  companyType
+  freshnessStatus
+  freshnessCheckedAt
+  decisionStatus
+  rejectionReason
+  promotedApplicationId
+  metadata
+  createdAt
+  updatedAt
+}

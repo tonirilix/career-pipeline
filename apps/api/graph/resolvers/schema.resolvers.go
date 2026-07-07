@@ -7,6 +7,7 @@ package resolvers
 
 import (
 	"context"
+	"time"
 
 	"github.com/tonirilix/career-pipeline/apps/api/graph"
 	"github.com/tonirilix/career-pipeline/apps/api/graph/model"
@@ -275,6 +276,126 @@ func (r *mutationResolver) SupersedeAIArtifact(ctx context.Context, id string, s
 	return mapAIArtifact(artifact), nil
 }
 
+// CreateRoleSearchTopic is the resolver for the createRoleSearchTopic field.
+func (r *mutationResolver) CreateRoleSearchTopic(ctx context.Context, input model.UpsertRoleSearchTopicInput) (*model.RoleSearchTopic, error) {
+	topic, err := r.RoleSearchTopicsUC.Create(ctx, roleSearchTopicCommandFromInput(input))
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleSearchTopic(topic), nil
+}
+
+// UpdateRoleSearchTopic is the resolver for the updateRoleSearchTopic field.
+func (r *mutationResolver) UpdateRoleSearchTopic(ctx context.Context, input model.UpsertRoleSearchTopicInput) (*model.RoleSearchTopic, error) {
+	topic, err := r.RoleSearchTopicsUC.Update(ctx, roleSearchTopicCommandFromInput(input))
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleSearchTopic(topic), nil
+}
+
+// RunRoleSearch is the resolver for the runRoleSearch field.
+func (r *mutationResolver) RunRoleSearch(ctx context.Context, topicID string, maxRoles *int) (*model.RoleSearchRunResult, error) {
+	limit := 0
+	if maxRoles != nil {
+		limit = *maxRoles
+	}
+	result, err := r.RoleRecordsUC.RunSearch(ctx, topicID, limit)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleSearchRunResult(result), nil
+}
+
+// CreateRoleFromURL is the resolver for the createRoleFromUrl field.
+func (r *mutationResolver) CreateRoleFromURL(ctx context.Context, input model.RoleRecordInput) (*model.RoleRecord, error) {
+	cmd, err := roleRecordCommandFromInput(input)
+	if err != nil {
+		return nil, err
+	}
+	role, err := r.RoleRecordsUC.CreateFromURL(ctx, cmd)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecord(role), nil
+}
+
+// CreateRoleFromPaste is the resolver for the createRoleFromPaste field.
+func (r *mutationResolver) CreateRoleFromPaste(ctx context.Context, input model.RoleRecordInput) (*model.RoleRecord, error) {
+	cmd, err := roleRecordCommandFromInput(input)
+	if err != nil {
+		return nil, err
+	}
+	role, err := r.RoleRecordsUC.CreateFromPaste(ctx, cmd)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecord(role), nil
+}
+
+// UpdateRoleRecord is the resolver for the updateRoleRecord field.
+func (r *mutationResolver) UpdateRoleRecord(ctx context.Context, id string, input model.RoleRecordInput) (*model.RoleRecord, error) {
+	cmd, err := roleRecordCommandFromInput(input)
+	if err != nil {
+		return nil, err
+	}
+	role, err := r.RoleRecordsUC.Update(ctx, id, cmd)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecord(role), nil
+}
+
+// UpdateRoleDecision is the resolver for the updateRoleDecision field.
+func (r *mutationResolver) UpdateRoleDecision(ctx context.Context, id string, status string, rejectionReason *string) (*model.RoleRecord, error) {
+	reason := domain.RoleRejectionNone
+	if rejectionReason != nil {
+		reason = domain.RoleRejectionReason(*rejectionReason)
+	}
+	role, err := r.RoleRecordsUC.UpdateDecision(ctx, usecases.UpdateRoleDecisionCommand{
+		ID:              id,
+		Status:          domain.RoleDecisionStatus(status),
+		RejectionReason: reason,
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecord(role), nil
+}
+
+// UpdateRoleFreshness is the resolver for the updateRoleFreshness field.
+func (r *mutationResolver) UpdateRoleFreshness(ctx context.Context, id string, status string, checkedAt *string) (*model.RoleRecord, error) {
+	var parsed *time.Time
+	if checkedAt != nil && *checkedAt != "" {
+		t, err := time.Parse(time.RFC3339, *checkedAt)
+		if err != nil {
+			return nil, err
+		}
+		parsed = &t
+	}
+	role, err := r.RoleRecordsUC.UpdateFreshness(ctx, usecases.UpdateRoleFreshnessCommand{
+		ID:        id,
+		Status:    domain.RoleFreshnessStatus(status),
+		CheckedAt: parsed,
+	})
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecord(role), nil
+}
+
+// PromoteRole is the resolver for the promoteRole field.
+func (r *mutationResolver) PromoteRole(ctx context.Context, id string) (*model.PromoteRoleResult, error) {
+	result, err := r.RoleRecordsUC.Promote(ctx, id)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return &model.PromoteRoleResult{
+		Role:        mapRoleRecord(result.Role),
+		Application: mapApplication(result.Application),
+	}, nil
+}
+
 // Applications is the resolver for the applications field.
 func (r *queryResolver) Applications(ctx context.Context) ([]*model.JobApplication, error) {
 	apps, err := r.ListApplicationsUC.Execute(ctx, ports.ListApplicationsFilter{})
@@ -322,6 +443,119 @@ func (r *queryResolver) AiArtifacts(ctx context.Context, ownerType string, owner
 		return nil, mapDomainError(err)
 	}
 	return mapAIArtifacts(artifacts), nil
+}
+
+// RoleSearchTopics is the resolver for the roleSearchTopics field.
+func (r *queryResolver) RoleSearchTopics(ctx context.Context) ([]*model.RoleSearchTopic, error) {
+	topics, err := r.RoleSearchTopicsUC.List(ctx)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleSearchTopics(topics), nil
+}
+
+// RoleRecords is the resolver for the roleRecords field.
+func (r *queryResolver) RoleRecords(ctx context.Context, filter *model.RoleRecordsFilterInput) ([]*model.RoleRecord, error) {
+	roles, err := r.RoleRecordsUC.List(ctx, roleRecordFilterFromInput(filter))
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecords(roles), nil
+}
+
+// RoleRecord is the resolver for the roleRecord field.
+func (r *queryResolver) RoleRecord(ctx context.Context, id string) (*model.RoleRecord, error) {
+	role, err := r.RoleRecordsUC.Get(ctx, id)
+	if err != nil {
+		return nil, mapDomainError(err)
+	}
+	return mapRoleRecord(role), nil
+}
+
+func roleSearchTopicCommandFromInput(input model.UpsertRoleSearchTopicInput) usecases.UpsertRoleSearchTopicCommand {
+	id := ""
+	if input.ID != nil {
+		id = *input.ID
+	}
+	return usecases.UpsertRoleSearchTopicCommand{
+		ID:               id,
+		Name:             input.Name,
+		TargetTitles:     input.TargetTitles,
+		PreferredStack:   input.PreferredStack,
+		Location:         input.Location,
+		RemotePreference: input.RemotePreference,
+		EmploymentType:   domain.EmploymentType(input.EmploymentType),
+		CompanyType:      domain.RoleCompanyType(input.CompanyType),
+		Compensation:     input.Compensation,
+		Seniority:        domain.RoleSeniority(input.Seniority),
+		Notes:            input.Notes,
+	}
+}
+
+func roleRecordCommandFromInput(input model.RoleRecordInput) (usecases.RoleRecordCommand, error) {
+	metadata, err := mapJSONInput(input.Metadata, `{}`)
+	if err != nil {
+		return usecases.RoleRecordCommand{}, err
+	}
+	sourceKind := domain.RoleSourceOther
+	if input.SourceKind != nil {
+		sourceKind = domain.RoleSourceKind(*input.SourceKind)
+	}
+	providerSource := ""
+	if input.ProviderSource != nil {
+		providerSource = *input.ProviderSource
+	}
+	rawSourceText := ""
+	if input.RawSourceText != nil {
+		rawSourceText = *input.RawSourceText
+	}
+	freshness := domain.RoleFreshnessUnknown
+	if input.FreshnessStatus != nil {
+		freshness = domain.RoleFreshnessStatus(*input.FreshnessStatus)
+	}
+	return usecases.RoleRecordCommand{
+		SearchTopicID:     input.SearchTopicID,
+		Company:           input.Company,
+		Title:             input.Title,
+		PostingURL:        input.PostingURL,
+		Source:            input.Source,
+		SourceKind:        sourceKind,
+		ProviderSource:    providerSource,
+		Description:       input.Description,
+		RawSourceText:     rawSourceText,
+		Location:          input.Location,
+		RemoteEligibility: domain.RoleRemoteEligibility(input.RemoteEligibility),
+		EmploymentType:    domain.EmploymentType(input.EmploymentType),
+		Seniority:         domain.RoleSeniority(input.Seniority),
+		Compensation:      input.Compensation,
+		Stack:             input.Stack,
+		CompanyType:       domain.RoleCompanyType(input.CompanyType),
+		FreshnessStatus:   freshness,
+		Metadata:          metadata,
+	}, nil
+}
+
+func roleRecordFilterFromInput(input *model.RoleRecordsFilterInput) ports.ListRoleRecordsFilter {
+	if input == nil {
+		return ports.ListRoleRecordsFilter{}
+	}
+	filter := ports.ListRoleRecordsFilter{}
+	if input.DecisionStatus != nil {
+		status := domain.RoleDecisionStatus(*input.DecisionStatus)
+		filter.DecisionStatus = &status
+	}
+	if input.FreshnessStatus != nil {
+		status := domain.RoleFreshnessStatus(*input.FreshnessStatus)
+		filter.FreshnessStatus = &status
+	}
+	if input.SourceKind != nil {
+		sourceKind := domain.RoleSourceKind(*input.SourceKind)
+		filter.SourceKind = &sourceKind
+	}
+	if input.SearchTerm != nil {
+		filter.SearchTerm = *input.SearchTerm
+	}
+	return filter
 }
 
 // Mutation returns graph.MutationResolver implementation.

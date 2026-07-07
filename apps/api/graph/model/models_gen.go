@@ -140,6 +140,13 @@ type FollowUpReminder struct {
 	CompletedAt   *string `json:"completedAt,omitempty"`
 }
 
+type ImportedRoleSummary struct {
+	RoleID     string `json:"roleId"`
+	Company    string `json:"company"`
+	Title      string `json:"title"`
+	PostingURL string `json:"postingUrl"`
+}
+
 type Interview struct {
 	ID          string `json:"id"`
 	Type        string `json:"type"`
@@ -172,6 +179,11 @@ type OwnerReference struct {
 	ID   string `json:"id"`
 }
 
+type PromoteRoleResult struct {
+	Role        *RoleRecord     `json:"role"`
+	Application *JobApplication `json:"application"`
+}
+
 type Query struct {
 }
 
@@ -181,11 +193,98 @@ type RecordInterviewOutcomeInput struct {
 	Outcome       string `json:"outcome"`
 }
 
+type RoleRecord struct {
+	ID                    string  `json:"id"`
+	SearchTopicID         *string `json:"searchTopicId,omitempty"`
+	Company               string  `json:"company"`
+	Title                 string  `json:"title"`
+	PostingURL            string  `json:"postingUrl"`
+	Source                string  `json:"source"`
+	SourceKind            string  `json:"sourceKind"`
+	ProviderSource        string  `json:"providerSource"`
+	Description           string  `json:"description"`
+	RawSourceText         string  `json:"rawSourceText"`
+	Location              string  `json:"location"`
+	RemoteEligibility     string  `json:"remoteEligibility"`
+	EmploymentType        string  `json:"employmentType"`
+	Seniority             string  `json:"seniority"`
+	Compensation          string  `json:"compensation"`
+	Stack                 string  `json:"stack"`
+	CompanyType           string  `json:"companyType"`
+	FreshnessStatus       string  `json:"freshnessStatus"`
+	FreshnessCheckedAt    *string `json:"freshnessCheckedAt,omitempty"`
+	DecisionStatus        string  `json:"decisionStatus"`
+	RejectionReason       string  `json:"rejectionReason"`
+	PromotedApplicationID *string `json:"promotedApplicationId,omitempty"`
+	Metadata              string  `json:"metadata"`
+	CreatedAt             string  `json:"createdAt"`
+	UpdatedAt             string  `json:"updatedAt"`
+}
+
+type RoleRecordInput struct {
+	SearchTopicID     *string `json:"searchTopicId,omitempty"`
+	Company           string  `json:"company"`
+	Title             string  `json:"title"`
+	PostingURL        string  `json:"postingUrl"`
+	Source            string  `json:"source"`
+	SourceKind        *string `json:"sourceKind,omitempty"`
+	ProviderSource    *string `json:"providerSource,omitempty"`
+	Description       string  `json:"description"`
+	RawSourceText     *string `json:"rawSourceText,omitempty"`
+	Location          string  `json:"location"`
+	RemoteEligibility string  `json:"remoteEligibility"`
+	EmploymentType    string  `json:"employmentType"`
+	Seniority         string  `json:"seniority"`
+	Compensation      string  `json:"compensation"`
+	Stack             string  `json:"stack"`
+	CompanyType       string  `json:"companyType"`
+	FreshnessStatus   *string `json:"freshnessStatus,omitempty"`
+	Metadata          string  `json:"metadata"`
+}
+
+type RoleRecordsFilterInput struct {
+	DecisionStatus  *string `json:"decisionStatus,omitempty"`
+	FreshnessStatus *string `json:"freshnessStatus,omitempty"`
+	SourceKind      *string `json:"sourceKind,omitempty"`
+	SearchTerm      *string `json:"searchTerm,omitempty"`
+}
+
+type RoleSearchRunResult struct {
+	TopicID       string                 `json:"topicId"`
+	ImportedCount int                    `json:"importedCount"`
+	SkippedCount  int                    `json:"skippedCount"`
+	Imported      []*ImportedRoleSummary `json:"imported"`
+	Skipped       []*SkippedRoleSummary  `json:"skipped"`
+}
+
+type RoleSearchTopic struct {
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	TargetTitles     string `json:"targetTitles"`
+	PreferredStack   string `json:"preferredStack"`
+	Location         string `json:"location"`
+	RemotePreference string `json:"remotePreference"`
+	EmploymentType   string `json:"employmentType"`
+	CompanyType      string `json:"companyType"`
+	Compensation     string `json:"compensation"`
+	Seniority        string `json:"seniority"`
+	Notes            string `json:"notes"`
+	CreatedAt        string `json:"createdAt"`
+	UpdatedAt        string `json:"updatedAt"`
+}
+
 type ScheduleInterviewInput struct {
 	ApplicationID string `json:"applicationId"`
 	Type          string `json:"type"`
 	ScheduledAt   string `json:"scheduledAt"`
 	Notes         string `json:"notes"`
+}
+
+type SkippedRoleSummary struct {
+	Company    string `json:"company"`
+	Title      string `json:"title"`
+	PostingURL string `json:"postingUrl"`
+	Reason     string `json:"reason"`
 }
 
 type TimelineEvent struct {
@@ -214,6 +313,20 @@ type UpdateCandidateProfileInput struct {
 	CompanyPreferences       string `json:"companyPreferences"`
 	WritingTone              string `json:"writingTone"`
 	PositioningSummary       string `json:"positioningSummary"`
+}
+
+type UpsertRoleSearchTopicInput struct {
+	ID               *string `json:"id,omitempty"`
+	Name             string  `json:"name"`
+	TargetTitles     string  `json:"targetTitles"`
+	PreferredStack   string  `json:"preferredStack"`
+	Location         string  `json:"location"`
+	RemotePreference string  `json:"remotePreference"`
+	EmploymentType   string  `json:"employmentType"`
+	CompanyType      string  `json:"companyType"`
+	Compensation     string  `json:"compensation"`
+	Seniority        string  `json:"seniority"`
+	Notes            string  `json:"notes"`
 }
 
 type ApplicationStage string

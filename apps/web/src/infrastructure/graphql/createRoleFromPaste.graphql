@@ -1,0 +1,5 @@
+mutation CreateRoleFromPaste($input: RoleRecordInput!) {
+  createRoleFromPaste(input: $input) {
+    ...RoleRecordFields
+  }
+}

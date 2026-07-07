@@ -1,0 +1,19 @@
+mutation RunRoleSearch($topicId: ID!, $maxRoles: Int) {
+  runRoleSearch(topicId: $topicId, maxRoles: $maxRoles) {
+    topicId
+    importedCount
+    skippedCount
+    imported {
+      roleId
+      company
+      title
+      postingUrl
+    }
+    skipped {
+      company
+      title
+      postingUrl
+      reason
+    }
+  }
+}
