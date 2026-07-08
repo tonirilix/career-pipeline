@@ -29,7 +29,7 @@ The system SHALL hide global navigation on viewports narrower than 768px and ren
 ---
 
 ### Requirement: Sidebar is always visible on desktop
-The system SHALL render global navigation as a persistent sidebar or rail on viewports 768px and wider, with no mobile navigation trigger visible.
+The system SHALL render global navigation as a persistent icon-first rail on viewports 768px and wider, with no mobile navigation trigger visible. The rail SHALL preserve access to each workspace route and the command palette.
 
 #### Scenario: Sidebar is visible on desktop without toggling
 - **WHEN** the viewport is 768px or wider
@@ -42,6 +42,10 @@ The system SHALL render global navigation as a persistent sidebar or rail on vie
 #### Scenario: Desktop sidebar can support icon collapse
 - **WHEN** the viewport is 768px or wider
 - **THEN** global navigation MAY collapse to an icon rail while preserving access to each workspace route
+
+#### Scenario: Desktop rail exposes command palette entry
+- **WHEN** the viewport is 768px or wider
+- **THEN** global navigation SHALL include an icon control that opens the command palette
 
 ---
 

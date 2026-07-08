@@ -34,7 +34,7 @@ The system SHALL treat `/` as an entry point to the pipeline workspace.
 - **THEN** the browser location SHALL be `/pipeline`
 
 ### Requirement: Workspace navigation uses browser history
-The system SHALL update browser history when users navigate among top-level workspaces from the global navigation shell.
+The system SHALL update browser history when users navigate among top-level workspaces from the global navigation shell, route-local UI, or command palette.
 
 #### Scenario: Navigating to memory updates location
 - **WHEN** the user activates the Memory workspace navigation item
@@ -51,6 +51,11 @@ The system SHALL update browser history when users navigate among top-level work
 #### Scenario: Navigation item active state follows route
 - **WHEN** the user opens `/roles`
 - **THEN** the global navigation shell SHALL present Roles as the active workspace route
+
+#### Scenario: Command navigation updates location
+- **WHEN** the user navigates to `/memory` using the command palette
+- **THEN** the browser location SHALL be `/memory`
+- **AND** browser Back SHALL return to the previous workspace
 
 ### Requirement: Unknown workspace routes fail safely
 The system SHALL handle unknown client routes without rendering an incorrect workspace as active.
