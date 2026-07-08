@@ -1,5 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import {
+  createMemoryHistory,
+  RouterContextProvider,
+  RouterProvider
+} from "@tanstack/react-router";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -19,6 +24,7 @@ import {
   useZustandPipelineControlsStore
 } from "../infrastructure/zustand/pipelineControlsStore";
 import { App } from "./App";
+import { createAppRouter } from "./router";
 
 function createApplication(
   application: Partial<JobApplication> &
@@ -229,21 +235,64 @@ function getStatValue(label: string) {
 function renderApp(
   gateway = createJobApplicationGraphqlGateway(),
   candidateContextGateway = createCandidateContextGateway(),
-  roleDiscoveryGateway = createRoleDiscoveryGateway()
+  roleDiscoveryGateway = createRoleDiscoveryGateway(),
+  initialPath = "/pipeline"
 ) {
   resetZustandPipelineControlsStore();
   const queryClient = createWebQueryClient();
+  const history = createMemoryHistory({ initialEntries: [initialPath] });
+  const router = createAppRouter({
+    history,
+    context: {
+      candidateContextGateway,
+      gateway,
+      roleDiscoveryGateway,
+      usePipelineControls: useZustandPipelineControlsStore
+    }
+  });
 
-  return render(
+  const rendered = render(
     <QueryClientProvider client={queryClient}>
-      <App
-        candidateContextGateway={candidateContextGateway}
-        gateway={gateway}
-        roleDiscoveryGateway={roleDiscoveryGateway}
-        usePipelineControls={useZustandPipelineControlsStore}
-      />
+      <RouterContextProvider router={router}>
+        <App
+          candidateContextGateway={candidateContextGateway}
+          gateway={gateway}
+          roleDiscoveryGateway={roleDiscoveryGateway}
+          usePipelineControls={useZustandPipelineControlsStore}
+        />
+      </RouterContextProvider>
     </QueryClientProvider>
   );
+
+  return { ...rendered, router };
+}
+
+function renderRoutedApp(
+  gateway = createJobApplicationGraphqlGateway(),
+  candidateContextGateway = createCandidateContextGateway(),
+  roleDiscoveryGateway = createRoleDiscoveryGateway(),
+  initialPath = "/pipeline"
+) {
+  resetZustandPipelineControlsStore();
+  const queryClient = createWebQueryClient();
+  const history = createMemoryHistory({ initialEntries: [initialPath] });
+  const router = createAppRouter({
+    history,
+    context: {
+      candidateContextGateway,
+      gateway,
+      roleDiscoveryGateway,
+      usePipelineControls: useZustandPipelineControlsStore
+    }
+  });
+
+  const rendered = render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
+
+  return { ...rendered, router };
 }
 
 async function openDetailsSection(
@@ -264,6 +313,101 @@ async function clickFormSubmit(
 }
 
 describe("Job application tracker shell", () => {
+  it("renders the pipeline workspace from a direct route", async () => {
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+
+    expect(
+      await screen.findByRole("region", { name: "Application pipeline" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Pipeline/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the candidate memory workspace from a direct route", async () => {
+    renderApp(createGateway(), undefined, undefined, "/memory");
+
+    expect(await screen.findByLabelText("Target roles")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Memory/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the role discovery workspace from a direct route", async () => {
+    renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
+
+    expect(await screen.findByText("Find possible jobs")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Roles/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("lands on the pipeline workspace from the root route", async () => {
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/");
+
+    expect(
+      await screen.findByRole("region", { name: "Application pipeline" })
+    ).toBeInTheDocument();
+  });
+
+  it("updates browser history when navigating between workspaces", async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+    await screen.findByLabelText("Target roles");
+    expect(router.history.location.pathname).toBe("/memory");
+
+    await user.click(screen.getByRole("button", { name: /Roles/ }));
+    await screen.findByText("Find possible jobs");
+    expect(router.history.location.pathname).toBe("/roles");
+
+    await user.click(screen.getByRole("button", { name: /Pipeline/ }));
+    await screen.findByRole("region", { name: "Application pipeline" });
+    expect(router.history.location.pathname).toBe("/pipeline");
+  });
+
+  it("returns to the previous workspace through browser history", async () => {
+    const user = userEvent.setup();
+    const { router } = renderRoutedApp(
+      createReadOnlyGateway([]),
+      undefined,
+      undefined,
+      "/pipeline"
+    );
+
+    await screen.findByRole("region", { name: "Application pipeline" });
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+    await screen.findByLabelText("Target roles");
+
+    await act(async () => {
+      router.history.back();
+    });
+
+    expect(
+      await screen.findByRole("region", { name: "Application pipeline" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows a safe not-found state for unsupported routes", async () => {
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/unknown");
+
+    expect(await screen.findByText("Workspace not found.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Pipeline/ })).not.toHaveAttribute(
+      "aria-current"
+    );
+    expect(screen.getByRole("button", { name: /Memory/ })).not.toHaveAttribute(
+      "aria-current"
+    );
+    expect(screen.getByRole("button", { name: /Roles/ })).not.toHaveAttribute(
+      "aria-current"
+    );
+  });
+
   it("shows details workspace navigation counts while keeping the application summary visible", async () => {
     const user = userEvent.setup();
     const application = createApplication({

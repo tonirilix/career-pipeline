@@ -1,4 +1,5 @@
 import { type FormEvent, lazy, Suspense, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Briefcase, Database, Plus, Search } from "lucide-react";
 
 import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
@@ -38,6 +39,23 @@ type AppProps = {
 };
 
 type Workspace = "pipeline" | "memory" | "roles";
+type WorkspaceRoute = Workspace | "not-found";
+
+function workspaceFromPathname(pathname: string): WorkspaceRoute {
+  if (pathname === "/" || pathname === "/pipeline") {
+    return "pipeline";
+  }
+
+  if (pathname === "/memory") {
+    return "memory";
+  }
+
+  if (pathname === "/roles") {
+    return "roles";
+  }
+
+  return "not-found";
+}
 
 export function App({
   candidateContextGateway,
@@ -47,8 +65,15 @@ export function App({
 }: AppProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeWorkspace, setActiveWorkspace] = useState<Workspace>("pipeline");
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeWorkspace = workspaceFromPathname(pathname);
+  const navigate = useNavigate();
   const workspace = usePipelineWorkspace(gateway, usePipelineControls);
+
+  function navigateToWorkspace(workspaceRoute: Workspace) {
+    void navigate({ to: `/${workspaceRoute}` });
+    setIsSidebarOpen(false);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const didSubmit = await workspace.submitOpportunity(event);
@@ -80,7 +105,8 @@ export function App({
             <Button
               type="button"
               variant={activeWorkspace === "pipeline" ? "default" : "outline"}
-              onClick={() => setActiveWorkspace("pipeline")}
+              onClick={() => navigateToWorkspace("pipeline")}
+              aria-current={activeWorkspace === "pipeline" ? "page" : undefined}
               className="rounded-none"
             >
               <Briefcase className="h-4 w-4" aria-hidden="true" />
@@ -89,7 +115,8 @@ export function App({
             <Button
               type="button"
               variant={activeWorkspace === "memory" ? "default" : "outline"}
-              onClick={() => setActiveWorkspace("memory")}
+              onClick={() => navigateToWorkspace("memory")}
+              aria-current={activeWorkspace === "memory" ? "page" : undefined}
               className="rounded-none"
             >
               <Database className="h-4 w-4" aria-hidden="true" />
@@ -98,7 +125,8 @@ export function App({
             <Button
               type="button"
               variant={activeWorkspace === "roles" ? "default" : "outline"}
-              onClick={() => setActiveWorkspace("roles")}
+              onClick={() => navigateToWorkspace("roles")}
+              aria-current={activeWorkspace === "roles" ? "page" : undefined}
               className="rounded-none"
             >
               <Search className="h-4 w-4" aria-hidden="true" />
@@ -185,10 +213,17 @@ export function App({
               <Suspense fallback={null}>
                 <CandidateMemoryWorkspace gateway={candidateContextGateway} />
               </Suspense>
-            ) : (
+            ) : activeWorkspace === "roles" ? (
               <Suspense fallback={null}>
                 <RoleDiscoveryWorkspace gateway={roleDiscoveryGateway} />
               </Suspense>
+            ) : (
+              <div
+                role="status"
+                className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+              >
+                Workspace not found.
+              </div>
             )}
           </div>
         </div>
