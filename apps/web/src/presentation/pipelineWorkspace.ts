@@ -18,6 +18,10 @@ import type {
 } from "../domain/interviewScheduling";
 import type { DetailsCommandError } from "./components/ApplicationDetails";
 import { projectJobApplications } from "./jobApplicationProjections";
+import {
+  getPipelineSavedViewLabel,
+  type PipelineSavedView
+} from "./pipelineSavedViews";
 import type { UsePipelineControls } from "./ports/pipelineControls";
 import { useJobApplications } from "./useJobApplications";
 export type { CommandStatus } from "./useJobApplications";
@@ -50,6 +54,7 @@ export function usePipelineWorkspace(
   const [detailsCommandError, setDetailsCommandError] =
     useState<DetailsCommandError | null>(null);
   const [form, setForm] = useState<CreateSavedJobOpportunityCommand>(emptyForm);
+  const [savedView, setSavedView] = useState<PipelineSavedView>("all");
 
   const controls = usePipelineControls();
 
@@ -59,6 +64,7 @@ export function usePipelineWorkspace(
     activeApplicationCount,
     overdueFollowUpItems,
     selectedApplication,
+    savedViewCounts,
     stageCounts,
     upcomingFollowUpItems,
     visibleApplications
@@ -68,10 +74,12 @@ export function usePipelineWorkspace(
         applications,
         controls,
         now: Date.now(),
-        selectedApplicationId
+        selectedApplicationId,
+        savedView
       }),
     [
       applications,
+      savedView,
       controls.searchTerm,
       controls.sortBy,
       controls.sourceFilter,
@@ -99,6 +107,13 @@ export function usePipelineWorkspace(
       setFormCommandError("Could not save the opportunity. Try again.");
       return false;
     }
+  }
+
+  function clearFilters() {
+    controls.setSearchTerm("");
+    controls.setStageFilter("All");
+    controls.setSourceFilter("All");
+    controls.setSortBy("created");
   }
 
   function clearOpportunityFormErrors() {
@@ -197,6 +212,7 @@ export function usePipelineWorkspace(
     addNoteStatus: jobApps.addNoteStatus,
     changeStage,
     changingStageApplicationIds: jobApps.changingStageApplicationIds,
+    clearFilters,
     clearOpportunityFormErrors,
     closeDetails,
     commandError: commandError ?? loadCommandError(jobApps.isLoadError),
@@ -216,6 +232,10 @@ export function usePipelineWorkspace(
     scheduleInterviewStatus: jobApps.scheduleInterviewStatus,
     selectedApplication,
     selectedApplicationId,
+    savedView,
+    savedViewCounts,
+    savedViewLabel: getPipelineSavedViewLabel(savedView),
+    setSavedView,
     setForm,
     stageCounts,
     submitOpportunity,

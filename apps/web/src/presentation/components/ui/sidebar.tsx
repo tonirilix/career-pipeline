@@ -108,7 +108,7 @@ export function Sidebar({ className, children, ...props }: ComponentProps<"nav">
 export function SidebarHeader({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
-      className={cn("border-b border-border px-3 py-4", className)}
+      className={cn("border-b border-border px-3 py-3", className)}
       {...props}
     />
   );
@@ -231,5 +231,25 @@ export function SidebarRail({ className, ...props }: ComponentProps<"button">) {
         <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
       )}
     </button>
+  );
+}
+
+export function SidebarIconButton({
+  className,
+  isActive = false,
+  ...props
+}: SidebarMenuButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-current={isActive ? "page" : undefined}
+      data-active={isActive}
+      className={cn(
+        "flex min-h-10 min-w-10 items-center justify-center border border-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        isActive && "border-border bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+        className
+      )}
+      {...props}
+    />
   );
 }

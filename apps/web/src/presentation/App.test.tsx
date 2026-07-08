@@ -458,6 +458,8 @@ describe("Job application tracker shell", () => {
   });
 
   it("renders pipeline controls as Pipeline workspace-local tools", async () => {
+    const user = userEvent.setup();
+
     renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     const main = screen.getByRole("main");
@@ -466,12 +468,81 @@ describe("Job application tracker shell", () => {
       within(main).getByRole("button", { name: "Add opportunity" })
     ).toBeInTheDocument();
     expect(
+      within(main).getByRole("region", { name: "Pipeline view options" })
+    ).toBeInTheDocument();
+    expect(
+      within(main).queryByRole("region", { name: "Pipeline controls" })
+    ).not.toBeInTheDocument();
+
+    await user.click(within(main).getByRole("button", { name: "View options" }));
+
+    expect(
       within(main).getByRole("region", { name: "Pipeline controls" })
     ).toBeInTheDocument();
     expect(
-      within(main).getByRole("region", { name: "Follow-up work" })
-    ).toBeInTheDocument();
+      within(main).queryByRole("region", { name: "Follow-up work" })
+    ).not.toBeInTheDocument();
     expect(getStatValue("Active")).toBeInTheDocument();
+  });
+
+  it("renders collapsible Pipeline saved views as secondary navigation", async () => {
+    const user = userEvent.setup();
+
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+
+    expect(
+      screen.getByRole("navigation", { name: "Pipeline saved views" })
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Collapse secondary navigation" })
+    );
+
+    expect(
+      screen.queryByRole("navigation", { name: "Pipeline saved views" })
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Expand secondary navigation" })
+    );
+
+    expect(
+      screen.getByRole("navigation", { name: "Pipeline saved views" })
+    ).toBeInTheDocument();
+  });
+
+  it("opens a command palette from global navigation and runs workspace commands", async () => {
+    const user = userEvent.setup();
+
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Command palette" });
+    expect(within(dialog).getByText("Navigation")).toBeInTheDocument();
+    expect(within(dialog).getByText("Pipeline")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Go to Memory" }));
+
+    expect(await screen.findByLabelText("Target roles")).toBeInTheDocument();
+  });
+
+  it("opens the add opportunity flow from the command palette", async () => {
+    const user = userEvent.setup();
+
+    renderApp(createGateway(), undefined, undefined, "/memory");
+
+    await user.click(screen.getByRole("button", { name: "Open command palette" }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Command palette" })).getByRole(
+        "button",
+        { name: "Add opportunity" }
+      )
+    );
+
+    expect(
+      await screen.findByRole("dialog", { name: "Add opportunity" })
+    ).toBeInTheDocument();
   });
 
   it("does not render pipeline-only controls in the Memory workspace", async () => {
@@ -955,6 +1026,7 @@ describe("Job application tracker shell", () => {
     await user.click(within(funnel).getByRole("button", { name: /^Applied/ }));
 
     // The pipeline controls dropdown should reflect the filter
+    await user.click(screen.getByRole("button", { name: "View options" }));
     expect(screen.getByLabelText("Filter by stage")).toHaveValue("Applied");
   });
 
@@ -971,6 +1043,7 @@ describe("Job application tracker shell", () => {
     // Second click: use aria-pressed to target the header button, not the clear badge
     await user.click(within(funnel).getByRole("button", { pressed: true, name: /^Applied/ }));
 
+    await user.click(screen.getByRole("button", { name: "View options" }));
     expect(screen.getByLabelText("Filter by stage")).toHaveValue("All");
   });
 
@@ -1579,6 +1652,8 @@ describe("Job application tracker shell", () => {
     );
     await clickFormSubmit(user, detail, "Create follow-up");
 
+    await user.click(screen.getByRole("button", { name: /Needs attention/ }));
+
     const followUpWork = screen.getByRole("region", { name: "Follow-up work" });
     const upcoming = within(followUpWork).getByRole("list", {
       name: "Upcoming follow-ups"
@@ -1858,6 +1933,7 @@ describe("Job application tracker shell", () => {
       await screen.findByRole("button", { name: "Mark Linear as applied" })
     );
 
+    await user.click(screen.getByRole("button", { name: "View options" }));
     await user.selectOptions(screen.getByLabelText("Filter by stage"), "Applied");
 
     const board = screen.getByRole("region", { name: "Application pipeline" });
@@ -1891,6 +1967,7 @@ describe("Job application tracker shell", () => {
     );
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
 
+    await user.click(screen.getByRole("button", { name: "View options" }));
     await user.selectOptions(screen.getByLabelText("Filter by source"), "Referral");
 
     const board = screen.getByRole("region", { name: "Application pipeline" });
@@ -1925,6 +2002,7 @@ describe("Job application tracker shell", () => {
     await user.click(screen.getByRole("button", { name: "Save opportunity" }));
     expect(await within(getStageColumn("Saved")).findByText("Vercel")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "View options" }));
     await user.type(screen.getByLabelText("Search applications"), "frontend");
 
     const board = screen.getByRole("region", { name: "Application pipeline" });
@@ -1972,6 +2050,7 @@ describe("Job application tracker shell", () => {
     );
     await screen.findByRole("heading", { name: "Linear" });
 
+    await user.click(screen.getByRole("button", { name: "View options" }));
     await user.selectOptions(
       screen.getByLabelText("Sort applications"),
       "lastActivity"
@@ -2027,6 +2106,7 @@ describe("Job application tracker shell", () => {
     );
     await screen.findByRole("heading", { name: "Linear" });
 
+    await user.click(screen.getByRole("button", { name: "View options" }));
     await user.selectOptions(
       screen.getByLabelText("Sort applications"),
       "followUpDate"

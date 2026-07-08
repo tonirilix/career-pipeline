@@ -1,4 +1,4 @@
-import { type FormEvent, lazy, Suspense, useState } from "react";
+import { type FormEvent, lazy, Suspense, useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
@@ -10,10 +10,12 @@ import { ApplicationDetails } from "./components/ApplicationDetails";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
-import { PipelineControls } from "./components/PipelineControls";
 import { FunnelChart } from "./components/FunnelChart";
 import { StatsBar } from "./components/StatsBar";
 import { AppSidebar } from "./components/AppSidebar";
+import { AppCommandPalette } from "./components/AppCommandPalette";
+import { PipelineSavedViews } from "./components/PipelineSavedViews";
+import { PipelineViewOptions } from "./components/PipelineViewOptions";
 import { WorkspaceShell } from "./components/WorkspaceShell";
 import { Button } from "./components/ui/button";
 import { ErrorNotice } from "./components/ui/error-notice";
@@ -70,6 +72,8 @@ export function App({
   usePipelineControls
 }: AppProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const activeWorkspace = workspaceFromPathname(pathname);
   const workspace = usePipelineWorkspace(gateway, usePipelineControls);
@@ -81,9 +85,25 @@ export function App({
     }
   }
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setIsCommandOpen(true);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <SidebarProvider>
-      <AppSidebar activeWorkspace={activeWorkspace} />
+    <SidebarProvider defaultCollapsed>
+      <AppSidebar
+        activeWorkspace={activeWorkspace}
+        onOpenCommand={() => setIsCommandOpen(true)}
+      />
       <SidebarInset>
       <main className="flex h-screen flex-col overflow-auto">
         {/* Mobile top bar */}
@@ -116,7 +136,10 @@ export function App({
                   />
                 }
                 tools={
-                  <PipelineControls
+                  <PipelineViewOptions
+                    isOpen={isViewOptionsOpen}
+                    onClearFilters={workspace.clearFilters}
+                    onToggle={() => setIsViewOptionsOpen((isOpen) => !isOpen)}
                     searchTerm={workspace.searchTerm}
                     setSearchTerm={workspace.setSearchTerm}
                     setSortBy={workspace.setSortBy}
@@ -127,6 +150,14 @@ export function App({
                     stageFilter={workspace.stageFilter}
                   />
                 }
+                secondaryNavigation={
+                  <PipelineSavedViews
+                    activeView={workspace.savedView}
+                    counts={workspace.savedViewCounts}
+                    onSelectView={workspace.setSavedView}
+                  />
+                }
+                secondaryNavigationLabel="Pipeline saved views"
               >
                 {workspace.commandError ? (
                   <ErrorNotice
@@ -142,6 +173,13 @@ export function App({
                   onStageClick={workspace.setStageFilter}
                 />
 
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="border border-border bg-card px-2 py-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    {workspace.savedViewLabel}
+                  </span>
+                </div>
+
+                {workspace.savedView === "needs-attention" ? (
                 <div className="mt-4">
                   <FollowUpWork
                     completingFollowUpReminderIds={workspace.completingFollowUpReminderIds}
@@ -150,6 +188,7 @@ export function App({
                     upcomingItems={workspace.upcomingFollowUpItems}
                   />
                 </div>
+                ) : null}
 
                 <div className="mt-6" />
 
@@ -220,6 +259,20 @@ export function App({
           onSubmit={handleSubmit}
         />
       </SlideOver>
+
+      <AppCommandPalette
+        isOpen={isCommandOpen}
+        onClearPipelineFilters={workspace.clearFilters}
+        onClose={() => setIsCommandOpen(false)}
+        onOpenOpportunityForm={() => {
+          workspace.clearOpportunityFormErrors();
+          setIsFormOpen(true);
+        }}
+        onSelectPipelineView={workspace.setSavedView}
+        setPipelineSortBy={workspace.setSortBy}
+        setPipelineSourceFilter={workspace.setSourceFilter}
+        setPipelineStageFilter={workspace.setStageFilter}
+      />
 
       <SlideOver
         isOpen={!!workspace.selectedApplicationId}

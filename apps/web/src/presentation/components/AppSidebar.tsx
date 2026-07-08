@@ -1,14 +1,13 @@
-import { Briefcase, Database, Search } from "lucide-react";
+import { Briefcase, Command, Database, Search } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarIconButton,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuLabel,
   SidebarRail,
   useSidebar
 } from "./ui/sidebar";
@@ -17,6 +16,7 @@ type Workspace = "pipeline" | "memory" | "roles";
 
 type AppSidebarProps = {
   activeWorkspace: Workspace | "not-found";
+  onOpenCommand: () => void;
 };
 
 const navItems = [
@@ -37,9 +37,9 @@ const navItems = [
   }
 ] as const;
 
-export function AppSidebar({ activeWorkspace }: AppSidebarProps) {
+export function AppSidebar({ activeWorkspace, onOpenCommand }: AppSidebarProps) {
   const navigate = useNavigate();
-  const { setIsMobileOpen } = useSidebar();
+  const { isCollapsed, setIsMobileOpen } = useSidebar();
 
   function navigateToWorkspace(workspace: Workspace) {
     setIsMobileOpen(false);
@@ -48,34 +48,49 @@ export function AppSidebar({ activeWorkspace }: AppSidebarProps) {
 
   return (
     <Sidebar>
-      <SidebarHeader>
-        <p className="m-0 mb-0.5 text-xs uppercase tracking-widest text-muted-foreground">
-          Career OS
+      <SidebarHeader className={isCollapsed ? "md:px-2" : undefined}>
+        <p className="m-0 mb-0.5 text-center text-xs uppercase tracking-widest text-muted-foreground md:sr-only">
+          OS
         </p>
-        <h1 className="m-0 text-lg font-bold leading-tight text-foreground">
+        <h1 className="m-0 text-center text-sm font-bold leading-tight text-foreground md:sr-only">
           Career Pipeline
         </h1>
       </SidebarHeader>
 
       <SidebarContent>
-        <nav aria-label="Workspace navigation">
-          <SidebarMenu>
+        <nav aria-label="Workspace navigation" className="grid justify-center">
+          <SidebarMenu className="w-10">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeWorkspace === item.route;
 
               return (
                 <SidebarMenuItem key={item.route}>
-                  <SidebarMenuButton
+                  <SidebarIconButton
+                    aria-label={item.label}
+                    title={item.label}
                     isActive={isActive}
                     onClick={() => navigateToWorkspace(item.route)}
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <SidebarMenuLabel>{item.label}</SidebarMenuLabel>
-                  </SidebarMenuButton>
+                    <span className="sr-only">{item.label}</span>
+                  </SidebarIconButton>
                 </SidebarMenuItem>
               );
             })}
+            <SidebarMenuItem>
+              <SidebarIconButton
+                aria-label="Open command palette"
+                title="Open command palette"
+                onClick={() => {
+                  setIsMobileOpen(false);
+                  onOpenCommand();
+                }}
+              >
+                <Command className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="sr-only">Open command palette</span>
+              </SidebarIconButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </nav>
       </SidebarContent>

@@ -5,6 +5,7 @@ import {
   type JobApplicationProjectionControls,
   projectJobApplications
 } from "./jobApplicationProjections";
+import type { PipelineSavedView } from "./pipelineSavedViews";
 
 const now = new Date("2026-05-10T12:00:00.000Z").getTime();
 
@@ -45,16 +46,19 @@ function createApplication(
 function project({
   applications,
   controls = {},
+  savedView,
   selectedApplicationId = null
 }: {
   applications: JobApplication[];
   controls?: Partial<JobApplicationProjectionControls>;
+  savedView?: PipelineSavedView;
   selectedApplicationId?: string | null;
 }) {
   return projectJobApplications({
     applications,
     controls: { ...defaultControls, ...controls },
     now,
+    savedView,
     selectedApplicationId
   });
 }
@@ -142,6 +146,96 @@ describe("projectJobApplications", () => {
         }
       }).visibleApplications.map(({ company }) => company)
     ).toEqual(["Orbit"]);
+  });
+
+  it("applies each pipeline saved view to visible applications and counts", () => {
+    const applications = [
+      createApplication({
+        id: "saved",
+        company: "Saved Co",
+        roleTitle: "Frontend Engineer",
+        stage: "Saved"
+      }),
+      createApplication({
+        id: "screening",
+        company: "Screening Co",
+        roleTitle: "Platform Engineer",
+        stage: "Screening"
+      }),
+      createApplication({
+        id: "technical",
+        company: "Technical Co",
+        roleTitle: "Product Engineer",
+        stage: "Technical interview",
+        followUps: [
+          {
+            id: "technical-follow-up",
+            applicationId: "technical",
+            dueAt: "2026-05-11T09:00:00.000Z",
+            note: "Send architecture notes",
+            completedAt: null
+          }
+        ]
+      }),
+      createApplication({
+        id: "offer",
+        company: "Offer Co",
+        roleTitle: "Staff Engineer",
+        stage: "Offer"
+      }),
+      createApplication({
+        id: "rejected",
+        company: "Rejected Co",
+        roleTitle: "Backend Engineer",
+        stage: "Rejected"
+      }),
+      createApplication({
+        id: "withdrawn",
+        company: "Withdrawn Co",
+        roleTitle: "Design Engineer",
+        stage: "Withdrawn"
+      })
+    ];
+
+    expect(
+      project({ applications, savedView: "needs-attention" })
+        .visibleApplications.map(({ company }) => company)
+    ).toEqual(["Technical Co"]);
+    expect(
+      project({ applications, savedView: "active" })
+        .visibleApplications.map(({ company }) => company)
+    ).toEqual(["Saved Co", "Screening Co", "Technical Co", "Offer Co"]);
+    expect(
+      project({ applications, savedView: "interviewing" })
+        .visibleApplications.map(({ company }) => company)
+    ).toEqual(["Screening Co", "Technical Co"]);
+    expect(
+      project({ applications, savedView: "offers" })
+        .visibleApplications.map(({ company }) => company)
+    ).toEqual(["Offer Co"]);
+    expect(
+      project({ applications, savedView: "closed" })
+        .visibleApplications.map(({ company }) => company)
+    ).toEqual(["Rejected Co", "Withdrawn Co"]);
+    expect(
+      project({ applications, savedView: "all" })
+        .visibleApplications.map(({ company }) => company)
+    ).toEqual([
+      "Saved Co",
+      "Screening Co",
+      "Technical Co",
+      "Offer Co",
+      "Rejected Co",
+      "Withdrawn Co"
+    ]);
+    expect(project({ applications }).savedViewCounts).toEqual({
+      "needs-attention": 1,
+      active: 4,
+      interviewing: 2,
+      offers: 1,
+      closed: 2,
+      all: 6
+    });
   });
 
   it("sorts by created order, last activity, and active follow-up date", () => {
