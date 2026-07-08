@@ -1,11 +1,4 @@
-# Responsive Sidebar
-
-## Purpose
-Defines the responsive behaviour of global application navigation: hidden by default on mobile and revealed via a trigger-controlled drawer overlay, while remaining a persistent sidebar or rail on desktop.
-
----
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Sidebar is hidden by default on mobile and revealed via a drawer
 The system SHALL hide global navigation on viewports narrower than 768px and render a navigation trigger in a top bar that opens global navigation as a full-height drawer overlay.
@@ -26,10 +19,8 @@ The system SHALL hide global navigation on viewports narrower than 768px and ren
 - **WHEN** the global navigation drawer is open and the user taps outside it
 - **THEN** the drawer SHALL close
 
----
-
 ### Requirement: Sidebar is always visible on desktop
-The system SHALL render global navigation as a persistent sidebar or rail on viewports 768px and wider, with no mobile navigation trigger visible.
+The system SHALL render global navigation as a persistent icon-first rail on viewports 768px and wider, with no mobile navigation trigger visible. The rail SHALL preserve access to each workspace route and the command palette.
 
 #### Scenario: Sidebar is visible on desktop without toggling
 - **WHEN** the viewport is 768px or wider
@@ -43,7 +34,9 @@ The system SHALL render global navigation as a persistent sidebar or rail on vie
 - **WHEN** the viewport is 768px or wider
 - **THEN** global navigation MAY collapse to an icon rail while preserving access to each workspace route
 
----
+#### Scenario: Desktop rail exposes command palette entry
+- **WHEN** the viewport is 768px or wider
+- **THEN** global navigation SHALL include an icon control that opens the command palette
 
 ### Requirement: Drawer close button meets minimum touch target size
 The system SHALL render a close button inside the mobile drawer with a minimum touch target size of 44×44px.
