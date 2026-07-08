@@ -317,6 +317,9 @@ describe("Job application tracker shell", () => {
     renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     expect(
+      screen.getByRole("heading", { name: "Pipeline" })
+    ).toBeInTheDocument();
+    expect(
       await screen.findByRole("region", { name: "Application pipeline" })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Pipeline/ })).toHaveAttribute(
@@ -328,6 +331,7 @@ describe("Job application tracker shell", () => {
   it("renders the candidate memory workspace from a direct route", async () => {
     renderApp(createGateway(), undefined, undefined, "/memory");
 
+    expect(screen.getByRole("heading", { name: "Memory" })).toBeInTheDocument();
     expect(await screen.findByLabelText("Target roles")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Memory/ })).toHaveAttribute(
       "aria-current",
@@ -338,6 +342,7 @@ describe("Job application tracker shell", () => {
   it("renders the role discovery workspace from a direct route", async () => {
     renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
 
+    expect(screen.getByRole("heading", { name: "Roles" })).toBeInTheDocument();
     expect(await screen.findByText("Find possible jobs")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Roles/ })).toHaveAttribute(
       "aria-current",
@@ -368,6 +373,23 @@ describe("Job application tracker shell", () => {
     await user.click(screen.getByRole("button", { name: /Pipeline/ }));
     await screen.findByRole("region", { name: "Application pipeline" });
     expect(router.history.location.pathname).toBe("/pipeline");
+  });
+
+  it("closes mobile global navigation after route navigation", async () => {
+    const user = userEvent.setup();
+    renderApp(createGateway(), undefined, undefined, "/pipeline");
+
+    await user.click(screen.getByRole("button", { name: "Open navigation" }));
+    expect(screen.getAllByRole("button", { name: "Close navigation" }).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Memory/ }));
+    await screen.findByLabelText("Target roles");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Close navigation" })
+      ).not.toBeInTheDocument()
+    );
   });
 
   it("returns to the previous workspace through browser history", async () => {
@@ -406,6 +428,78 @@ describe("Job application tracker shell", () => {
     expect(screen.getByRole("button", { name: /Roles/ })).not.toHaveAttribute(
       "aria-current"
     );
+  });
+
+  it("keeps global navigation focused on workspace routes", async () => {
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+
+    const globalNavigation = screen.getByRole("navigation", {
+      name: "Global navigation"
+    });
+
+    expect(
+      within(globalNavigation).getByRole("button", { name: /Pipeline/ })
+    ).toBeInTheDocument();
+    expect(
+      within(globalNavigation).getByRole("button", { name: /Memory/ })
+    ).toBeInTheDocument();
+    expect(
+      within(globalNavigation).getByRole("button", { name: /Roles/ })
+    ).toBeInTheDocument();
+    expect(
+      within(globalNavigation).queryByRole("button", { name: "Add opportunity" })
+    ).not.toBeInTheDocument();
+    expect(
+      within(globalNavigation).queryByRole("region", { name: "Pipeline controls" })
+    ).not.toBeInTheDocument();
+    expect(
+      within(globalNavigation).queryByRole("region", { name: "Follow-up work" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders pipeline controls as Pipeline workspace-local tools", async () => {
+    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+
+    const main = screen.getByRole("main");
+
+    expect(
+      within(main).getByRole("button", { name: "Add opportunity" })
+    ).toBeInTheDocument();
+    expect(
+      within(main).getByRole("region", { name: "Pipeline controls" })
+    ).toBeInTheDocument();
+    expect(
+      within(main).getByRole("region", { name: "Follow-up work" })
+    ).toBeInTheDocument();
+    expect(getStatValue("Active")).toBeInTheDocument();
+  });
+
+  it("does not render pipeline-only controls in the Memory workspace", async () => {
+    renderApp(createGateway(), undefined, undefined, "/memory");
+
+    await screen.findByLabelText("Target roles");
+
+    expect(screen.queryByRole("button", { name: "Add opportunity" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Pipeline controls" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Follow-up work" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not render pipeline-only controls in the Roles workspace", async () => {
+    renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
+
+    await screen.findByText("Find possible jobs");
+
+    expect(screen.queryByRole("button", { name: "Add opportunity" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Pipeline controls" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Follow-up work" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows details workspace navigation counts while keeping the application summary visible", async () => {
