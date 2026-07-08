@@ -20,6 +20,7 @@ import { WorkspaceShell } from "./components/WorkspaceShell";
 import { Button } from "./components/ui/button";
 import { ErrorNotice } from "./components/ui/error-notice";
 import {
+  SecondarySidebar,
   SidebarInset,
   SidebarProvider,
   SidebarTrigger
@@ -74,6 +75,7 @@ export function App({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
+  const [isSecondaryNavOpen, setIsSecondaryNavOpen] = useState(true);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const activeWorkspace = workspaceFromPathname(pathname);
   const workspace = usePipelineWorkspace(gateway, usePipelineControls);
@@ -104,6 +106,20 @@ export function App({
         activeWorkspace={activeWorkspace}
         onOpenCommand={() => setIsCommandOpen(true)}
       />
+      {activeWorkspace === "pipeline" ? (
+        <SecondarySidebar
+          label="Pipeline saved views"
+          title="Views"
+          isOpen={isSecondaryNavOpen}
+          onOpenChange={setIsSecondaryNavOpen}
+        >
+          <PipelineSavedViews
+            activeView={workspace.savedView}
+            counts={workspace.savedViewCounts}
+            onSelectView={workspace.setSavedView}
+          />
+        </SecondarySidebar>
+      ) : null}
       <SidebarInset>
       <main className="flex h-screen flex-col overflow-auto">
         {/* Mobile top bar */}
@@ -150,14 +166,6 @@ export function App({
                     stageFilter={workspace.stageFilter}
                   />
                 }
-                secondaryNavigation={
-                  <PipelineSavedViews
-                    activeView={workspace.savedView}
-                    counts={workspace.savedViewCounts}
-                    onSelectView={workspace.setSavedView}
-                  />
-                }
-                secondaryNavigationLabel="Pipeline saved views"
               >
                 {workspace.commandError ? (
                   <ErrorNotice

@@ -1,5 +1,7 @@
-import { Briefcase, Command, Database, Search } from "lucide-react";
+import { Briefcase, Command, Database, LayoutGrid, Search } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+
+import { cn } from "@/lib/utils";
 
 import {
   Sidebar,
@@ -48,13 +50,29 @@ export function AppSidebar({ activeWorkspace, onOpenCommand }: AppSidebarProps) 
 
   return (
     <Sidebar>
-      <SidebarHeader className={isCollapsed ? "md:px-2" : undefined}>
-        <p className="m-0 mb-0.5 text-center text-xs uppercase tracking-widest text-muted-foreground md:sr-only">
-          OS
-        </p>
-        <h1 className="m-0 text-center text-sm font-bold leading-tight text-foreground md:sr-only">
-          Career Pipeline
-        </h1>
+      <SidebarHeader
+        className={cn(
+          "flex items-center justify-center",
+          isCollapsed && "md:px-2 md:py-2"
+        )}
+      >
+        <div
+          className={cn(
+            "hidden items-center justify-center border border-border bg-primary text-primary-foreground",
+            isCollapsed ? "md:flex md:min-h-10 md:min-w-10" : "md:hidden"
+          )}
+          aria-hidden="true"
+        >
+          <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <div className={cn(isCollapsed && "md:sr-only")}>
+          <p className="m-0 mb-0.5 text-center text-xs uppercase tracking-widest text-muted-foreground">
+            OS
+          </p>
+          <h1 className="m-0 text-center text-sm font-bold leading-tight text-foreground">
+            Career Pipeline
+          </h1>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>

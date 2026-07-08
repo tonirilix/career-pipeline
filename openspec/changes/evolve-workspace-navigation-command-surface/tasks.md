@@ -47,3 +47,13 @@
 - [x] 6.6 Run `npm test --workspace apps/web`.
 - [x] 6.7 Run `npm run build --workspace apps/web`.
 - [x] 6.8 Smoke-test `/pipeline`, `/memory`, `/roles`, secondary navigation collapse, View options, and command palette in the browser.
+
+## 7. Follow-Up: Secondary Navigation Adjacency Gap
+
+Task 2.2 was implemented as an `<aside>` owned by `WorkspaceShell`, living inside the padded main content column rather than structurally adjacent to `AppSidebar`. This satisfies "route-local" and "collapsible" but not the `workspace-secondary-navigation` requirement that the panel be "adjacent to the global rail" (spec.md:3-4) — it reads as detached from the rail, especially when collapsed, and the primary rail's collapsed header leaves dead space above its icons.
+
+- [x] 7.1 Promote the Pipeline secondary panel to a sibling `Sidebar`-like component (`SecondarySidebar`) inside `SidebarProvider`, rendered next to `AppSidebar` with no visual gap, instead of inside `WorkspaceShell`'s content column.
+- [x] 7.2 Give the secondary panel the same collapse mechanics as `AppSidebar` (rail flush against the primary rail) so collapsed state doesn't leave a gap.
+- [x] 7.3 Fix `SidebarHeader` collapsed state so it doesn't reserve empty header height above the icon rail (renders a compact `LayoutGrid` logo mark instead of sr-only text inside a padded box).
+- [x] 7.4 Existing collapse/expand tests in `App.test.tsx` continue to cover adjacency behavior via accessible names; no additional coverage needed since the DOM landmark structure (`complementary` region, collapse/expand buttons) is unchanged.
+- [x] 7.5 Ran `npm test --workspace apps/web` (150 passed) and `npm run build --workspace apps/web`; smoke-tested `/pipeline` at desktop and mobile widths, including both sidebars collapsed simultaneously.

@@ -234,6 +234,59 @@ export function SidebarRail({ className, ...props }: ComponentProps<"button">) {
   );
 }
 
+type SecondarySidebarProps = {
+  label: string;
+  title: string;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  children: ReactNode;
+};
+
+export function SecondarySidebar({
+  label,
+  title,
+  isOpen,
+  onOpenChange,
+  children
+}: SecondarySidebarProps) {
+  if (!isOpen) {
+    return (
+      <div className="hidden shrink-0 border-r border-border bg-background md:flex md:w-10 md:flex-col">
+        <button
+          type="button"
+          aria-label="Expand secondary navigation"
+          className="flex min-h-10 w-full items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          onClick={() => onOpenChange(true)}
+        >
+          <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <aside
+      aria-label={label}
+      className="hidden w-64 shrink-0 flex-col border-r border-border bg-background md:flex"
+    >
+      <div className="flex min-h-11 shrink-0 items-center justify-between border-b border-border px-3">
+        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          {title}
+        </span>
+        <button
+          type="button"
+          aria-label="Collapse secondary navigation"
+          className="flex min-h-8 min-w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          onClick={() => onOpenChange(false)}
+        >
+          <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+    </aside>
+  );
+}
+
 export function SidebarIconButton({
   className,
   isActive = false,
