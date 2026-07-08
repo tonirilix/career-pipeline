@@ -7,8 +7,8 @@ import { createCandidateContextGraphqlGateway } from "./infrastructure/graphql/c
 import { createJobApplicationGraphqlGateway } from "./infrastructure/graphql/jobApplicationGraphqlGateway";
 import { createRoleDiscoveryGraphqlGateway } from "./infrastructure/graphql/roleDiscoveryGraphqlGateway";
 import { createWebQueryClient } from "./infrastructure/query/queryClient";
-import { useZustandPipelineControlsStore } from "./infrastructure/zustand/pipelineControlsStore";
-import { App } from "./presentation/App";
+import { createAppRouter } from "./presentation/router";
+import { RouterProvider } from "@tanstack/react-router";
 
 const rootElement = document.getElementById("root");
 
@@ -31,16 +31,18 @@ void enableMockBackend().then(() => {
   const candidateContextGateway = createCandidateContextGraphqlGateway();
   const roleDiscoveryGateway = createRoleDiscoveryGraphqlGateway();
   const queryClient = createWebQueryClient();
+  const router = createAppRouter({
+    context: {
+      candidateContextGateway,
+      gateway,
+      roleDiscoveryGateway
+    }
+  });
 
   createRoot(rootElement).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <App
-          candidateContextGateway={candidateContextGateway}
-          gateway={gateway}
-          roleDiscoveryGateway={roleDiscoveryGateway}
-          usePipelineControls={useZustandPipelineControlsStore}
-        />
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </StrictMode>
   );

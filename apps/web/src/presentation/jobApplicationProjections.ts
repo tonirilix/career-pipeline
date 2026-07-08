@@ -6,6 +6,10 @@ import type {
   JobSource
 } from "../domain/jobOpportunity";
 import type { PipelineSortOption } from "./ports/pipelineControls";
+import {
+  filterApplicationsBySavedView,
+  type PipelineSavedView
+} from "./pipelineSavedViews";
 
 export type FollowUpWorkItem = {
   application: JobApplication;
@@ -28,6 +32,7 @@ export type JobApplicationProjectionInput = {
   applications: JobApplication[];
   controls: JobApplicationProjectionControls;
   now: number;
+  savedView?: PipelineSavedView;
   selectedApplicationId: string | null;
 };
 
@@ -37,6 +42,7 @@ export type JobApplicationProjection = {
   selectedApplication: JobApplication | undefined;
   stageCounts: StageCount[];
   upcomingFollowUpItems: FollowUpWorkItem[];
+  savedViewCounts: Record<PipelineSavedView, number>;
   visibleApplications: JobApplication[];
 };
 
@@ -44,15 +50,19 @@ export function projectJobApplications({
   applications,
   controls,
   now,
+  savedView = "all",
   selectedApplicationId
 }: JobApplicationProjectionInput): JobApplicationProjection {
   const normalizedSearchTerm = controls.searchTerm.trim().toLowerCase();
   const visibleApplications = sortApplications(
-    applications.filter(
+    filterApplicationsBySavedView(
+      applications.filter(
       (application) =>
         matchesStageFilter(application, controls.stageFilter) &&
         matchesSourceFilter(application, controls.sourceFilter) &&
         matchesSearchTerm(application, normalizedSearchTerm)
+    ),
+      savedView
     ),
     controls.sortBy
   );
@@ -77,6 +87,20 @@ export function projectJobApplications({
       stage,
       count: applications.filter((application) => application.stage === stage).length
     })),
+    savedViewCounts: {
+      "needs-attention": filterApplicationsBySavedView(
+        applications,
+        "needs-attention"
+      ).length,
+      active: filterApplicationsBySavedView(applications, "active").length,
+      interviewing: filterApplicationsBySavedView(
+        applications,
+        "interviewing"
+      ).length,
+      offers: filterApplicationsBySavedView(applications, "offers").length,
+      closed: filterApplicationsBySavedView(applications, "closed").length,
+      all: applications.length
+    },
     upcomingFollowUpItems: activeFollowUpItems.filter(({ followUp }) =>
       isAtOrAfterTime(followUp.dueAt, now)
     ),

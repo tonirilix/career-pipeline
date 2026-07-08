@@ -20,13 +20,15 @@ export function FollowUpWork({
   completingFollowUpReminderIds,
   onCompleteFollowUp
 }: FollowUpWorkProps) {
+  const totalCount = overdueItems.length + upcomingItems.length;
+
   if (overdueItems.length === 0 && upcomingItems.length === 0) {
     return (
       <section
         aria-label="Follow-up work"
-        className="border-b border-border px-4 py-3"
+        className="border border-border bg-card px-3 py-2"
       >
-        <p className="m-0 text-sm text-muted-foreground">
+        <p className="m-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           No follow-ups need attention.
         </p>
       </section>
@@ -36,14 +38,33 @@ export function FollowUpWork({
   return (
     <section
       aria-label="Follow-up work"
-      className="grid gap-3 grid-cols-1 px-4 py-3"
+      className="border border-border bg-card"
     >
+      <div className="flex min-h-11 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+        <h2 className="m-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Follow-up work
+        </h2>
+        <span className="ml-auto text-xs font-bold text-foreground">
+          {totalCount}
+        </span>
+        {overdueItems.length > 0 ? (
+          <span className="border border-border px-2 py-1 text-xs font-bold text-accent">
+            {overdueItems.length} overdue
+          </span>
+        ) : null}
+        {upcomingItems.length > 0 ? (
+          <span className="border border-border px-2 py-1 text-xs font-bold text-muted-foreground">
+            {upcomingItems.length} upcoming
+          </span>
+        ) : null}
+      </div>
+      <div className="grid gap-3 p-3 xl:grid-cols-2">
       {overdueItems.length > 0 ? (
-      <div className="border border-border p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest m-0">
+      <div className="min-w-0 border border-border p-3">
+        <div className="mb-2 flex items-center gap-2">
+          <h3 className="m-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
             Overdue follow-ups
-          </h2>
+          </h3>
           <span className="ml-auto text-xs font-bold text-accent">
             {overdueItems.length}
           </span>
@@ -59,11 +80,11 @@ export function FollowUpWork({
       ) : null}
 
       {upcomingItems.length > 0 ? (
-      <div className="border border-border p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest m-0">
+      <div className="min-w-0 border border-border p-3">
+        <div className="mb-2 flex items-center gap-2">
+          <h3 className="m-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
             Upcoming follow-ups
-          </h2>
+          </h3>
           <span className="ml-auto text-xs font-bold text-muted-foreground">
             {upcomingItems.length}
           </span>
@@ -77,6 +98,7 @@ export function FollowUpWork({
         />
       </div>
       ) : null}
+      </div>
     </section>
   );
 }

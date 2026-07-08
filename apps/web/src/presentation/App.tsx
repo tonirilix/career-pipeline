@@ -1,5 +1,6 @@
-import { type FormEvent, lazy, Suspense, useState } from "react";
-import { Briefcase, Database, Plus, Search } from "lucide-react";
+import { type FormEvent, lazy, Suspense, useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 
 import type { CandidateContextGateway } from "../application/ports/candidateContextGateway";
 import type { JobApplicationGateway } from "../application/ports/jobApplicationGateway";
@@ -9,12 +10,21 @@ import { ApplicationDetails } from "./components/ApplicationDetails";
 import { FollowUpWork } from "./components/FollowUpWork";
 import { OpportunityForm } from "./components/OpportunityForm";
 import { PipelineBoard } from "./components/PipelineBoard";
-import { PipelineControls } from "./components/PipelineControls";
 import { FunnelChart } from "./components/FunnelChart";
 import { StatsBar } from "./components/StatsBar";
+import { AppSidebar } from "./components/AppSidebar";
+import { AppCommandPalette } from "./components/AppCommandPalette";
+import { PipelineSavedViews } from "./components/PipelineSavedViews";
+import { PipelineViewOptions } from "./components/PipelineViewOptions";
+import { WorkspaceShell } from "./components/WorkspaceShell";
 import { Button } from "./components/ui/button";
 import { ErrorNotice } from "./components/ui/error-notice";
-import { Sidebar } from "./components/ui/sidebar";
+import {
+  SecondarySidebar,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger
+} from "./components/ui/sidebar";
 import { SlideOver } from "./components/ui/slide-over";
 import { usePipelineWorkspace } from "./pipelineWorkspace";
 
@@ -38,6 +48,23 @@ type AppProps = {
 };
 
 type Workspace = "pipeline" | "memory" | "roles";
+type WorkspaceRoute = Workspace | "not-found";
+
+function workspaceFromPathname(pathname: string): WorkspaceRoute {
+  if (pathname === "/" || pathname === "/pipeline") {
+    return "pipeline";
+  }
+
+  if (pathname === "/memory") {
+    return "memory";
+  }
+
+  if (pathname === "/roles") {
+    return "roles";
+  }
+
+  return "not-found";
+}
 
 export function App({
   candidateContextGateway,
@@ -46,8 +73,11 @@ export function App({
   usePipelineControls
 }: AppProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeWorkspace, setActiveWorkspace] = useState<Workspace>("pipeline");
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
+  const [isSecondaryNavOpen, setIsSecondaryNavOpen] = useState(true);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeWorkspace = workspaceFromPathname(pathname);
   const workspace = usePipelineWorkspace(gateway, usePipelineControls);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -57,98 +87,86 @@ export function App({
     }
   }
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setIsCommandOpen(true);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)}>
-        <div className="border-b border-border px-4 py-4 shrink-0">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest m-0 mb-0.5">
-            Pipeline workspace
-          </p>
-          <h1 className="text-xl font-bold text-foreground leading-tight m-0 mb-3">
-            Career Pipeline
-          </h1>
-          <Button
-            type="button"
-            onClick={() => setIsFormOpen(true)}
-            variant="outline"
-            className="w-full bg-transparent hover:bg-muted rounded-none"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Add opportunity
-          </Button>
-          <nav className="mt-3 grid grid-cols-3 gap-2" aria-label="Workspace navigation">
-            <Button
-              type="button"
-              variant={activeWorkspace === "pipeline" ? "default" : "outline"}
-              onClick={() => setActiveWorkspace("pipeline")}
-              className="rounded-none"
-            >
-              <Briefcase className="h-4 w-4" aria-hidden="true" />
-              Pipeline
-            </Button>
-            <Button
-              type="button"
-              variant={activeWorkspace === "memory" ? "default" : "outline"}
-              onClick={() => setActiveWorkspace("memory")}
-              className="rounded-none"
-            >
-              <Database className="h-4 w-4" aria-hidden="true" />
-              Memory
-            </Button>
-            <Button
-              type="button"
-              variant={activeWorkspace === "roles" ? "default" : "outline"}
-              onClick={() => setActiveWorkspace("roles")}
-              className="rounded-none"
-            >
-              <Search className="h-4 w-4" aria-hidden="true" />
-              Roles
-            </Button>
-          </nav>
-        </div>
-
-        <StatsBar
-          activeCount={workspace.activeApplicationCount}
-          overdueCount={workspace.overdueFollowUpItems.length}
-          upcomingCount={workspace.upcomingFollowUpItems.length}
-        />
-
-        <PipelineControls
-          searchTerm={workspace.searchTerm}
-          setSearchTerm={workspace.setSearchTerm}
-          setSortBy={workspace.setSortBy}
-          setSourceFilter={workspace.setSourceFilter}
-          setStageFilter={workspace.setStageFilter}
-          sortBy={workspace.sortBy}
-          sourceFilter={workspace.sourceFilter}
-          stageFilter={workspace.stageFilter}
-        />
-
-        <FollowUpWork
-          completingFollowUpReminderIds={workspace.completingFollowUpReminderIds}
-          onCompleteFollowUp={workspace.completeFollowUp}
-          overdueItems={workspace.overdueFollowUpItems}
-          upcomingItems={workspace.upcomingFollowUpItems}
-        />
-      </Sidebar>
-
-      <main className="flex-1 overflow-auto flex flex-col">
+    <SidebarProvider defaultCollapsed>
+      <AppSidebar
+        activeWorkspace={activeWorkspace}
+        onOpenCommand={() => setIsCommandOpen(true)}
+      />
+      {activeWorkspace === "pipeline" ? (
+        <SecondarySidebar
+          label="Pipeline saved views"
+          title="Views"
+          isOpen={isSecondaryNavOpen}
+          onOpenChange={setIsSecondaryNavOpen}
+        >
+          <PipelineSavedViews
+            activeView={workspace.savedView}
+            counts={workspace.savedViewCounts}
+            onSelectView={workspace.setSavedView}
+          />
+        </SecondarySidebar>
+      ) : null}
+      <SidebarInset>
+      <main className="flex h-screen flex-col overflow-auto">
         {/* Mobile top bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border md:hidden shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open sidebar"
-            className="min-h-11 min-w-11 flex items-center justify-center text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors"
-          >
-            ☰
-          </button>
+        <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3 md:hidden">
+          <SidebarTrigger />
           <span className="text-sm font-bold text-foreground">Career Pipeline</span>
         </div>
         <div className="flex-1 overflow-auto px-4 py-5 md:px-6 md:py-6">
-          <div className="mx-auto w-full max-w-[1180px]">
+          <div className="mx-auto w-full max-w-[1240px]">
             {activeWorkspace === "pipeline" ? (
-              <>
+              <WorkspaceShell
+                title="Pipeline"
+                description="Track active applications, follow-ups, interviews, and stage movement."
+                actions={
+                  <Button
+                    type="button"
+                    onClick={() => setIsFormOpen(true)}
+                    variant="outline"
+                    className="w-full bg-transparent hover:bg-muted md:w-auto"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Add opportunity
+                  </Button>
+                }
+                summary={
+                  <StatsBar
+                    activeCount={workspace.activeApplicationCount}
+                    overdueCount={workspace.overdueFollowUpItems.length}
+                    upcomingCount={workspace.upcomingFollowUpItems.length}
+                  />
+                }
+                tools={
+                  <PipelineViewOptions
+                    isOpen={isViewOptionsOpen}
+                    onClearFilters={workspace.clearFilters}
+                    onToggle={() => setIsViewOptionsOpen((isOpen) => !isOpen)}
+                    searchTerm={workspace.searchTerm}
+                    setSearchTerm={workspace.setSearchTerm}
+                    setSortBy={workspace.setSortBy}
+                    setSourceFilter={workspace.setSourceFilter}
+                    setStageFilter={workspace.setStageFilter}
+                    sortBy={workspace.sortBy}
+                    sourceFilter={workspace.sourceFilter}
+                    stageFilter={workspace.stageFilter}
+                  />
+                }
+              >
                 {workspace.commandError ? (
                   <ErrorNotice
                     className="mb-5"
@@ -162,6 +180,23 @@ export function App({
                   activeStage={workspace.stageFilter}
                   onStageClick={workspace.setStageFilter}
                 />
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="border border-border bg-card px-2 py-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    {workspace.savedViewLabel}
+                  </span>
+                </div>
+
+                {workspace.savedView === "needs-attention" ? (
+                <div className="mt-4">
+                  <FollowUpWork
+                    completingFollowUpReminderIds={workspace.completingFollowUpReminderIds}
+                    onCompleteFollowUp={workspace.completeFollowUp}
+                    overdueItems={workspace.overdueFollowUpItems}
+                    upcomingItems={workspace.upcomingFollowUpItems}
+                  />
+                </div>
+                ) : null}
 
                 <div className="mt-6" />
 
@@ -180,19 +215,42 @@ export function App({
                     onViewDetails={workspace.viewDetails}
                   />
                 )}
-              </>
+              </WorkspaceShell>
             ) : activeWorkspace === "memory" ? (
-              <Suspense fallback={null}>
-                <CandidateMemoryWorkspace gateway={candidateContextGateway} />
-              </Suspense>
+              <WorkspaceShell
+                title="Memory"
+                description="Maintain candidate context, approved memory, and AI artifacts."
+              >
+                <Suspense fallback={null}>
+                  <CandidateMemoryWorkspace gateway={candidateContextGateway} />
+                </Suspense>
+              </WorkspaceShell>
+            ) : activeWorkspace === "roles" ? (
+              <WorkspaceShell
+                title="Roles"
+                description="Capture role opportunities, search topics, and promotion decisions."
+              >
+                <Suspense fallback={null}>
+                  <RoleDiscoveryWorkspace gateway={roleDiscoveryGateway} />
+                </Suspense>
+              </WorkspaceShell>
             ) : (
-              <Suspense fallback={null}>
-                <RoleDiscoveryWorkspace gateway={roleDiscoveryGateway} />
-              </Suspense>
+              <WorkspaceShell
+                title="Workspace not found"
+                description="Choose a workspace from global navigation."
+              >
+                <div
+                  role="status"
+                  className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+                >
+                  Workspace not found.
+                </div>
+              </WorkspaceShell>
             )}
           </div>
         </div>
       </main>
+      </SidebarInset>
 
       <SlideOver
         isOpen={isFormOpen}
@@ -209,6 +267,20 @@ export function App({
           onSubmit={handleSubmit}
         />
       </SlideOver>
+
+      <AppCommandPalette
+        isOpen={isCommandOpen}
+        onClearPipelineFilters={workspace.clearFilters}
+        onClose={() => setIsCommandOpen(false)}
+        onOpenOpportunityForm={() => {
+          workspace.clearOpportunityFormErrors();
+          setIsFormOpen(true);
+        }}
+        onSelectPipelineView={workspace.setSavedView}
+        setPipelineSortBy={workspace.setSortBy}
+        setPipelineSourceFilter={workspace.setSourceFilter}
+        setPipelineStageFilter={workspace.setStageFilter}
+      />
 
       <SlideOver
         isOpen={!!workspace.selectedApplicationId}
@@ -230,6 +302,6 @@ export function App({
           />
         ) : null}
       </SlideOver>
-    </div>
+    </SidebarProvider>
   );
 }
