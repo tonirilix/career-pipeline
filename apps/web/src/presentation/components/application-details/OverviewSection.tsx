@@ -3,7 +3,7 @@ import type { JobApplication } from "../../../domain/jobOpportunity";
 export function OverviewSection({ application }: { application: JobApplication }) {
   return (
     <section aria-label="Overview" className="grid gap-4">
-      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+      <h3 className="text-xs font-bold text-muted-foreground meta-label tracking-widest">
         Overview
       </h3>
       <dl className="grid grid-cols-2 border border-border">
@@ -15,18 +15,18 @@ export function OverviewSection({ application }: { application: JobApplication }
         ].map(({ label, value }, index) => (
           <div
             className={`px-4 py-3 ${index % 2 === 0 ? "border-r border-border" : ""} ${
-              index < 2 ? "border-b border-border" : ""
+              index < 2 ? "border-b border-border-subtle" : ""
             }`}
             key={label}
           >
-            <dt className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
+            <dt className="text-xs font-bold text-muted-foreground meta-label tracking-widest mb-1">
               {label}
             </dt>
             <dd className="text-xs text-foreground m-0">{value}</dd>
           </div>
         ))}
         <div className="col-span-2 border-t border-border px-4 py-3">
-          <dt className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
+          <dt className="text-xs font-bold text-muted-foreground meta-label tracking-widest mb-1">
             Posting URL
           </dt>
           <dd className="text-xs text-foreground m-0 break-all">

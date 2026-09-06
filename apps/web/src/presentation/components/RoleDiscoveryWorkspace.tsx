@@ -207,7 +207,7 @@ export function RoleDiscoveryWorkspace({ gateway }: RoleDiscoveryWorkspaceProps)
     return (
       <div
         role="status"
-        className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+        className="border border-border bg-card px-4 py-6 text-sm text-foreground-secondary"
       >
         Loading role discovery...
       </div>
@@ -232,7 +232,7 @@ export function RoleDiscoveryWorkspace({ gateway }: RoleDiscoveryWorkspaceProps)
       <section className="border border-border bg-card p-4">
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
               Role search
             </p>
             <h2 className="m-0 text-xl font-bold text-foreground">
@@ -412,7 +412,7 @@ export function RoleDiscoveryWorkspace({ gateway }: RoleDiscoveryWorkspaceProps)
           <div className="border border-border bg-card p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+                <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
                   Role inbox
                 </p>
                 <h2 className="m-0 text-base font-bold text-foreground">
@@ -434,7 +434,7 @@ export function RoleDiscoveryWorkspace({ gateway }: RoleDiscoveryWorkspaceProps)
           </div>
 
           {discovery.roles.length === 0 ? (
-            <div className="border border-border bg-card px-4 py-8 text-sm text-muted-foreground">
+            <div className="border border-border bg-card px-4 py-8 text-sm text-foreground-secondary">
               No roles yet. Run a search to import possible jobs.
             </div>
           ) : (
@@ -494,7 +494,7 @@ function RolePagination({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm text-muted-foreground">
+      <span className="text-sm text-foreground-secondary">
         {firstItem}-{lastItem} of {totalCount}
       </span>
       <Button
@@ -548,10 +548,10 @@ function RoleRow({
           <h3 className="m-0 text-base font-bold text-foreground">
             {role.company} · {role.title}
           </h3>
-          <p className="m-0 mt-1 text-sm text-muted-foreground">
+          <p className="m-0 mt-1 text-sm text-foreground-secondary">
             {compactRoleMeta(role)}
           </p>
-          <p className="m-0 mt-1 text-sm text-muted-foreground">
+          <p className="m-0 mt-1 text-sm text-foreground-secondary">
             {role.stack || "Stack unknown"}
             {role.compensation ? ` · ${role.compensation}` : ""}
           </p>
@@ -652,13 +652,13 @@ function RoleInspector({
   if (!role) {
     return (
       <aside className="border border-border bg-card p-4">
-        <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+        <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
           Inspector
         </p>
         <h2 className="m-0 mt-1 text-base font-bold text-foreground">
           Select a role
         </h2>
-        <p className="m-0 mt-2 text-sm text-muted-foreground">
+        <p className="m-0 mt-2 text-sm text-foreground-secondary">
           Open a role when you need to edit metadata, check the raw source, or
           mark freshness.
         </p>
@@ -671,7 +671,7 @@ function RoleInspector({
       <form className="space-y-4" onSubmit={onSave}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
               Inspector
             </p>
             <h2 className="m-0 mt-1 text-base font-bold text-foreground">

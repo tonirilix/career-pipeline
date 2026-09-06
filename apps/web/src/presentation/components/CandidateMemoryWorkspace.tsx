@@ -188,7 +188,7 @@ export function CandidateMemoryWorkspace({
     return (
       <div
         role="status"
-        className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+        className="border border-border bg-card px-4 py-6 text-sm text-foreground-secondary"
       >
         Loading candidate context...
       </div>
@@ -213,7 +213,7 @@ export function CandidateMemoryWorkspace({
       <section className="border border-border bg-card p-4">
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
               Candidate profile
             </p>
             <h2 className="m-0 text-lg font-bold text-foreground">
@@ -298,7 +298,7 @@ export function CandidateMemoryWorkspace({
       <section className="grid gap-6 xl:grid-cols-[minmax(320px,420px)_1fr]">
         <form className="border border-border bg-card p-4" onSubmit={saveMemory}>
           <div className="mb-4">
-            <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
               Structured memory
             </p>
             <h2 className="m-0 text-lg font-bold text-foreground">
@@ -393,7 +393,7 @@ export function CandidateMemoryWorkspace({
 
         <div className="space-y-3">
           {context.memoryRecords.length === 0 ? (
-            <div className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
+            <div className="border border-border bg-card px-4 py-6 text-sm text-foreground-secondary">
               No candidate memory records yet.
             </div>
           ) : (
@@ -434,11 +434,11 @@ export function CandidateMemoryWorkspace({
                     <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
                       {record.body}
                     </p>
-                    <p className="mt-3 text-xs text-muted-foreground">
+                    <p className="mt-3 text-xs text-foreground-secondary">
                       Source: {record.source || "Not set"}
                     </p>
                     {record.supersededBy ? (
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 text-xs text-foreground-secondary">
                         Superseded by:{" "}
                         {memoryById[record.supersededBy]?.title ?? record.supersededBy}
                       </p>
@@ -502,7 +502,7 @@ export function CandidateMemoryWorkspace({
 
       <section className="border border-border bg-card p-4">
         <div className="mb-4">
-          <p className="m-0 text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="m-0 text-xs meta-label tracking-widest text-muted-foreground">
             AI artifacts
           </p>
           <h2 className="m-0 text-lg font-bold text-foreground">
@@ -510,7 +510,7 @@ export function CandidateMemoryWorkspace({
           </h2>
         </div>
         {context.artifacts.length === 0 ? (
-          <div className="border border-border bg-background px-4 py-6 text-sm text-muted-foreground">
+          <div className="border border-border bg-background px-4 py-6 text-sm text-foreground-secondary">
             No profile artifacts have been saved yet.
           </div>
         ) : (
@@ -523,7 +523,7 @@ export function CandidateMemoryWorkspace({
                     <h3 className="m-0 mt-2 text-base font-bold text-foreground">
                       {artifact.title}
                     </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 text-xs text-foreground-secondary">
                       {artifact.provenance.providerName ?? "Unknown provider"}
                       {artifact.provenance.modelName
                         ? ` / ${artifact.provenance.modelName}`
@@ -560,7 +560,7 @@ export function CandidateMemoryWorkspace({
                   </div>
                 </div>
                 {artifact.supersededBy ? (
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-foreground-secondary">
                     Superseded by:{" "}
                     {artifactById[artifact.supersededBy]?.title ?? artifact.supersededBy}
                   </p>

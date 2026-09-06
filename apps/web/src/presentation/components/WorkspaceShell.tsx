@@ -26,7 +26,7 @@ export function WorkspaceShell({
       <div className="border-b border-border pb-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <p className="m-0 mb-1 text-xs uppercase tracking-widest text-muted-foreground">
+            <p className="m-0 mb-1 text-xs meta-label tracking-widest text-muted-foreground">
               Workspace
             </p>
             <h2
@@ -36,7 +36,7 @@ export function WorkspaceShell({
               {title}
             </h2>
             {description ? (
-              <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
+              <p className="m-0 mt-1 max-w-3xl text-sm text-foreground-secondary">
                 {description}
               </p>
             ) : null}

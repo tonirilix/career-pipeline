@@ -53,7 +53,7 @@ export function PipelineViewOptions({
         {activeFilters.map((filter) => (
           <span
             key={filter}
-            className="border border-border bg-card px-2 py-1 text-xs font-semibold text-muted-foreground"
+            className="border border-border-strong bg-card px-2 py-1 text-xs font-semibold text-muted-foreground"
           >
             {filter}
           </span>

@@ -51,13 +51,13 @@ export function PipelineBoard({ applications, changingStageApplicationIds, onSta
                   type="button"
                   onClick={() => setClosedCollapsed((c) => !c)}
                   aria-expanded={!collapsed}
-                  className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors"
+                  className="flex min-h-[44px] min-w-[44px] items-center gap-1.5 text-xs font-bold text-muted-foreground meta-label tracking-widest hover:text-foreground transition-colors"
                 >
                   <span aria-hidden="true">{collapsed ? "▶" : "▼"}</span>
                   {label}
                 </button>
               ) : (
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest py-1">
+                <span className="text-xs font-bold text-muted-foreground meta-label tracking-widest py-1">
                   {label}
                 </span>
               )}
@@ -71,9 +71,9 @@ export function PipelineBoard({ applications, changingStageApplicationIds, onSta
                   const stageApplications = applications.filter((a) => a.stage === stage);
                   return (
                     <section key={stage} aria-label={`${stage} applications`}>
-                      <Card className="min-h-[104px] rounded-none shadow-none border border-border bg-background/40">
+                      <Card className="min-h-[104px] shadow-none border border-border bg-background/40">
                         <CardHeader className="flex-row items-center justify-between space-y-0 py-1.5 px-2.5 border-b border-border">
-                          <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                          <CardTitle className="text-xs font-bold meta-label tracking-widest text-muted-foreground">
                             {stage}
                           </CardTitle>
                           <span
@@ -99,7 +99,7 @@ export function PipelineBoard({ applications, changingStageApplicationIds, onSta
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-muted-foreground py-3 text-center uppercase tracking-widest">
+                            <p className="text-xs text-muted-foreground py-3 text-center meta-label tracking-widest">
                               No applications
                             </p>
                           )}

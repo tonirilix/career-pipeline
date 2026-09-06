@@ -17,7 +17,7 @@ export function SectionButton({
   return (
     <button
       aria-pressed={active}
-      className={`min-h-12 border-r border-border px-2 text-[11px] font-bold uppercase tracking-wide transition-colors last:border-r-0 ${
+      className={`min-h-12 border-r border-border px-2 text-[11px] font-bold meta-label tracking-wide transition-colors last:border-r-0 ${
         active
           ? "bg-muted text-foreground"
           : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -50,11 +50,11 @@ export function SectionHeader({
   return (
     <div className="flex items-start justify-between gap-3">
       <div>
-        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+        <h3 className="text-xs font-bold text-muted-foreground meta-label tracking-widest">
           {title}
         </h3>
         {!canAct && disabledReason ? (
-          <p className="m-0 mt-1 text-xs text-muted-foreground">{disabledReason}</p>
+          <p className="m-0 mt-1 text-xs text-foreground-secondary">{disabledReason}</p>
         ) : null}
       </div>
       {canAct && !hideAction ? (
@@ -97,7 +97,7 @@ export function DateTimeFields({
       className="grid min-w-0 grid-cols-2 gap-3"
       role="group"
     >
-      <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+      <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
         Date
         <Input
           onChange={handleDateInput}
@@ -106,7 +106,7 @@ export function DateTimeFields({
           value={date}
         />
       </label>
-      <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+      <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
         Time
         <Input
           onChange={handleTimeInput}

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Briefcase, Database, Plus, Search } from "lucide-react";
+import { Briefcase, Database, ListChecks, Plus, Search } from "lucide-react";
 
 import type { ApplicationStage } from "../../domain/applicationStage";
 import type { JobSource } from "../../domain/jobOpportunity";
@@ -56,6 +56,12 @@ export function AppCommandPalette({
 
   const commands = useMemo<CommandAction[]>(
     () => [
+      {
+        label: "Go to Today",
+        group: "Navigation",
+        icon: ListChecks,
+        run: () => closeAfter(() => void navigate({ to: "/today" }))
+      },
       {
         label: "Go to Pipeline",
         group: "Navigation",

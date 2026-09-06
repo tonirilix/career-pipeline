@@ -34,7 +34,7 @@ export function PipelineControls({
       className="border border-border bg-card px-3 py-3"
     >
       <div className="grid items-end gap-2 md:grid-cols-[minmax(220px,1fr)_minmax(140px,180px)_minmax(140px,180px)_minmax(150px,190px)]">
-        <label className="grid gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground md:order-1">
+        <label className="grid gap-1 text-xs font-bold meta-label tracking-wide text-muted-foreground md:order-1">
           Search applications
           <Input
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -43,7 +43,7 @@ export function PipelineControls({
             placeholder="Company or role"
           />
         </label>
-        <label className="grid gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground md:order-2">
+        <label className="grid gap-1 text-xs font-bold meta-label tracking-wide text-muted-foreground md:order-2">
           Stage
           <Select
             aria-label="Filter by stage"
@@ -60,7 +60,7 @@ export function PipelineControls({
             ))}
           </Select>
         </label>
-        <label className="grid gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground md:order-3">
+        <label className="grid gap-1 text-xs font-bold meta-label tracking-wide text-muted-foreground md:order-3">
           Channel
           <Select
             aria-label="Filter by source"
@@ -75,7 +75,7 @@ export function PipelineControls({
             ))}
           </Select>
         </label>
-        <label className="grid gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground md:order-4">
+        <label className="grid gap-1 text-xs font-bold meta-label tracking-wide text-muted-foreground md:order-4">
           Sort
           <Select
             aria-label="Sort applications"

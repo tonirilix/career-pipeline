@@ -4,7 +4,7 @@ import { formatDate } from "./dateHelpers";
 export function TimelineSection({ timeline }: { timeline: TimelineEvent[] }) {
   return (
     <section aria-label="Timeline" className="grid gap-4">
-      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+      <h3 className="text-xs font-bold text-muted-foreground meta-label tracking-widest">
         Timeline
       </h3>
       <TimelineList timeline={timeline} />
@@ -14,7 +14,7 @@ export function TimelineSection({ timeline }: { timeline: TimelineEvent[] }) {
 
 function TimelineList({ timeline }: { timeline: TimelineEvent[] }) {
   if (timeline.length === 0) {
-    return <p className="text-sm text-muted-foreground italic">No timeline events yet</p>;
+    return <p className="text-sm text-foreground-secondary italic">No timeline events yet</p>;
   }
 
   return (
@@ -26,7 +26,7 @@ function TimelineList({ timeline }: { timeline: TimelineEvent[] }) {
         <li key={event.id} className="relative pl-5 pb-4 last:pb-0">
           <span className="absolute left-[-5px] top-1.5 w-2 h-2 bg-border" />
           <time
-            className="block text-xs font-bold text-muted-foreground uppercase tracking-wide"
+            className="block text-xs font-bold text-muted-foreground meta-label tracking-wide"
             dateTime={event.occurredAt}
           >
             {formatDate(event.occurredAt)}

@@ -2,7 +2,6 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   createMemoryHistory,
-  RouterContextProvider,
   RouterProvider
 } from "@tanstack/react-router";
 import userEvent from "@testing-library/user-event";
@@ -23,7 +22,6 @@ import {
   resetZustandPipelineControlsStore,
   useZustandPipelineControlsStore
 } from "../infrastructure/zustand/pipelineControlsStore";
-import { App } from "./App";
 import { createAppRouter } from "./router";
 
 function createApplication(
@@ -232,7 +230,7 @@ function getStatValue(label: string) {
   return within(statItem as HTMLElement).getByText(/^\d+$/);
 }
 
-function renderApp(
+async function renderApp(
   gateway = createJobApplicationGraphqlGateway(),
   candidateContextGateway = createCandidateContextGateway(),
   roleDiscoveryGateway = createRoleDiscoveryGateway(),
@@ -253,16 +251,13 @@ function renderApp(
 
   const rendered = render(
     <QueryClientProvider client={queryClient}>
-      <RouterContextProvider router={router}>
-        <App
-          candidateContextGateway={candidateContextGateway}
-          gateway={gateway}
-          roleDiscoveryGateway={roleDiscoveryGateway}
-          usePipelineControls={useZustandPipelineControlsStore}
-        />
-      </RouterContextProvider>
+      <RouterProvider router={router} />
     </QueryClientProvider>
   );
+
+  // The router resolves its first match asynchronously, so nothing is in the
+  // document until global navigation appears.
+  await screen.findByRole("navigation", { name: "Global navigation" });
 
   return { ...rendered, router };
 }
@@ -314,7 +309,7 @@ async function clickFormSubmit(
 
 describe("Job application tracker shell", () => {
   it("renders the pipeline workspace from a direct route", async () => {
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     expect(
       screen.getByRole("heading", { name: "Pipeline" })
@@ -329,7 +324,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("renders the candidate memory workspace from a direct route", async () => {
-    renderApp(createGateway(), undefined, undefined, "/memory");
+    await renderApp(createGateway(), undefined, undefined, "/memory");
 
     expect(screen.getByRole("heading", { name: "Memory" })).toBeInTheDocument();
     expect(await screen.findByLabelText("Target roles")).toBeInTheDocument();
@@ -340,7 +335,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("renders the role discovery workspace from a direct route", async () => {
-    renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
+    await renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
 
     expect(screen.getByRole("heading", { name: "Roles" })).toBeInTheDocument();
     expect(await screen.findByText("Find possible jobs")).toBeInTheDocument();
@@ -350,17 +345,44 @@ describe("Job application tracker shell", () => {
     );
   });
 
-  it("lands on the pipeline workspace from the root route", async () => {
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/");
+  it("lands on the today workspace from the root route", async () => {
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/");
+
+    expect(
+      await screen.findByRole("heading", { name: "Today" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Application pipeline" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the today workspace from a direct route", async () => {
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/today");
+
+    expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Today/ })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("keeps pipeline directly addressable after the root route moves", async () => {
+    const { router } = await renderApp(
+      createReadOnlyGateway([]),
+      undefined,
+      undefined,
+      "/pipeline"
+    );
 
     expect(
       await screen.findByRole("region", { name: "Application pipeline" })
     ).toBeInTheDocument();
+    expect(router.history.location.pathname).toBe("/pipeline");
   });
 
   it("updates browser history when navigating between workspaces", async () => {
     const user = userEvent.setup();
-    const { router } = renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+    const { router } = await renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     await user.click(screen.getByRole("button", { name: /Memory/ }));
     await screen.findByLabelText("Target roles");
@@ -375,20 +397,37 @@ describe("Job application tracker shell", () => {
     expect(router.history.location.pathname).toBe("/pipeline");
   });
 
-  it("closes mobile global navigation after route navigation", async () => {
-    const user = userEvent.setup();
-    renderApp(createGateway(), undefined, undefined, "/pipeline");
+  it("keeps global navigation visible without a trigger or a drawer", async () => {
+    await renderApp(createGateway(), undefined, undefined, "/pipeline");
 
-    await user.click(screen.getByRole("button", { name: "Open navigation" }));
-    expect(screen.getAllByRole("button", { name: "Close navigation" }).length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("navigation", { name: "Global navigation" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Open navigation" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Close navigation" })
+    ).not.toBeInTheDocument();
+  });
 
-    await user.click(screen.getByRole("button", { name: /Memory/ }));
-    await screen.findByLabelText("Target roles");
+  it("labels and counts every navigation destination", async () => {
+    await renderApp(createGateway(), undefined, undefined, "/pipeline");
+
+    const globalNavigation = screen.getByRole("navigation", {
+      name: "Global navigation"
+    });
+
+    for (const label of ["Today", "Pipeline", "Memory", "Roles"]) {
+      expect(
+        within(globalNavigation).getByRole("button", { name: new RegExp(label) })
+      ).toBeInTheDocument();
+    }
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("button", { name: "Close navigation" })
-      ).not.toBeInTheDocument()
+        within(globalNavigation).getByRole("button", { name: /^Pipeline\s*\d+$/ })
+      ).toBeInTheDocument()
     );
   });
 
@@ -416,7 +455,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("shows a safe not-found state for unsupported routes", async () => {
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/unknown");
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/unknown");
 
     expect(await screen.findByText("Workspace not found.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Pipeline/ })).not.toHaveAttribute(
@@ -431,7 +470,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("keeps global navigation focused on workspace routes", async () => {
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     const globalNavigation = screen.getByRole("navigation", {
       name: "Global navigation"
@@ -460,7 +499,7 @@ describe("Job application tracker shell", () => {
   it("renders pipeline controls as Pipeline workspace-local tools", async () => {
     const user = userEvent.setup();
 
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     const main = screen.getByRole("main");
 
@@ -488,7 +527,7 @@ describe("Job application tracker shell", () => {
   it("renders collapsible Pipeline saved views as secondary navigation", async () => {
     const user = userEvent.setup();
 
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     expect(
       screen.getByRole("navigation", { name: "Pipeline saved views" })
@@ -514,7 +553,7 @@ describe("Job application tracker shell", () => {
   it("opens a command palette from global navigation and runs workspace commands", async () => {
     const user = userEvent.setup();
 
-    renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
+    await renderApp(createReadOnlyGateway([]), undefined, undefined, "/pipeline");
 
     await user.click(screen.getByRole("button", { name: "Open command palette" }));
 
@@ -530,7 +569,7 @@ describe("Job application tracker shell", () => {
   it("opens the add opportunity flow from the command palette", async () => {
     const user = userEvent.setup();
 
-    renderApp(createGateway(), undefined, undefined, "/memory");
+    await renderApp(createGateway(), undefined, undefined, "/memory");
 
     await user.click(screen.getByRole("button", { name: "Open command palette" }));
     await user.click(
@@ -546,7 +585,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("does not render pipeline-only controls in the Memory workspace", async () => {
-    renderApp(createGateway(), undefined, undefined, "/memory");
+    await renderApp(createGateway(), undefined, undefined, "/memory");
 
     await screen.findByLabelText("Target roles");
 
@@ -560,7 +599,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("does not render pipeline-only controls in the Roles workspace", async () => {
-    renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
+    await renderApp(createGateway(), undefined, createRoleDiscoveryGateway(), "/roles");
 
     await screen.findByText("Find possible jobs");
 
@@ -619,7 +658,7 @@ describe("Job application tracker shell", () => {
       ]
     });
 
-    renderApp(createReadOnlyGateway([application]));
+    await renderApp(createReadOnlyGateway([application]));
 
     await user.click(await screen.findByRole("button", { name: "View Linear details" }));
 
@@ -656,7 +695,7 @@ describe("Job application tracker shell", () => {
       createCandidateProfile(command)
     );
 
-    renderApp(
+    await renderApp(
       createGateway(),
       createCandidateContextGateway({
         updateCandidateProfile
@@ -697,7 +736,7 @@ describe("Job application tracker shell", () => {
       supersededBy: replacement.id
     }));
 
-    renderApp(
+    await renderApp(
       createGateway(),
       createCandidateContextGateway({
         listCandidateMemoryRecords: async () => [current, replacement],
@@ -740,7 +779,7 @@ describe("Job application tracker shell", () => {
       currentContent: userEditedContent ?? artifact.modelContent
     }));
 
-    renderApp(
+    await renderApp(
       createGateway(),
       createCandidateContextGateway({
         listAIArtifacts: async () => [artifact],
@@ -781,7 +820,7 @@ describe("Job application tracker shell", () => {
       supersededBy: replacement.id
     }));
 
-    renderApp(
+    await renderApp(
       createGateway(),
       createCandidateContextGateway({
         listAIArtifacts: async () => [artifact, replacement],
@@ -827,7 +866,7 @@ describe("Job application tracker shell", () => {
       ]
     });
 
-    renderApp(createReadOnlyGateway([application]));
+    await renderApp(createReadOnlyGateway([application]));
 
     await user.click(await screen.findByRole("button", { name: "View Linear details" }));
 
@@ -896,7 +935,7 @@ describe("Job application tracker shell", () => {
       ]
     });
 
-    renderApp(createReadOnlyGateway([application]));
+    await renderApp(createReadOnlyGateway([application]));
 
     await user.click(await screen.findByRole("button", { name: "View Linear details" }));
 
@@ -932,7 +971,7 @@ describe("Job application tracker shell", () => {
       ]
     });
 
-    renderApp(createReadOnlyGateway([application]));
+    await renderApp(createReadOnlyGateway([application]));
 
     await user.click(await screen.findByRole("button", { name: "View Linear details" }));
 
@@ -962,7 +1001,7 @@ describe("Job application tracker shell", () => {
   it("hides active work actions for closed applications while allowing notes", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1004,7 +1043,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("shows an application funnel chart above the pipeline board in the main content area", async () => {
-    renderApp();
+    await renderApp();
 
     await screen.findByRole("region", { name: "Application pipeline" });
 
@@ -1017,7 +1056,7 @@ describe("Job application tracker shell", () => {
   it("clicking a funnel stage button filters the pipeline board to that stage", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await screen.findByRole("region", { name: "Application pipeline" });
 
@@ -1033,7 +1072,7 @@ describe("Job application tracker shell", () => {
   it("clicking the active funnel stage button again clears the filter", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await screen.findByRole("region", { name: "Application pipeline" });
 
@@ -1048,7 +1087,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("renders a pipeline workspace with the expected application stages", async () => {
-    renderApp();
+    await renderApp();
 
     expect(
       screen.getByRole("heading", { name: "Career Pipeline" })
@@ -1082,7 +1121,7 @@ describe("Job application tracker shell", () => {
   it("collapses the Closed phase when empty, expands it when populated, and still lets the user collapse it", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     const board = await screen.findByRole("region", { name: "Application pipeline" });
     const closedPhase = within(board).getByRole("region", { name: "Closed phase" });
@@ -1119,7 +1158,7 @@ describe("Job application tracker shell", () => {
   it("lets a user create a saved job opportunity and see it in the Saved column", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1151,7 +1190,7 @@ describe("Job application tracker shell", () => {
   it("shows understandable errors for required fields and invalid posting URLs", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Posting URL"), "not-a-url");
@@ -1179,7 +1218,7 @@ describe("Job application tracker shell", () => {
   });
 
   it("shows a visible alert when saved opportunities cannot load", async () => {
-    renderApp(
+    await renderApp(
       createGateway({
         listApplications: async () => {
           throw new Error("Network unavailable");
@@ -1196,7 +1235,7 @@ describe("Job application tracker shell", () => {
   it("shows a visible form alert when saving a valid opportunity fails", async () => {
     const user = userEvent.setup();
 
-    renderApp(
+    await renderApp(
       createGateway({
         createSavedOpportunity: async () => {
           throw new Error("Write failed");
@@ -1229,7 +1268,7 @@ describe("Job application tracker shell", () => {
   it("lets a user mark a saved opportunity as applied", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1260,7 +1299,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when a stage transition is invalid", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1285,7 +1324,7 @@ describe("Job application tracker shell", () => {
   it("lets a user advance active stages, reject an application, and reopen it", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1333,7 +1372,7 @@ describe("Job application tracker shell", () => {
   it("treats rejected applications as closed work until they are reopened", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1372,7 +1411,7 @@ describe("Job application tracker shell", () => {
   it("lets a user inspect application details and timeline without leaving the board", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1420,7 +1459,7 @@ describe("Job application tracker shell", () => {
   it("keeps selected application timeline updated after stage changes", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1450,7 +1489,7 @@ describe("Job application tracker shell", () => {
   it("lets a user schedule an interview for an applied application and see it in details", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1502,7 +1541,7 @@ describe("Job application tracker shell", () => {
   it("does not offer interview scheduling for a saved opportunity", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1552,7 +1591,7 @@ describe("Job application tracker shell", () => {
       ]
     });
 
-    renderApp(
+    await renderApp(
       createGateway({
         listApplications: async () => [application],
         recordInterviewOutcome: async (command) => ({
@@ -1592,7 +1631,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when scheduling an interview without a date", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1622,7 +1661,7 @@ describe("Job application tracker shell", () => {
   it("lets a user create and complete an upcoming follow-up reminder", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1678,7 +1717,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when a follow-up is due before the latest interaction", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1720,7 +1759,7 @@ describe("Job application tracker shell", () => {
   it("shows an understandable error when creating a follow-up without a due date", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1769,7 +1808,7 @@ describe("Job application tracker shell", () => {
       ]
     });
 
-    renderApp(
+    await renderApp(
       createGateway({
         listApplications: async () => [application],
         addApplicationNote: async () => {
@@ -1868,7 +1907,7 @@ describe("Job application tracker shell", () => {
   it("lets a user add a note and see it in application details and timeline", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1908,7 +1947,7 @@ describe("Job application tracker shell", () => {
   it("lets a user filter the pipeline by stage", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1945,7 +1984,7 @@ describe("Job application tracker shell", () => {
   it("lets a user filter the pipeline by source", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -1979,7 +2018,7 @@ describe("Job application tracker shell", () => {
   it("lets a user search the pipeline by company or role title", async () => {
     const user = userEvent.setup();
 
-    renderApp();
+    await renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add opportunity" }));
     await user.type(screen.getByLabelText("Company"), "Linear");
@@ -2020,7 +2059,7 @@ describe("Job application tracker shell", () => {
   it("lets a user sort the pipeline by last activity", async () => {
     const user = userEvent.setup();
 
-    renderApp(
+    await renderApp(
       createReadOnlyGateway([
         createApplication({
           id: "linear",
@@ -2067,7 +2106,7 @@ describe("Job application tracker shell", () => {
   it("lets a user sort the pipeline by follow-up date", async () => {
     const user = userEvent.setup();
 
-    renderApp(
+    await renderApp(
       createReadOnlyGateway([
         createApplication({
           id: "linear",

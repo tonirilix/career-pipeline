@@ -1,114 +1,49 @@
-import {
-  createContext,
-  type ComponentProps,
-  type ReactNode,
-  useContext,
-  useMemo,
-  useState
-} from "react";
-import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { type ComponentProps, type ReactNode } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-type SidebarContextValue = {
-  isMobileOpen: boolean;
-  setIsMobileOpen: (isOpen: boolean) => void;
-  isCollapsed: boolean;
-  setIsCollapsed: (isCollapsed: boolean) => void;
-};
-
-const SidebarContext = createContext<SidebarContextValue | null>(null);
-
-export function useSidebar() {
-  const context = useContext(SidebarContext);
-
-  if (!context) {
-    throw new Error("Sidebar components must be rendered inside SidebarProvider.");
-  }
-
-  return context;
-}
-
-type SidebarProviderProps = {
-  children: ReactNode;
-  defaultCollapsed?: boolean;
-};
-
-export function SidebarProvider({
-  children,
-  defaultCollapsed = false
-}: SidebarProviderProps) {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
-  const value = useMemo(
-    () => ({
-      isMobileOpen,
-      setIsMobileOpen,
-      isCollapsed,
-      setIsCollapsed
-    }),
-    [isMobileOpen, isCollapsed]
-  );
-
+/**
+ * The shell's outer flex row: global navigation, then whatever the route lays
+ * out beside it.
+ */
+export function SidebarLayout({ children }: { children: ReactNode }) {
   return (
-    <SidebarContext.Provider value={value}>
-      <div
-        className="flex h-screen min-h-0 w-full overflow-hidden bg-background text-foreground"
-        data-sidebar-wrapper
-      >
-        {children}
-      </div>
-    </SidebarContext.Provider>
+    <div
+      className="flex h-screen min-h-0 w-full overflow-hidden bg-background text-foreground"
+      data-sidebar-wrapper
+    >
+      {children}
+    </div>
   );
 }
 
+/**
+ * Global navigation. One element in both presentations: a labelled vertical
+ * rail from 768px up, and a persistent bottom tab bar below it. It never
+ * collapses to icons and it is never hidden behind a trigger — recognising a
+ * destination is its whole job.
+ */
 export function Sidebar({ className, children, ...props }: ComponentProps<"nav">) {
-  const { isMobileOpen, setIsMobileOpen, isCollapsed } = useSidebar();
-
   return (
-    <>
-      {isMobileOpen ? (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          className="fixed inset-0 z-40 bg-black/60 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      ) : null}
-
-      <nav
-        aria-label={props["aria-label"] ?? "Global navigation"}
-        data-collapsed={isCollapsed}
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-border bg-background transition-transform md:static md:z-auto md:translate-x-0",
-          isMobileOpen && "translate-x-0",
-          isCollapsed ? "md:w-16" : "md:w-56",
-          className
-        )}
-        {...props}
-      >
-        {isMobileOpen ? (
-          <div className="flex justify-end px-3 pt-3 md:hidden">
-            <button
-              type="button"
-              onClick={() => setIsMobileOpen(false)}
-              aria-label="Close navigation"
-              className="flex min-h-11 min-w-11 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
-        ) : null}
-        {children}
-      </nav>
-    </>
+    <nav
+      aria-label={props["aria-label"] ?? "Global navigation"}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-40 flex shrink-0 border-t border-border bg-background",
+        "md:static md:h-screen md:w-46 md:flex-col md:border-r md:border-t-0",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </nav>
   );
 }
 
 export function SidebarHeader({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
-      className={cn("border-b border-border px-3 py-3", className)}
+      className={cn("hidden shrink-0 border-b border-border px-3 py-3 md:block", className)}
       {...props}
     />
   );
@@ -117,7 +52,10 @@ export function SidebarHeader({ className, ...props }: ComponentProps<"div">) {
 export function SidebarContent({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
-      className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3", className)}
+      className={cn(
+        "flex min-w-0 flex-1 md:min-h-0 md:flex-col md:overflow-y-auto md:p-2",
+        className
+      )}
       {...props}
     />
   );
@@ -126,7 +64,7 @@ export function SidebarContent({ className, ...props }: ComponentProps<"div">) {
 export function SidebarFooter({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
-      className={cn("border-t border-border px-3 py-3", className)}
+      className={cn("hidden shrink-0 border-t border-border p-2 md:block", className)}
       {...props}
     />
   );
@@ -134,34 +72,10 @@ export function SidebarFooter({ className, ...props }: ComponentProps<"div">) {
 
 export function SidebarMenu({ className, ...props }: ComponentProps<"ul">) {
   return (
-    <ul className={cn("m-0 grid list-none gap-1 p-0", className)} {...props} />
-  );
-}
-
-export function SidebarMenuItem({ className, ...props }: ComponentProps<"li">) {
-  return <li className={cn("min-w-0", className)} {...props} />;
-}
-
-type SidebarMenuButtonProps = ComponentProps<"button"> & {
-  isActive?: boolean;
-};
-
-export function SidebarMenuButton({
-  className,
-  isActive = false,
-  ...props
-}: SidebarMenuButtonProps) {
-  const { isCollapsed } = useSidebar();
-
-  return (
-    <button
-      type="button"
-      aria-current={isActive ? "page" : undefined}
-      data-active={isActive}
+    <ul
       className={cn(
-        "flex min-h-10 w-full items-center gap-2 border border-transparent px-3 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-        isActive && "border-border bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-        isCollapsed && "md:justify-center md:px-0",
+        "m-0 flex w-full flex-1 list-none gap-0 p-0",
+        "md:grid md:flex-none md:auto-rows-min md:content-start md:gap-0.5",
         className
       )}
       {...props}
@@ -169,68 +83,66 @@ export function SidebarMenuButton({
   );
 }
 
-export function SidebarMenuLabel({
-  className,
-  children,
-  ...props
-}: ComponentProps<"span">) {
-  const { isCollapsed } = useSidebar();
+export function SidebarMenuItem({ className, ...props }: ComponentProps<"li">) {
+  return <li className={cn("min-w-0 flex-1 md:flex-none", className)} {...props} />;
+}
 
+type SidebarNavButtonProps = ComponentProps<"button"> & {
+  isActive?: boolean;
+  label: string;
+  count?: number;
+  icon: ReactNode;
+};
+
+/**
+ * A destination. Always labelled, counted where the destination can carry a
+ * count, and marked active by an accent bar rather than by weight alone.
+ */
+export function SidebarNavButton({
+  className,
+  isActive = false,
+  label,
+  count,
+  icon,
+  ...props
+}: SidebarNavButtonProps) {
   return (
-    <span
-      className={cn(isCollapsed && "md:sr-only", className)}
+    <button
+      type="button"
+      aria-current={isActive ? "page" : undefined}
+      data-active={isActive}
+      className={cn(
+        "relative flex w-full flex-col items-center justify-center gap-0.5 px-2 py-1 text-sm font-semibold transition-colors",
+        "min-h-11 md:min-h-9 md:flex-row md:justify-start md:gap-2.5 md:px-2.5 md:py-0",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+        isActive
+          ? "bg-selected text-foreground shadow-[inset_0_2px_0_var(--color-accent)] md:shadow-[inset_2px_0_0_var(--color-accent)]"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        className
+      )}
       {...props}
     >
-      {children}
-    </span>
+      <span aria-hidden="true" className="shrink-0">
+        {icon}
+      </span>
+      <span className="min-w-0 truncate text-[11px] md:text-[13px]">{label}</span>
+      {typeof count === "number" ? (
+        <span
+          className={cn(
+            "text-[11px] font-bold tabular-nums md:ml-auto md:text-[11px]",
+            isActive ? "text-accent" : "text-muted-foreground"
+          )}
+        >
+          {count}
+        </span>
+      ) : null}
+    </button>
   );
 }
 
 export function SidebarInset({ className, ...props }: ComponentProps<"div">) {
   return (
     <div className={cn("min-w-0 flex-1 overflow-hidden", className)} {...props} />
-  );
-}
-
-export function SidebarTrigger({ className, ...props }: ComponentProps<"button">) {
-  const { setIsMobileOpen } = useSidebar();
-
-  return (
-    <button
-      type="button"
-      onClick={() => setIsMobileOpen(true)}
-      aria-label="Open navigation"
-      className={cn(
-        "flex min-h-11 min-w-11 items-center justify-center border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden",
-        className
-      )}
-      {...props}
-    >
-      <Menu className="h-4 w-4" aria-hidden="true" />
-    </button>
-  );
-}
-
-export function SidebarRail({ className, ...props }: ComponentProps<"button">) {
-  const { isCollapsed, setIsCollapsed } = useSidebar();
-
-  return (
-    <button
-      type="button"
-      aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
-      onClick={() => setIsCollapsed(!isCollapsed)}
-      className={cn(
-        "hidden min-h-10 w-full items-center justify-center border-t border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:flex",
-        className
-      )}
-      {...props}
-    >
-      {isCollapsed ? (
-        <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
-      ) : (
-        <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
-      )}
-    </button>
   );
 }
 
@@ -267,10 +179,10 @@ export function SecondarySidebar({
   return (
     <aside
       aria-label={label}
-      className="hidden w-64 shrink-0 flex-col border-r border-border bg-background md:flex"
+      className="hidden w-64 shrink-0 flex-col border-r border-border bg-card md:flex"
     >
       <div className="flex min-h-11 shrink-0 items-center justify-between border-b border-border px-3">
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-bold meta-label tracking-widest text-muted-foreground">
           {title}
         </span>
         <button
@@ -284,25 +196,5 @@ export function SecondarySidebar({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
     </aside>
-  );
-}
-
-export function SidebarIconButton({
-  className,
-  isActive = false,
-  ...props
-}: SidebarMenuButtonProps) {
-  return (
-    <button
-      type="button"
-      aria-current={isActive ? "page" : undefined}
-      data-active={isActive}
-      className={cn(
-        "flex min-h-10 min-w-10 items-center justify-center border border-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-        isActive && "border-border bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-        className
-      )}
-      {...props}
-    />
   );
 }
