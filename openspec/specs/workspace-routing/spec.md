@@ -8,7 +8,11 @@ Defines route-backed navigation for the top-level frontend workspaces so users c
 ## Requirements
 
 ### Requirement: Top-level workspaces are URL-addressable
-The system SHALL expose stable client routes for the existing top-level workspaces: `/pipeline`, `/memory`, and `/roles`.
+The system SHALL expose stable client routes for the existing top-level workspaces: `/today`, `/pipeline`, `/memory`, and `/roles`.
+
+#### Scenario: Direct today route renders today workspace
+- **WHEN** a user opens `/today`
+- **THEN** the main content SHALL render the today workspace
 
 #### Scenario: Direct pipeline route renders pipeline workspace
 - **WHEN** a user opens `/pipeline`
@@ -22,16 +26,21 @@ The system SHALL expose stable client routes for the existing top-level workspac
 - **WHEN** a user opens `/roles`
 - **THEN** the main content SHALL render the role discovery workspace
 
-### Requirement: Root route enters the pipeline workspace
-The system SHALL treat `/` as an entry point to the pipeline workspace.
+### Requirement: Root route enters the today workspace
+The system SHALL treat `/` as an entry point to the today workspace.
 
-#### Scenario: Root route lands on pipeline
+#### Scenario: Root route lands on today
 - **WHEN** a user opens `/`
-- **THEN** the main content SHALL render the pipeline workspace
+- **THEN** the main content SHALL render the today workspace
 
-#### Scenario: Pipeline has a canonical route
-- **WHEN** the user navigates from another workspace to the pipeline workspace
-- **THEN** the browser location SHALL be `/pipeline`
+#### Scenario: Today has a canonical route
+- **WHEN** the user navigates from another workspace to the today workspace
+- **THEN** the browser location SHALL be `/today`
+
+#### Scenario: Pipeline remains directly addressable
+- **WHEN** a user opens `/pipeline`
+- **THEN** the main content SHALL render the pipeline workspace
+- **AND** the pipeline workspace SHALL NOT be reachable only through today
 
 ### Requirement: Workspace navigation uses browser history
 The system SHALL update browser history when users navigate among top-level workspaces from the global navigation shell, route-local UI, or command palette.
