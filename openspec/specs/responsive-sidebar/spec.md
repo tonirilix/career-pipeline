@@ -1,35 +1,18 @@
 # Responsive Sidebar
 
 ## Purpose
-Defines the responsive behaviour of global application navigation: hidden by default on mobile and revealed via a trigger-controlled drawer overlay, while remaining a persistent sidebar or rail on desktop.
+Defines the responsive behaviour of global application navigation: a persistent labelled rail on desktop and a persistent bottom tab bar on mobile. Destinations and their outstanding counts stay continuously visible at every width; navigation is never hidden behind a trigger.
 
 ---
 
 ## Requirements
 
-### Requirement: Sidebar is hidden by default on mobile and revealed via a drawer
-The system SHALL hide global navigation on viewports narrower than 768px and render a navigation trigger in a top bar that opens global navigation as a full-height drawer overlay.
-
-#### Scenario: Sidebar is not visible on mobile by default
-- **WHEN** the viewport is narrower than 768px and the drawer is closed
-- **THEN** the sidebar navigation landmark SHALL not be visible
-
-#### Scenario: Navigation trigger is visible on mobile
-- **WHEN** the viewport is narrower than 768px
-- **THEN** a navigation trigger button SHALL be visible in the top bar with an accessible label
-
-#### Scenario: Tapping the navigation trigger opens the drawer
-- **WHEN** the user taps the navigation trigger button on mobile
-- **THEN** global navigation SHALL slide in as a full-height overlay
-
-#### Scenario: Tapping the overlay backdrop closes the drawer
-- **WHEN** the global navigation drawer is open and the user taps outside it
-- **THEN** the drawer SHALL close
-
----
-
 ### Requirement: Sidebar is always visible on desktop
-The system SHALL render global navigation as a persistent icon-first rail on viewports 768px and wider, with no mobile navigation trigger visible. The rail SHALL preserve access to each workspace route and the command palette.
+The system SHALL render global navigation as a persistent labelled rail on viewports 768px and wider, with no mobile navigation trigger visible. The rail SHALL preserve access to each workspace route and the command palette.
+
+Each navigation item SHALL display its workspace name as text, and SHALL display a count of outstanding items for workspaces that can carry one. The rail SHALL mark the active workspace with an accent marker in addition to any text weight change, so the active state does not rely on weight alone.
+
+The rail SHALL NOT collapse to an icon-only presentation. Recognising a destination is the rail's primary job, and unlabelled glyphs defeat it.
 
 #### Scenario: Sidebar is visible on desktop without toggling
 - **WHEN** the viewport is 768px or wider
@@ -39,19 +22,53 @@ The system SHALL render global navigation as a persistent icon-first rail on vie
 - **WHEN** the viewport is 768px or wider
 - **THEN** no mobile navigation trigger button SHALL be present in the layout
 
-#### Scenario: Desktop sidebar can support icon collapse
+#### Scenario: Navigation items are labelled
 - **WHEN** the viewport is 768px or wider
-- **THEN** global navigation MAY collapse to an icon rail while preserving access to each workspace route
+- **THEN** each navigation item SHALL display its workspace name as visible text
+
+#### Scenario: Navigation items carry counts
+- **WHEN** a workspace has outstanding items
+- **THEN** its navigation item SHALL display the count of those items
+- **AND** the count SHALL update when the underlying data changes
+
+#### Scenario: Active workspace is marked with an accent
+- **WHEN** a workspace is the active route
+- **THEN** its navigation item SHALL carry an accent marker
+- **AND** items for other workspaces SHALL NOT carry that marker
 
 #### Scenario: Desktop rail exposes command palette entry
 - **WHEN** the viewport is 768px or wider
-- **THEN** global navigation SHALL include an icon control that opens the command palette
+- **THEN** global navigation SHALL include a control that opens the command palette
 
 ---
 
-### Requirement: Drawer close button meets minimum touch target size
-The system SHALL render a close button inside the mobile drawer with a minimum touch target size of 44×44px.
+### Requirement: Global navigation is a persistent bottom tab bar on mobile
+The system SHALL render global navigation as a persistent bottom tab bar on viewports narrower than 768px, with one tab per top-level workspace. The bar SHALL remain visible without user interaction, and SHALL NOT overlay or obscure the bottom of the main content region.
 
-#### Scenario: Close button is large enough
-- **WHEN** the mobile global navigation drawer is open
-- **THEN** the close button SHALL have a minimum height and width of 44px
+Each tab SHALL display its workspace name and, where applicable, its outstanding count. The active tab SHALL be marked with an accent marker.
+
+#### Scenario: Tab bar is visible on mobile without interaction
+- **WHEN** the viewport is narrower than 768px
+- **THEN** the global navigation landmark SHALL be visible without requiring any user interaction
+
+#### Scenario: No navigation trigger on mobile
+- **WHEN** the viewport is narrower than 768px
+- **THEN** no navigation trigger button SHALL be present in the layout
+- **AND** no navigation drawer overlay SHALL be rendered
+
+#### Scenario: Tabs are labelled and counted
+- **WHEN** the viewport is narrower than 768px
+- **THEN** each tab SHALL display its workspace name as visible text
+- **AND** a workspace with outstanding items SHALL display its count
+
+#### Scenario: Active tab is marked
+- **WHEN** a workspace is the active route on mobile
+- **THEN** its tab SHALL carry an accent marker
+
+#### Scenario: Tabs meet touch target size
+- **WHEN** the viewport is narrower than 768px
+- **THEN** each tab SHALL have a minimum touch target height of 44px
+
+#### Scenario: Content is not obscured by the tab bar
+- **WHEN** the user scrolls the main content region to its end on mobile
+- **THEN** the final content SHALL be fully visible above the tab bar
