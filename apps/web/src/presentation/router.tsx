@@ -10,6 +10,11 @@ import type { JobApplicationGateway } from "../application/ports/jobApplicationG
 import type { RoleDiscoveryGateway } from "../application/ports/roleDiscoveryGateway";
 import { useZustandPipelineControlsStore } from "../infrastructure/zustand/pipelineControlsStore";
 import { App } from "./App";
+import { MemoryRoute } from "./routes/MemoryRoute";
+import { NotFoundRoute } from "./routes/NotFoundRoute";
+import { PipelineRoute } from "./routes/PipelineRoute";
+import { RolesRoute } from "./routes/RolesRoute";
+import { TodayRoute } from "./routes/TodayRoute";
 import type { UsePipelineControls } from "./ports/pipelineControls";
 
 type AppRouterContext = {
@@ -20,31 +25,45 @@ type AppRouterContext = {
 };
 
 const rootRoute = createRootRouteWithContext<AppRouterContext>()({
-  component: RootRoute
+  component: RootRoute,
+  notFoundComponent: NotFoundRoute
 });
 
+// The entry point is the derived action queue, not the data view. `/pipeline`
+// is unchanged, so existing links and bookmarks still resolve to the board.
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/"
+  path: "/",
+  component: TodayRoute
+});
+
+const todayRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/today",
+  component: TodayRoute
 });
 
 const pipelineRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/pipeline"
+  path: "/pipeline",
+  component: PipelineRoute
 });
 
 const memoryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/memory"
+  path: "/memory",
+  component: MemoryRoute
 });
 
 const rolesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/roles"
+  path: "/roles",
+  component: RolesRoute
 });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  todayRoute,
   pipelineRoute,
   memoryRoute,
   rolesRoute

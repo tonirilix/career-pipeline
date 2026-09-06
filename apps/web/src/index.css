@@ -65,6 +65,70 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The inspector's entrance and exit.
+
+   From 768px up the panel earns its space by widening, so the list narrows
+   continuously instead of snapping to a new width. Below that it covers the
+   region rather than displacing it, so it rises into place instead. Elevation
+   stays a matter of surface and border — nothing here casts a shadow.
+
+   Omitting the `to` frame animates towards the element's own computed style,
+   which is what lets the width animation resolve a `clamp()` target. */
+@keyframes inspector-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes inspector-sink {
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes inspector-widen {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes inspector-narrow {
+  to {
+    width: 0;
+    opacity: 0;
+  }
+}
+
+@layer components {
+  .inspector-enter {
+    animation: inspector-rise 0.18s ease-out;
+  }
+
+  .inspector-exit {
+    animation: inspector-sink 0.16s ease-in forwards;
+  }
+
+  @media (min-width: 768px) {
+    .inspector-enter {
+      animation: inspector-widen 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    .inspector-exit {
+      animation: inspector-narrow 0.18s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .inspector-enter,
+    .inspector-exit {
+      animation: none;
+    }
+  }
+}
+
 @layer base {
   * {
     box-sizing: border-box;

@@ -208,6 +208,9 @@ export function usePipelineWorkspace(
   return {
     ...controls,
     activeApplicationCount,
+    // The raw, unfiltered list. Today derives from this so pipeline controls
+    // cannot empty the user's day.
+    applications,
     addNote,
     addNoteStatus: jobApps.addNoteStatus,
     changeStage,

@@ -182,6 +182,31 @@ describe("frontend architecture boundaries", () => {
     ).toEqual([]);
   });
 
+  it("keeps the Today derivation as pure presentation logic", () => {
+    const derivationFile = resolve(sourceRoot, "presentation/todayProjections.ts");
+
+    expect(
+      findForbiddenReferences([derivationFile], [
+        "@tanstack/react-query",
+        "infrastructure",
+        "React",
+        "react",
+        "zustand",
+        "graphql",
+        "msw",
+        "fetch",
+        "window",
+        "document",
+        "localStorage",
+        "sessionStorage",
+        "navigator",
+        "useMutation",
+        "useQuery",
+        "useQueryClient"
+      ])
+    ).toEqual([]);
+  });
+
   it("keeps usePipelineWorkspace composed with centralized projections", () => {
     const source = readFileSync(
       resolve(sourceRoot, "presentation/pipelineWorkspace.ts"),

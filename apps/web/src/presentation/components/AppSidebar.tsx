@@ -1,119 +1,111 @@
-import { Briefcase, Command, Database, LayoutGrid, Search } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
-
-import { cn } from "@/lib/utils";
+import { Briefcase, Command, Database, ListChecks, Search } from "lucide-react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
-  SidebarIconButton,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarRail,
-  useSidebar
+  SidebarNavButton
 } from "./ui/sidebar";
 
-type Workspace = "pipeline" | "memory" | "roles";
+export type NavigationCounts = {
+  today: number;
+  pipeline: number;
+  roles: number;
+};
 
 type AppSidebarProps = {
-  activeWorkspace: Workspace | "not-found";
+  counts: NavigationCounts;
   onOpenCommand: () => void;
 };
 
 const navItems = [
   {
+    label: "Today",
+    to: "/today",
+    // The index route renders Today, so it marks the Today destination.
+    matchPaths: ["/", "/today"],
+    countKey: "today",
+    icon: ListChecks
+  },
+  {
     label: "Pipeline",
-    route: "pipeline",
+    to: "/pipeline",
+    matchPaths: ["/pipeline"],
+    countKey: "pipeline",
     icon: Briefcase
   },
   {
     label: "Memory",
-    route: "memory",
+    to: "/memory",
+    matchPaths: ["/memory"],
+    countKey: null,
     icon: Database
   },
   {
     label: "Roles",
-    route: "roles",
+    to: "/roles",
+    matchPaths: ["/roles"],
+    countKey: "roles",
     icon: Search
   }
 ] as const;
 
-export function AppSidebar({ activeWorkspace, onOpenCommand }: AppSidebarProps) {
+export function AppSidebar({ counts, onOpenCommand }: AppSidebarProps) {
   const navigate = useNavigate();
-  const { isCollapsed, setIsMobileOpen } = useSidebar();
-
-  function navigateToWorkspace(workspace: Workspace) {
-    setIsMobileOpen(false);
-    void navigate({ to: `/${workspace}` });
-  }
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   return (
     <Sidebar>
-      <SidebarHeader
-        className={cn(
-          "flex items-center justify-center",
-          isCollapsed && "md:px-2 md:py-2"
-        )}
-      >
-        <div
-          className={cn(
-            "hidden items-center justify-center border border-border bg-primary text-primary-foreground",
-            isCollapsed ? "md:flex md:min-h-10 md:min-w-10" : "md:hidden"
-          )}
-          aria-hidden="true"
-        >
-          <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-        </div>
-        <div className={cn(isCollapsed && "md:sr-only")}>
-          <p className="m-0 mb-0.5 text-center text-xs meta-label tracking-widest text-muted-foreground">
-            OS
-          </p>
-          <h1 className="m-0 text-center text-sm font-bold leading-tight text-foreground">
-            Career Pipeline
-          </h1>
-        </div>
+      <SidebarHeader>
+        <p className="m-0 mb-0.5 text-[10px] meta-label tracking-widest text-muted-foreground">
+          OS
+        </p>
+        <h1 className="m-0 text-[13px] font-bold leading-tight text-foreground">
+          Career Pipeline
+        </h1>
       </SidebarHeader>
 
       <SidebarContent>
-        <nav aria-label="Workspace navigation" className="grid justify-center">
-          <SidebarMenu className="w-10">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeWorkspace === item.route;
+        <SidebarMenu>
+          {navItems.map((item) => {
+            const Icon = item.icon;
 
-              return (
-                <SidebarMenuItem key={item.route}>
-                  <SidebarIconButton
-                    aria-label={item.label}
-                    title={item.label}
-                    isActive={isActive}
-                    onClick={() => navigateToWorkspace(item.route)}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span className="sr-only">{item.label}</span>
-                  </SidebarIconButton>
-                </SidebarMenuItem>
-              );
-            })}
-            <SidebarMenuItem>
-              <SidebarIconButton
-                aria-label="Open command palette"
-                title="Open command palette"
-                onClick={() => {
-                  setIsMobileOpen(false);
-                  onOpenCommand();
-                }}
-              >
-                <Command className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="sr-only">Open command palette</span>
-              </SidebarIconButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </nav>
+            return (
+              <SidebarMenuItem key={item.to}>
+                <SidebarNavButton
+                  label={item.label}
+                  count={item.countKey ? counts[item.countKey] : undefined}
+                  icon={<Icon className="h-4 w-4" aria-hidden="true" />}
+                  isActive={item.matchPaths.some((path) => path === pathname)}
+                  onClick={() => void navigate({ to: item.to })}
+                />
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
       </SidebarContent>
 
-      <SidebarRail />
+      <SidebarFooter>
+        <button
+          type="button"
+          aria-label="Open command palette"
+          onClick={onOpenCommand}
+          className="flex min-h-9 w-full items-center gap-2.5 px-2.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        >
+          <Command className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="truncate">Commands</span>
+          <span
+            aria-hidden="true"
+            className="ml-auto text-[10px] meta-label tracking-wide text-muted-foreground"
+          >
+            &#8984;K
+          </span>
+        </button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
