@@ -35,7 +35,7 @@ export function PipelineSavedViews({
                   </span>
                   <span
                     className={`block truncate text-xs ${
-                      isActive ? "text-primary-foreground/80" : "text-muted-foreground"
+                      isActive ? "text-primary-foreground/80" : "text-foreground-secondary"
                     }`}
                   >
                     {view.description}

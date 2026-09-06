@@ -22,8 +22,8 @@ export function StatsBar({
 
 function StatItem({ label, value, highlight }: { label: string; value: number; highlight: boolean }) {
   return (
-    <div className="flex min-h-9 items-center gap-2 border border-border bg-card px-3">
-      <dt className="text-xs uppercase tracking-widest text-muted-foreground">{label}</dt>
+    <div className="flex min-h-9 items-center gap-2 border border-border-strong bg-card px-3">
+      <dt className="text-xs meta-label tracking-widest text-muted-foreground">{label}</dt>
       <dd className={`m-0 text-sm font-bold tabular-nums ${highlight ? "text-accent" : "text-foreground"}`}>
         {value}
       </dd>

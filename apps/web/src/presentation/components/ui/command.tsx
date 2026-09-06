@@ -98,7 +98,7 @@ export function CommandList({ className, ...props }: ComponentProps<"div">) {
 export function CommandEmpty({ className, ...props }: ComponentProps<"p">) {
   return (
     <p
-      className={cn("m-0 px-3 py-6 text-center text-sm text-muted-foreground", className)}
+      className={cn("m-0 px-3 py-6 text-center text-sm text-foreground-secondary", className)}
       {...props}
     />
   );
@@ -116,7 +116,7 @@ export function CommandGroup({
 }: CommandGroupProps) {
   return (
     <section className={cn("py-1", className)} {...props}>
-      <h3 className="m-0 px-2 py-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+      <h3 className="m-0 px-2 py-1 text-xs font-bold meta-label tracking-widest text-muted-foreground">
         {heading}
       </h3>
       <div className="grid gap-1">{children}</div>

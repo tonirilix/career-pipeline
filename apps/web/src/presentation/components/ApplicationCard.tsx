@@ -44,7 +44,7 @@ export function ApplicationCard({
 
   return (
     <div
-      className={`group relative border border-border border-l-2 bg-card px-3 py-2.5 transition-colors hover:bg-muted/30 hover:border-muted-foreground ${
+      className={`group relative border border-border-strong border-l-2 bg-card px-3 py-2.5 transition-colors hover:bg-muted/30 hover:border-muted-foreground ${
         isClosed ? "border-l-muted-foreground opacity-75" : "border-l-accent"
       }`}
     >
@@ -60,12 +60,12 @@ export function ApplicationCard({
           <h3 className="text-sm font-bold text-foreground leading-tight">
             {application.company}
           </h3>
-          <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+          <p className="text-xs text-foreground-secondary leading-tight mt-0.5">
             {application.roleTitle}
           </p>
         </div>
         <span
-          className={`inline-flex shrink-0 items-center border border-border px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
+          className={`inline-flex shrink-0 items-center border border-border-strong px-1.5 py-0.5 text-xs font-semibold meta-label tracking-wider ${
             isClosed ? "text-muted-foreground" : "text-accent"
           }`}
         >
@@ -73,7 +73,7 @@ export function ApplicationCard({
         </span>
       </div>
 
-      <div className="pointer-events-none relative z-10 flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-muted-foreground">
+      <div className="pointer-events-none relative z-10 flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-foreground-secondary">
         {metadata.map((item) => (
           <span
             className="inline-flex max-w-full items-center gap-1 truncate before:h-1 before:w-1 before:shrink-0 before:bg-border"
@@ -87,7 +87,7 @@ export function ApplicationCard({
       <div className="relative z-20 mt-2 flex flex-wrap items-center gap-1.5">
         <Button
           aria-label={`View ${application.company} details`}
-          className="h-11 md:h-8 px-3 text-xs rounded-none bg-transparent hover:bg-muted"
+          className="h-11 md:h-8 px-3 text-xs bg-transparent hover:bg-muted"
           variant="outline"
           onClick={() => onViewDetails(application.id)}
           type="button"
@@ -97,7 +97,7 @@ export function ApplicationCard({
         {primaryNextStage ? (
           <Button
             aria-label={stageActionLabel(application, primaryNextStage)}
-            className="h-11 md:h-8 px-3 text-xs rounded-none"
+            className="h-11 md:h-8 px-3 text-xs"
             disabled={isChangingStage}
             onClick={() => void onStageChange(application, primaryNextStage)}
             type="button"
@@ -111,13 +111,13 @@ export function ApplicationCard({
         <div className="grid gap-0.5">
           <span
             aria-hidden="true"
-            className="text-xs font-bold text-muted-foreground uppercase tracking-widest"
+            className="text-xs font-bold text-muted-foreground meta-label tracking-widest"
           >
             Jump stage
           </span>
           <Select
             aria-label={`Jump ${application.company} to stage`}
-            className="h-11 md:h-8 text-xs rounded-none px-2"
+            className="h-11 md:h-8 text-xs px-2"
             onChange={(e) =>
               setSelectedStage(e.target.value as ApplicationStage)
             }
@@ -132,7 +132,7 @@ export function ApplicationCard({
         </div>
         <Button
           aria-label={`Jump ${application.company} to selected stage`}
-          className="self-end h-11 md:h-8 px-2 text-xs rounded-none bg-transparent hover:bg-muted"
+          className="self-end h-11 md:h-8 px-2 text-xs bg-transparent hover:bg-muted"
           variant="outline"
           disabled={isChangingStage}
           onClick={() => void onStageChange(application, selectedStage)}

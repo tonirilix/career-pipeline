@@ -30,7 +30,7 @@ export function ErrorNotice({
           className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
         />
         <div className="min-w-0">
-          <p className="m-0 text-xs font-bold uppercase tracking-widest text-destructive">
+          <p className="m-0 text-xs font-bold meta-label tracking-widest text-destructive">
             {title}
           </p>
           {message ? (

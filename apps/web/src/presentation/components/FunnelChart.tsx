@@ -43,17 +43,17 @@ export function FunnelChart({ stageCounts, activeStage, onStageClick }: FunnelCh
     <section aria-label="Application funnel" className="border-b border-border bg-card">
       {/* Section heading */}
       <div className="flex items-center justify-between px-6 pt-4 pb-2">
-        <span className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">
+        <span className="text-[11px] meta-label tracking-widest text-muted-foreground font-medium">
           Pipeline overview
         </span>
         {activeStage !== "All" && (
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">Filtering board to:</span>
+            <span className="text-[11px] text-foreground-secondary">Filtering board to:</span>
             <button
               type="button"
               aria-label={`Clear ${activeStage} filter`}
               onClick={() => onStageClick("All")}
-              className="flex items-center gap-1 text-[11px] font-medium text-accent bg-accent/10 border border-accent/30 px-2 py-0.5 rounded-full hover:bg-accent/20 transition-colors"
+              className="flex items-center gap-1 text-[11px] font-medium text-accent bg-accent/10 border border-accent/30 px-2 py-0.5 hover:bg-accent/20 transition-colors"
             >
               <span aria-hidden="true">{activeStage}</span>
               <span aria-hidden="true" className="text-accent/70 font-bold">×</span>
@@ -87,7 +87,7 @@ export function FunnelChart({ stageCounts, activeStage, onStageClick }: FunnelCh
                   : "border-b-2 border-transparent hover:bg-muted",
               ].join(" ")}
             >
-              <span className="text-[10px] uppercase tracking-normal md:tracking-wide text-muted-foreground leading-tight text-center w-full truncate">
+              <span className="text-[10px] meta-label tracking-normal md:tracking-wide text-muted-foreground leading-tight text-center w-full truncate">
                 {stage}
               </span>
               <span
@@ -146,9 +146,9 @@ export function FunnelChart({ stageCounts, activeStage, onStageClick }: FunnelCh
                 : null;
 
             return (
-              <div className="bg-card border border-border shadow-md px-3 py-2 text-xs rounded-sm min-w-[160px]">
+              <div className="bg-card border border-border shadow-md px-3 py-2 text-xs min-w-[160px]">
                 <p className="font-bold text-foreground mb-1.5">{String(part.data.id)}</p>
-                <div className="space-y-0.5 text-muted-foreground">
+                <div className="space-y-0.5 text-foreground-secondary">
                   <p>
                     <span className="font-semibold text-foreground">{count.toLocaleString()}</span>{" "}
                     applications

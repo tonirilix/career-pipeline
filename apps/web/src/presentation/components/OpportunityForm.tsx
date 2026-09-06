@@ -41,14 +41,14 @@ export function OpportunityForm({
       className="mb-5 overflow-hidden"
     >
       <div className="border-b border-border px-5 py-3">
-        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest m-0">
+        <h2 className="text-xs font-bold text-muted-foreground meta-label tracking-widest m-0">
           New opportunity
         </h2>
       </div>
 
       <form noValidate onSubmit={onSubmit} className="p-5">
         <div className="grid gap-4 grid-cols-2">
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Company
             <Input
               aria-describedby={errorsByField.has("company") ? "company-error" : undefined}
@@ -65,7 +65,7 @@ export function OpportunityForm({
               </span>
             ) : null}
           </label>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Role title
             <Input
               aria-describedby={errorsByField.has("roleTitle") ? "role-title-error" : undefined}
@@ -82,7 +82,7 @@ export function OpportunityForm({
               </span>
             ) : null}
           </label>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Posting URL
             <Input
               aria-describedby={errorsByField.has("postingUrl") ? "posting-url-error" : undefined}
@@ -100,7 +100,7 @@ export function OpportunityForm({
               </span>
             ) : null}
           </label>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Source
             <Select
               name="source"
@@ -117,7 +117,7 @@ export function OpportunityForm({
               ))}
             </Select>
           </label>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Location
             <Input
               name="location"
@@ -126,7 +126,7 @@ export function OpportunityForm({
               value={form.location}
             />
           </label>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Compensation
             <Input
               name="compensation"
@@ -135,7 +135,7 @@ export function OpportunityForm({
               value={form.compensation}
             />
           </label>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Employment type
             <Select
               name="employmentType"
@@ -180,10 +180,10 @@ export function OpportunityForm({
         ) : null}
 
         <div className="mt-5 flex gap-2.5 justify-end border-t border-border pt-4">
-          <Button type="button" variant="outline" className="rounded-none bg-transparent hover:bg-muted" onClick={onCancel}>
+          <Button type="button" variant="outline" className="bg-transparent hover:bg-muted" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="rounded-none" disabled={submitStatus === "pending"}>Save opportunity</Button>
+          <Button type="submit" disabled={submitStatus === "pending"}>Save opportunity</Button>
         </div>
       </form>
     </section>

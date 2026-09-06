@@ -267,10 +267,10 @@ export function SecondarySidebar({
   return (
     <aside
       aria-label={label}
-      className="hidden w-64 shrink-0 flex-col border-r border-border bg-background md:flex"
+      className="hidden w-64 shrink-0 flex-col border-r border-border bg-card md:flex"
     >
       <div className="flex min-h-11 shrink-0 items-center justify-between border-b border-border px-3">
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <span className="text-xs font-bold meta-label tracking-widest text-muted-foreground">
           {title}
         </span>
         <button

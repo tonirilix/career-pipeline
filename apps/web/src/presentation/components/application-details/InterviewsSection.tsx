@@ -186,7 +186,7 @@ export function InterviewsSection({
       ) : null}
       {isScheduleActive ? (
         <form className="grid gap-3" onSubmit={onScheduleSubmit}>
-          <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid min-w-0 gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Interview type
             <Select
               onChange={(e) => onInterviewTypeChange(e.target.value as Interview["type"])}
@@ -206,7 +206,7 @@ export function InterviewsSection({
             onDateChange={onInterviewDateChange}
             onTimeChange={onInterviewTimeChange}
           />
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Interview notes
             <Textarea
               className="min-h-[80px]"
@@ -252,7 +252,7 @@ function InterviewList({
   onSubmitOutcome: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   if (interviews.length === 0) {
-    return <p className="text-sm text-muted-foreground italic">No interviews scheduled</p>;
+    return <p className="text-sm text-foreground-secondary italic">No interviews scheduled</p>;
   }
 
   return (
@@ -261,23 +261,23 @@ function InterviewList({
         <li key={interview.id} className="border border-border px-3 py-2">
           <div className="flex items-center justify-between gap-2 mb-1">
             <strong className="text-sm font-semibold">{interview.type}</strong>
-            <span className="text-xs font-bold text-muted-foreground border border-border px-1.5 py-0.5 uppercase tracking-wider">
+            <span className="text-xs font-bold text-muted-foreground border border-border-strong px-1.5 py-0.5 meta-label tracking-wider">
               {interview.outcome}
             </span>
           </div>
           <time
-            className="block text-xs font-bold text-muted-foreground uppercase tracking-wide"
+            className="block text-xs font-bold text-muted-foreground meta-label tracking-wide"
             dateTime={interview.scheduledAt}
           >
             {formatDate(interview.scheduledAt)}
           </time>
           {interview.notes ? (
-            <p className="text-xs text-muted-foreground mt-1">{interview.notes}</p>
+            <p className="text-xs text-foreground-secondary mt-1">{interview.notes}</p>
           ) : null}
           {outcomeState.kind === "active" &&
           outcomeState.interviewId === interview.id ? (
             <form className="mt-3 grid gap-2" onSubmit={onSubmitOutcome}>
-              <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+              <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
                 Outcome
                 <Select
                   onChange={(event) =>

@@ -76,7 +76,7 @@ export function NotesSection({
       ) : null}
       {isActive ? (
         <form className="grid gap-2" onSubmit={onSubmit}>
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Application note
             <Textarea
               className="min-h-[80px]"
@@ -99,7 +99,7 @@ export function NotesSection({
 
 function NoteList({ notes }: { notes: ApplicationNote[] }) {
   if (notes.length === 0) {
-    return <p className="text-sm text-muted-foreground italic">No notes yet</p>;
+    return <p className="text-sm text-foreground-secondary italic">No notes yet</p>;
   }
 
   return (
@@ -107,7 +107,7 @@ function NoteList({ notes }: { notes: ApplicationNote[] }) {
       {notes.map((note) => (
         <li key={note.id} className="border border-border px-3 py-2">
           <time
-            className="block text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1"
+            className="block text-xs font-bold text-muted-foreground meta-label tracking-wide mb-1"
             dateTime={note.createdAt}
           >
             {formatDate(note.createdAt)}

@@ -118,7 +118,7 @@ export function FollowUpsSection({
             onDateChange={onDateChange}
             onTimeChange={onTimeChange}
           />
-          <label className="grid gap-1 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+          <label className="grid gap-1 text-xs font-bold text-muted-foreground meta-label tracking-wide">
             Follow-up note
             <Textarea
               className="min-h-[80px]"
@@ -141,7 +141,7 @@ export function FollowUpsSection({
 function FollowUpList({ followUps }: { followUps: FollowUpReminder[] }) {
   if (followUps.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground italic">No follow-ups scheduled</p>
+      <p className="text-sm text-foreground-secondary italic">No follow-ups scheduled</p>
     );
   }
 
@@ -154,7 +154,7 @@ function FollowUpList({ followUps }: { followUps: FollowUpReminder[] }) {
         >
           <div>
             <time
-              className="block text-xs font-bold text-muted-foreground uppercase tracking-wide mb-0.5"
+              className="block text-xs font-bold text-muted-foreground meta-label tracking-wide mb-0.5"
               dateTime={followUp.dueAt}
             >
               {formatDate(followUp.dueAt)}
@@ -162,7 +162,7 @@ function FollowUpList({ followUps }: { followUps: FollowUpReminder[] }) {
             <span className="text-sm text-foreground">{followUp.note}</span>
           </div>
           {followUp.completedAt ? (
-            <span className="text-xs font-bold text-accent border border-accent/30 px-1.5 py-0.5 whitespace-nowrap uppercase tracking-wider">
+            <span className="text-xs font-bold text-accent border border-accent/30 px-1.5 py-0.5 whitespace-nowrap meta-label tracking-wider">
               done
             </span>
           ) : null}

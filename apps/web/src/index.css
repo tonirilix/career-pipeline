@@ -1,22 +1,68 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0c0c0c;
-  --color-foreground: #e4e4e4;
-  --color-primary: #e4e4e4;
-  --color-primary-dark: #c8c8c8;
+  /* Typography roles.
+     Sans is the document default. Mono is a restricted label role applied via
+     the `meta-label` utility below — never inherited. */
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Surface scale, ordered by elevation. Elevation is carried by surface step
+     and border only — never by shadow or radius. */
+  --color-page: #050505;      /* viewport ground beneath the shell */
+  --color-background: #0c0c0c; /* shell */
+  --color-card: #101010;      /* raised panel: cards, slide-over, secondary sidebar */
+  --color-selected: #171717;  /* selected or hovered row */
+  --color-muted: #171717;     /* alias of `selected`; hover and selection share an elevation */
+
+  /* Text scale. `foreground` is ink, `foreground-secondary` is supporting prose,
+     `muted-foreground` is de-emphasised metadata (counts, timestamps, hints). */
+  --color-foreground: #e8e8e3;
+  --color-foreground-secondary: #a8a8a0;
+  --color-muted-foreground: #7c7c74;
+  --color-card-foreground: #e8e8e3;
+
+  /* Border scale. `strong` frames chips and outer containers, `border` divides
+     panels and sections, `subtle` rules repeated rows within a list. */
+  --color-border-strong: #3a3a3a;
+  --color-border: #2a2a2a;
+  --color-border-subtle: #1f1f1f;
+  --color-input: #2a2a2a;
+
+  --color-primary: #e8e8e3;
+  --color-primary-dark: #c8c8c3;
   --color-primary-foreground: #0c0c0c;
-  --color-muted: #1c1c1c;
-  --color-muted-foreground: #525252;
   --color-destructive: #ff4444;
   --color-destructive-foreground: #0c0c0c;
-  --color-border: #272727;
-  --color-input: #272727;
-  --color-ring: #e4e4e4;
-  --color-card: #111111;
-  --color-card-foreground: #e4e4e4;
+
+  /* Accent is rationed. Permitted uses: focus ring, active-navigation marker,
+     selected-row marker, overdue emphasis, and status framing such as toasts.
+     It is not a general-purpose highlight or a decorative border. */
   --color-accent: #c8f135;
-  --radius: 0.125rem;
+  --color-ring: #c8f135;
+
+  /* Square corners. Tailwind v4 resolves `rounded-*` from the `--radius-*`
+     scale, so zeroing these is what actually squares controls and containers.
+     `rounded-full` is unaffected and stays available for pills and dots. */
+  --radius: 0;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
+
+/* The monospace label role: short uppercase metadata only — type and status
+   chips, stage names, counts, due dates, group headers, keyboard hints.
+   Size and letter-spacing stay with the caller (`text-xs tracking-widest`) so
+   the role composes with per-site typographic tuning. */
+@utility meta-label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 @layer base {
@@ -31,7 +77,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-family: var(--font-sans);
     font-synthesis: none;
     margin: 0;
     min-width: 320px;

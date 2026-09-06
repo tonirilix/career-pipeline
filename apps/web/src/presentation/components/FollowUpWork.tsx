@@ -28,7 +28,7 @@ export function FollowUpWork({
         aria-label="Follow-up work"
         className="border border-border bg-card px-3 py-2"
       >
-        <p className="m-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="m-0 text-xs font-semibold text-foreground-secondary">
           No follow-ups need attention.
         </p>
       </section>
@@ -41,19 +41,19 @@ export function FollowUpWork({
       className="border border-border bg-card"
     >
       <div className="flex min-h-11 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-        <h2 className="m-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <h2 className="m-0 text-xs font-bold meta-label tracking-widest text-muted-foreground">
           Follow-up work
         </h2>
-        <span className="ml-auto text-xs font-bold text-foreground">
+        <span className="ml-auto text-xs font-bold tabular-nums text-foreground">
           {totalCount}
         </span>
         {overdueItems.length > 0 ? (
-          <span className="border border-border px-2 py-1 text-xs font-bold text-accent">
+          <span className="border border-border-strong px-2 py-1 text-xs font-bold meta-label tracking-wide text-accent">
             {overdueItems.length} overdue
           </span>
         ) : null}
         {upcomingItems.length > 0 ? (
-          <span className="border border-border px-2 py-1 text-xs font-bold text-muted-foreground">
+          <span className="border border-border-strong px-2 py-1 text-xs font-bold meta-label tracking-wide text-muted-foreground">
             {upcomingItems.length} upcoming
           </span>
         ) : null}
@@ -62,10 +62,10 @@ export function FollowUpWork({
       {overdueItems.length > 0 ? (
       <div className="min-w-0 border border-border p-3">
         <div className="mb-2 flex items-center gap-2">
-          <h3 className="m-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <h3 className="m-0 text-xs font-bold meta-label tracking-widest text-muted-foreground">
             Overdue follow-ups
           </h3>
-          <span className="ml-auto text-xs font-bold text-accent">
+          <span className="ml-auto text-xs font-bold tabular-nums text-accent">
             {overdueItems.length}
           </span>
         </div>
@@ -82,10 +82,10 @@ export function FollowUpWork({
       {upcomingItems.length > 0 ? (
       <div className="min-w-0 border border-border p-3">
         <div className="mb-2 flex items-center gap-2">
-          <h3 className="m-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <h3 className="m-0 text-xs font-bold meta-label tracking-widest text-muted-foreground">
             Upcoming follow-ups
           </h3>
-          <span className="ml-auto text-xs font-bold text-muted-foreground">
+          <span className="ml-auto text-xs font-bold tabular-nums text-muted-foreground">
             {upcomingItems.length}
           </span>
         </div>
@@ -113,7 +113,7 @@ type FollowUpWorkListProps = {
 
 function FollowUpWorkList({ items, label, urgent, completingFollowUpReminderIds, onCompleteFollowUp }: FollowUpWorkListProps) {
   return (
-    <ol aria-label={label} className="grid gap-0 m-0 list-none p-0 divide-y divide-border">
+    <ol aria-label={label} className="grid gap-0 m-0 list-none p-0 divide-y divide-border-subtle">
       {items.map(({ application, followUp }) => (
         <li key={followUp.id} className="py-3 first:pt-0 min-w-0 overflow-hidden">
           <div className="mb-1">
@@ -121,7 +121,7 @@ function FollowUpWorkList({ items, label, urgent, completingFollowUpReminderIds,
               {application.company}
             </strong>
             <time
-              className={`text-xs font-bold uppercase tracking-widest ${
+              className={`text-xs font-bold meta-label tracking-widest ${
                 urgent ? "text-accent" : "text-muted-foreground"
               }`}
               dateTime={followUp.dueAt}
@@ -129,11 +129,11 @@ function FollowUpWorkList({ items, label, urgent, completingFollowUpReminderIds,
               {formatDate(followUp.dueAt)}
             </time>
           </div>
-          <span className="block text-xs text-muted-foreground mb-2">
+          <span className="block text-xs text-foreground-secondary mb-2">
             {followUp.note}
           </span>
           <Button
-            className="w-full min-w-0 min-h-8 text-xs rounded-none bg-transparent hover:bg-muted overflow-hidden [white-space:normal]"
+            className="w-full min-w-0 min-h-8 text-xs bg-transparent hover:bg-muted overflow-hidden [white-space:normal]"
             variant="outline"
             disabled={completingFollowUpReminderIds.has(followUp.id)}
             onClick={() =>

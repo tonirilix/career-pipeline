@@ -66,7 +66,7 @@ export function AppSidebar({ activeWorkspace, onOpenCommand }: AppSidebarProps) 
           <LayoutGrid className="h-4 w-4" aria-hidden="true" />
         </div>
         <div className={cn(isCollapsed && "md:sr-only")}>
-          <p className="m-0 mb-0.5 text-center text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="m-0 mb-0.5 text-center text-xs meta-label tracking-widest text-muted-foreground">
             OS
           </p>
           <h1 className="m-0 text-center text-sm font-bold leading-tight text-foreground">

@@ -182,7 +182,7 @@ export function App({
                 />
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="border border-border bg-card px-2 py-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  <span className="border border-border-strong bg-card px-2 py-1 text-xs font-bold meta-label tracking-widest text-muted-foreground">
                     {workspace.savedViewLabel}
                   </span>
                 </div>
@@ -203,7 +203,7 @@ export function App({
                 {workspace.isLoadingApplications ? (
                   <div
                     role="status"
-                    className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+                    className="border border-border bg-card px-4 py-6 text-sm text-foreground-secondary"
                   >
                     Loading applications...
                   </div>
@@ -241,7 +241,7 @@ export function App({
               >
                 <div
                   role="status"
-                  className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground"
+                  className="border border-border bg-card px-4 py-6 text-sm text-foreground-secondary"
                 >
                   Workspace not found.
                 </div>

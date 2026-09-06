@@ -74,7 +74,7 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+          <span className="text-xs font-bold text-muted-foreground meta-label tracking-widest">
             {title}
           </span>
           <button
